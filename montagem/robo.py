@@ -162,10 +162,51 @@ def montar_antigo(post_id: int):
     return passos
 
 
+OPCOES = "https://kfvugtrjuqdakbpzvsxq.supabase.co/functions/v1/opcoes"
+ALTERNATIVAS = ["capa_f1", "capa_f3b", "capa_marcatexto", "capa_f1b", "capa_f3a"]
+
+
+def capas_alternativas(p):
+    """Gera 3 capas em moldes diferentes da atual, com o mesmo texto aprovado e foto conferida."""
+    import kit
+    from foto_fiel import foto_fiel
+    from render import renderizar
+    from concurrent.futures import ThreadPoolExecutor
+    post_id = p["id"]; ficha = p.get("ficha") or {}
+    ev = lambda agente, fala, estado="trabalhando", **k: evento(post_id, agente, fala, estado, **k)
+    capa = (ficha.get("capa") if ficha.get("kit") else None) or {}
+    texto = capa.get("texto") or ((p.get("variacoes") or {}).get("pecas") or {}).get("capa", "")
+    atual = capa.get("molde") or "capa_f1"
+    pers = ficha.get("personagem", "") if ficha.get("kit") else ""
+    ideia = (capa.get("foto_prompt") or ficha.get("foto_prompt") or "") + (f" Main character: {pers}." if pers else "")
+    moldes = [m for m in ALTERNATIVAS if m != atual][:3]
+    ev("diretor", f"Você pediu outras capas. Vou montar 3 versões: {', '.join(moldes)}, com o mesmo texto aprovado.")
+    pasta = SAIDA / f"post_{post_id}" / "capas"; pasta.mkdir(parents=True, exist_ok=True)
+
+    def uma(i_m):
+        i, m = i_m
+        vert = m in ("capa_f3a", "capa_f3b", "capa_marcatexto")
+        ff = foto_fiel(texto, m, ideia, f"post_{post_id}/opc{i}", vertical=vert, log=lambda *_: None, ev=ev)
+        loc = pasta / f"foto{i}.png"; baixar(ff["melhor"], loc)
+        s = {"molde": m, "foto": loc.resolve().as_uri(), "texto": texto}
+        if m == "capa_marcatexto":
+            s["texto"] = texto.replace(". ", ".\n", 1)
+        f = renderizar([s], pasta / f"r{i}")[0]
+        cam = f"post_{post_id}/capa_opc_{int(time.time())}_{i}.png"
+        chamar({"acao": "salvar", "caminho": cam, "base64": base64.b64encode(Path(f["arquivo"]).read_bytes()).decode()})
+        return {"molde": m, "imagem": cam}
+    with ThreadPoolExecutor(3) as ex:
+        opcoes = list(ex.map(uma, enumerate(moldes, 1)))
+    chamar({"acao": "salvar", "post_id": post_id, "opcoes": opcoes}, url=OPCOES)
+    ev("entregador", f"{len(opcoes)} capas novas prontas. Abra 'Gerar capas' no post e clique na que quiser.", "pronto")
+
+
 def main():
     if "--contar" in sys.argv:  # usado pelo GitHub para não instalar o navegador à toa
         c = chamar({"acao": "contar"})
         n = c.get("pendentes", 0) if c.get("ok") else 0
+        c2 = chamar({"acao": "contar"}, url=OPCOES)
+        n += c2.get("pendentes", 0) if c2.get("ok") else 0
         print("pendentes:", n if c.get("ok") else c)
         if os.environ.get("GITHUB_OUTPUT"):
             with open(os.environ["GITHUB_OUTPUT"], "a") as f:
@@ -181,6 +222,14 @@ def main():
             print(pid, "ERRO", e)
             evento(pid, "entregador", f"Deu erro na montagem: {str(e)[:160]}", "erro")
             chamar({"acao": "erro", "post_id": pid, "log": str(e)})
+    fc = chamar({"acao": "fila"}, url=OPCOES)
+    for p in fc.get("posts", []) if fc.get("ok") else []:
+        try:
+            capas_alternativas(p); print(p["id"], "capas alternativas ok")
+        except Exception as e:
+            print(p["id"], "ERRO capas", e)
+            evento(p["id"], "entregador", f"Deu erro nas capas novas: {str(e)[:160]}", "erro")
+            chamar({"post_id": p["id"], "erro": str(e)[:300], "acao": "salvar"}, url=OPCOES)
 
 
 if __name__ == "__main__":

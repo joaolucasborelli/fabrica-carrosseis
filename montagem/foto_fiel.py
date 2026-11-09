@@ -29,8 +29,18 @@ def foto_fiel(texto, molde, ideia, caminho_base, vertical=False, nota_minima=8, 
     cam = f"{caminho_base}_v0.png"
     ev("fotografo", "Fotografando a cena (foto realista de celular, expressão contida, sem faixa preta).")
     g = _chamar(MONTADOR, {"acao": "imagem", "prompt": cena["prompt"], "caminho": cam, "size": size, "quality": "medium"})
+    if not g.get("ok") and "safety" in str(g.get("erro", "")).lower():
+        # o gerador recusou (ex.: criança doente): o diretor refaz a cena de um jeito seguro, sem perder a história
+        ev("fotografo", "O gerador recusou a foto por segurança. Vou pedir ao Diretor uma cena mais segura, com a mesma história.")
+        c2 = _chamar(CAPAS, {"acao": "cena", "texto": texto, "molde": molde, "ideia": ideia + (
+            " SAFETY REWRITE: the previous prompt was rejected by the image safety system. Keep the story and the key objects, but show ONLY adults in focus;"
+            " any child appears calm, asleep, seen from behind or out of frame; no illness, fever, medicine close-ups, injuries or distress on children;"
+            " imply the situation through objects and the adult's restrained expression.")})
+        if c2.get("ok"):
+            cena = c2["cena"]
+            g = _chamar(MONTADOR, {"acao": "imagem", "prompt": cena["prompt"], "caminho": cam, "size": size, "quality": "medium"})
     if not g.get("ok"):
-        ev("fotografo", "A foto foi recusada pelo gerador.", "erro")
+        ev("fotografo", "A foto foi recusada pelo gerador mesmo depois de ajustar a cena.", "erro")
         raise RuntimeError(f"imagem: {g}")
     ev("fotografo", f"Foto pronta em {g.get('segundos', '?')}s. Mandei para o Conferente.", "pronto")
     historico = []
