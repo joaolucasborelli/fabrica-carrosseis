@@ -71,10 +71,11 @@ FIT_JS = """
     const ps = box.querySelectorAll('p');
     // texto curto: cresce até o teto do molde (data-max), sem passar da caixa
     const max = parseFloat(box.dataset.max || 0);
+    const altura = () => { const k = box.children; return k[k.length-1].getBoundingClientRect().bottom - k[0].getBoundingClientRect().top; };
     let g = 0;
     while (max && g++ < 40) {
       const fs = parseFloat(getComputedStyle(ps[0]).fontSize);
-      if (fs >= max || box.scrollHeight > box.clientHeight * 0.62) break;
+      if (fs >= max || altura() > box.clientHeight * 0.55) break;
       ps.forEach(p => { const f = parseFloat(getComputedStyle(p).fontSize); p.style.fontSize = Math.min(f * 1.04, max * f / fs) + 'px'; });
     }
     let guard = 0;
