@@ -42,7 +42,10 @@ def chamar(corpo, timeout=200, url=None):
                 return json.loads(r.read())
         except urllib.error.HTTPError as e:
             res = {"ok": False, "status": e.code, "erro": e.read().decode(errors="replace")[:600]}
-            if e.code < 500 or corpo.get("acao") in ("diagramar", "imagem", "fila"):
+            if e.code < 500 or corpo.get("acao") in ("diagramar", "fila"):
+                return res
+            # foto: tenta de novo em erro passageiro da OpenAI (página de erro, 5xx), mas não quando foi barrada por segurança
+            if corpo.get("acao") == "imagem" and (tentativa >= 2 or any(k in res["erro"].lower() for k in ("safety", "moderation", "policy"))):
                 return res
         except (urllib.error.URLError, TimeoutError) as e:
             res = {"ok": False, "erro": str(e)}
