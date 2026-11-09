@@ -122,21 +122,24 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 /* cards numerados */
 .esc.cd .tit{top:120px;font-size:96px}
 .esc.cd .sub{top:232px;font-size:34px;color:#cfcfcb}
-.esc.cd .cards{position:absolute;left:44px;right:44px;top:360px;bottom:150px;display:flex;flex-direction:column;justify-content:center;gap:22px}
-.esc.cd .card{display:flex;align-items:center;gap:26px;background:#141416;border:2px solid #2a2a2e;border-radius:22px;padding:24px 30px;min-height:122px}
-.esc.cd .card .n{font:400 70px/1 'Bebas Neue',sans-serif;color:#FFD21F;width:70px}
-.esc.cd .card .ic{width:84px;height:84px;border-radius:18px;object-fit:cover;flex:none}
-.esc.cd .card b{font:700 38px/1.15 'Inter',sans-serif;color:#fff;flex:0 0 300px}
-.esc.cd .card span{flex:1;border-left:2px solid #3a3a3e;padding-left:24px;font:400 31px/1.3 'Inter',sans-serif;color:#d7d7d3}
+.esc.cd .cards{position:absolute;left:52px;right:52px;top:350px;bottom:150px;display:flex;flex-direction:column;justify-content:center;gap:20px}
+.esc.cd .card{position:relative;flex:1 1 0;max-height:205px;min-height:118px;display:flex;align-items:center;gap:28px;padding:20px 36px 20px 30px;overflow:hidden;
+  background:linear-gradient(180deg,#1b1c21,#121215);border:1.5px solid #2e2f36;border-radius:28px;box-shadow:0 16px 36px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06)}
+.esc.cd .card::before{content:"";position:absolute;left:0;top:22px;bottom:22px;width:6px;border-radius:0 6px 6px 0;background:#FFD21F;box-shadow:0 0 18px rgba(255,210,31,.7)}
+.esc.cd .card .n{flex:none;width:90px;height:90px;border-radius:24px;background:rgba(255,210,31,.1);border:2px solid rgba(255,210,31,.55);display:flex;align-items:center;justify-content:center;padding-top:6px;font:400 60px/1 'Bebas Neue',sans-serif;color:#FFD21F}
+.esc.cd .card .ic{width:90px;height:90px;border-radius:22px;object-fit:cover;flex:none}
+.esc.cd .card b{font:800 40px/1.12 'Inter',sans-serif;color:#fff;flex:0 0 270px}
+.esc.cd .card span{flex:1;border-left:2px solid #35363d;padding-left:28px;font:400 32px/1.3 'Inter',sans-serif;color:#d9d9d5}
+.esc.cd .card span mark,.esc.cd .card b mark{background:#FFD21F;color:#111;padding:0 .1em}
 /* checklist + foto */
 .esc.ck .tit{top:110px;font-size:112px}
 .esc.ck .sub{top:232px;font-weight:700;color:#fff}
 .esc.ck .sub u{text-decoration:none;border-bottom:3px solid #FFD21F;padding-bottom:6px}
 .esc.ck .corpo{position:absolute;left:60px;right:60px;top:320px;bottom:150px;display:flex;flex-direction:column;gap:44px}
-.esc.ck .itens{display:flex;flex-direction:column;gap:26px}
+.esc.ck .itens{display:flex;flex-direction:column;gap:16px}
 .esc.ck .corpo .moldura{position:relative;left:auto;right:auto;top:auto;height:auto;flex:1;min-height:380px}
-.esc.ck .it{display:flex;gap:22px;font:400 38px/1.3 'Inter',sans-serif;color:#f2f2ef}
-.esc.ck .it::before{content:"✓";flex:none;width:44px;height:44px;margin-top:4px;border-radius:9px;background:#FFD21F;color:#111;font:800 30px/44px 'Inter',sans-serif;text-align:center}
+.esc.ck .it{display:flex;align-items:center;gap:22px;padding:16px 26px 16px 18px;background:linear-gradient(180deg,#1a1b20,#131316);border:1.5px solid #2c2d34;border-radius:20px;font:500 37px/1.25 'Inter',sans-serif;color:#f2f2ef;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.esc.ck .it::before{content:"✓";flex:none;width:50px;height:50px;border-radius:50%;background:#FFD21F;color:#111;font:900 30px/50px 'Inter',sans-serif;text-align:center;box-shadow:0 0 18px rgba(255,210,31,.5)}
 .esc.ck .moldura{left:60px;right:60px;top:640px;height:510px}
 /* rede de rostos */
 .esc.rd .tit{top:70px;font-size:104px}
@@ -240,13 +243,22 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .stk .handle{color:rgba(255,255,255,.8);text-shadow:0 1px 6px #000}
 /* miolo · antes e hoje empilhados */
 .ah{background:#0b0b0b}
-.ah .meia{position:absolute;left:0;right:0;height:560px;overflow:hidden}
+.ah .meia{position:absolute;left:0;right:0;height:530px;overflow:hidden}
 .ah .meia img{width:100%;height:100%;object-fit:cover;object-position:var(--foco,50% 40%)}
-.ah .m1{top:0}.ah .m2{top:566px}
-.ah .rot{position:absolute;left:40px;top:34px;font:400 64px/1 'Bebas Neue',sans-serif;padding:10px 20px 6px;border-radius:8px}
-.ah .m1 .rot{background:rgba(17,17,17,.88);color:#F5F5F0}.ah .m2 .rot{background:#FFD21F;color:#111}
-.ah .texto{position:absolute;left:70px;right:70px;top:1140px;height:150px;display:flex;align-items:center;justify-content:center}
-.ah .texto p{font:700 44px/1.2 'Inter',sans-serif;color:#F5F5F0;text-align:center}
+.ah .m1{top:0}.ah .m2{top:540px}
+.ah .m1 img{filter:grayscale(.8) brightness(.78) contrast(1.06)}
+.ah .m1::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25),transparent 30%,transparent 75%,rgba(0,0,0,.35))}
+.ah .m2::after{content:"";position:absolute;left:0;right:0;bottom:0;height:190px;background:linear-gradient(transparent,#0b0b0b)}
+.ah .costura{position:absolute;left:0;right:0;top:530px;height:10px;background:#FFD21F;box-shadow:0 0 34px rgba(255,210,31,.65);z-index:2}
+.ah .seta{position:absolute;left:50%;top:535px;width:96px;height:96px;transform:translate(-50%,-50%);border-radius:50%;background:#FFD21F;border:7px solid #0b0b0b;z-index:3;display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px rgba(255,210,31,.5)}
+.ah .seta svg{width:44px;height:44px}
+.ah .rot{position:absolute;left:40px;top:36px;z-index:2;display:flex;align-items:center;gap:12px;font:400 62px/1 'Bebas Neue',sans-serif;padding:12px 26px 8px 18px;border-radius:16px;box-shadow:0 10px 26px rgba(0,0,0,.45)}
+.ah .rot i{width:38px;height:38px;border-radius:50%;font:900 24px/38px 'Inter',sans-serif;text-align:center;font-style:normal;margin-top:-4px}
+.ah .m1 .rot{background:rgba(14,14,15,.9);color:#F5F5F0;border:2px solid rgba(255,255,255,.22)}.ah .m1 .rot i{background:#3a3a3e;color:#cfcfcb}
+.ah .m2 .rot{top:66px;background:#FFD21F;color:#111}.ah .m2 .rot i{background:#111;color:#FFD21F}
+.ah .texto{position:absolute;left:70px;right:70px;top:1080px;height:205px;display:flex;align-items:center;justify-content:center}
+.ah .texto p{font:700 46px/1.22 'Inter',sans-serif;color:#F5F5F0;text-align:center;text-wrap:balance}
+.ah .texto mark{background:#FFD21F;color:#111;padding:0 .12em}
 /* miolo · lista com linhas sobre foto escura */
 .ll{background:#0b0b0b}
 .ll .foto{position:absolute;inset:0;width:1080px;height:1350px;object-fit:cover;filter:brightness(.6)}
@@ -254,21 +266,45 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .ll .chapeu{position:absolute;left:84px;top:150px;display:flex;align-items:center;gap:16px;font:800 28px/1 'Archivo',sans-serif;letter-spacing:.22em;color:#FFD21F;text-transform:uppercase}
 .ll .chapeu::before{content:"";width:40px;height:4px;background:#FFD21F}
 .ll .tit{position:absolute;left:84px;right:84px;top:205px;font:400 116px/.95 'Bebas Neue',sans-serif;color:#fff;text-transform:uppercase}
-.ll .linhas{position:absolute;left:84px;right:84px;top:var(--ly,470px);bottom:150px;display:flex;flex-direction:column;justify-content:center}
-.ll .lin{display:flex;align-items:center;gap:30px;min-height:120px;border-bottom:2px solid rgba(255,255,255,.28)}
-.ll .lin b{font:400 64px/1 'Bebas Neue',sans-serif;color:#FFD21F;width:64px}
-.ll .lin span{font:500 38px/1.25 'Inter',sans-serif;color:#fff}
+.ll .tit .am{color:#FFD21F}
+.ll .linhas{position:absolute;left:70px;right:70px;top:var(--ly,385px);bottom:150px;display:flex;flex-direction:column;justify-content:center;gap:22px}
+.ll .lin{position:relative;flex:0 1 168px;min-height:112px;display:flex;align-items:center;gap:30px;padding:20px 36px 20px 26px;
+  background:linear-gradient(180deg,rgba(28,29,34,.86),rgba(16,16,19,.86));border:1.5px solid rgba(255,255,255,.13);border-radius:26px;box-shadow:0 16px 34px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06)}
+.ll .lin+.lin::before{content:"";position:absolute;left:62px;top:-24px;width:4px;height:24px;background:linear-gradient(#FFD21F,rgba(255,210,31,.35))}
+.ll .lin b{flex:none;width:78px;height:78px;border-radius:50%;background:#FFD21F;color:#111;font:400 52px/84px 'Bebas Neue',sans-serif;text-align:center;box-shadow:0 0 0 6px rgba(255,210,31,.14),0 0 24px rgba(255,210,31,.45)}
+.ll .lin span{font:600 38px/1.25 'Inter',sans-serif;color:#fff}
+.ll .lin span mark{background:#FFD21F;color:#111;padding:0 .12em}
 .ll .barra{position:absolute;left:0;bottom:0;height:10px;background:#FFD21F}
 .ll .handle{color:#cfcfcb;top:1290px}
-/* miolo · conta visual */
-.cv{background:#111}
-.cv .tit{position:absolute;left:70px;right:70px;top:110px;text-align:center;font-size:104px;color:#F5F5F0}
-.cv .conta{position:absolute;left:110px;right:110px;top:300px;bottom:170px;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:10px}
-.cv .cx{background:#1b1d22;border:2px solid #2c2f36;border-radius:22px;padding:22px 34px;display:flex;align-items:baseline;justify-content:space-between;gap:20px}
-.cv .cx b{font:900 72px/1 'Archivo',sans-serif;font-stretch:80%;color:#F5F5F0}
-.cv .cx span{font:500 30px/1.2 'Inter',sans-serif;color:#b8bcc4;text-align:right}
-.cv .op{text-align:center;font:800 46px/1 'Inter',sans-serif;color:#FFD21F}
-.cv .cx.fim{background:#FFD21F;border-color:#FFD21F}.cv .cx.fim b,.cv .cx.fim span{color:#111}
+/* miolo · conta visual (v2: caixas com número, operadores em círculo, resultado com brilho) */
+.cv{background:#0c0c0d}
+.cv::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.07) 1.6px,transparent 1.7px);background-size:22px 22px}
+.cv .brilho{position:absolute;left:50%;bottom:120px;width:1000px;height:640px;transform:translateX(-50%);background:radial-gradient(ellipse at 50% 70%,rgba(255,210,31,.16),transparent 62%);z-index:0}
+.cv .chapeu{position:absolute;left:0;right:0;top:74px;text-align:center}
+.cv .chapeu span{display:inline-block;background:#FFD21F;color:#111;font:800 24px/1 'Inter',sans-serif;letter-spacing:.18em;text-transform:uppercase;padding:11px 20px 10px;border-radius:999px}
+.cv .tit{position:absolute;left:70px;right:70px;top:124px;text-align:center;font:400 124px/.95 'Bebas Neue',sans-serif;color:#F5F5F0;text-transform:uppercase}
+.cv .tit .am{color:#FFD21F}
+.cv .tit::after{content:"";display:block;width:120px;height:6px;margin:26px auto 0;border-radius:6px;background:#FFD21F;box-shadow:0 0 18px rgba(255,210,31,.6)}
+.cv .conta{position:absolute;left:84px;right:84px;top:330px;bottom:150px;display:flex;flex-direction:column;justify-content:center;gap:26px}
+.cv .cx{position:relative;flex:1 1 0;max-height:205px;min-height:112px;display:flex;align-items:center;gap:30px;padding:0 44px 0 34px;
+  background:linear-gradient(180deg,#1e2026,#15161a);border:2px solid #2f323a;border-radius:30px;box-shadow:0 18px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.07)}
+.cv .cx em{flex:none;width:66px;height:66px;border-radius:50%;border:2.5px solid rgba(255,210,31,.6);color:#FFD21F;font:400 36px/62px 'Bebas Neue',sans-serif;text-align:center;font-style:normal;background:rgba(255,210,31,.06)}
+.cv .cx .vt{flex:1;min-width:0}
+.cv .cx b{display:block;white-space:nowrap;font:900 94px/1 'Archivo',sans-serif;font-stretch:76%;color:#F5F5F0;letter-spacing:-.005em}
+.cv .cx span{display:block;margin-top:12px;font:700 26px/1.15 'Inter',sans-serif;letter-spacing:.15em;text-transform:uppercase;color:#9da2ac}
+.cv .cx:not(.fim) .vt{display:flex;align-items:center;justify-content:space-between;gap:26px}
+.cv .cx:not(.fim) b{flex:0 1 auto;min-width:0;overflow:hidden}
+.cv .cx:not(.fim) span{flex:none;max-width:46%;margin:0;padding:13px 22px 12px;border-radius:999px;background:rgba(255,255,255,.05);border:1.5px solid #3a3d46;color:#c4c8d0;text-align:center;font-size:24px;line-height:1.2;letter-spacing:.1em}
+.cv .op{position:relative;height:0;z-index:3;display:flex;justify-content:center}
+.cv .op i{position:absolute;top:-39px;width:78px;height:78px;border-radius:50%;background:#FFD21F;color:#111;font:900 52px/76px 'Archivo',sans-serif;text-align:center;font-style:normal;
+  box-shadow:0 0 0 9px #0c0c0d,0 0 30px rgba(255,210,31,.55)}
+.cv .op.ig i{background:#F5F5F0;box-shadow:0 0 0 9px #0c0c0d,0 0 30px rgba(255,255,255,.25)}
+.cv .cx.fim{flex-grow:1.4;max-height:285px;min-height:170px;border:0;background:linear-gradient(135deg,#FFE45C 0%,#FFD21F 50%,#F2B705 100%);
+  box-shadow:0 0 0 7px rgba(255,210,31,.16),0 0 80px rgba(255,210,31,.38),0 22px 50px rgba(0,0,0,.55)}
+.cv .cx.fim b{color:#111;font-size:118px}
+.cv .cx.fim span{color:rgba(17,17,17,.72)}
+.cv .cx.fim em{background:#111;border-color:#111;color:#FFD21F;font:900 34px/66px 'Inter',sans-serif;width:70px;height:70px}
+.cv .selo{position:absolute;right:30px;top:-22px;background:#111;color:#FFD21F;border:2.5px solid #FFD21F;font:800 21px/1 'Inter',sans-serif;letter-spacing:.18em;padding:10px 16px 9px;border-radius:999px;transform:rotate(2.5deg);box-shadow:0 8px 20px rgba(0,0,0,.45)}
 /* miolo · citação com assinatura */
 .ct{background:#000}
 .ct .aspas{position:absolute;left:84px;top:170px;font:900 260px/1 'Archivo',sans-serif;color:#FFD21F}
@@ -346,6 +382,25 @@ FIT_JS = """
     for (const el of s.querySelectorAll('.sub, .cards, .corpo, .itens, .lista, .rede, .moldura, .conta, .linhas')) {
       if (el.closest('.corpo') && el !== s.querySelector('.corpo')) continue;
       el.style.top = (parseFloat(getComputedStyle(el).top) + extra) + 'px';
+    }
+  }
+  // valores grandes das caixas: numa linha só, encolhendo; se ainda não couber, quebram em 2 linhas
+  // valor nunca encosta no círculo do operador: o tamanho acompanha a altura da caixa
+  for (const b of document.querySelectorAll('.cv .cx b')) {
+    const cx = b.closest('.cx'), fim = cx.classList.contains('fim');
+    const lim = Math.max(46, cx.clientHeight - (fim ? 104 : 62));
+    if (parseFloat(getComputedStyle(b).fontSize) > lim) b.style.fontSize = lim + 'px';
+  }
+  for (const b of document.querySelectorAll('.cv .cx b')) {
+    let fs = parseFloat(getComputedStyle(b).fontSize), g = 0;
+    while (b.scrollWidth > b.clientWidth + 1 && fs > 46 && g++ < 60) { fs *= 0.95; b.style.fontSize = fs + 'px'; }
+    if (b.scrollWidth > b.clientWidth + 1) b.style.whiteSpace = 'normal';
+  }
+  // caixas que mesmo assim estouram a altura: encolhe tudo dentro delas
+  for (const cx of document.querySelectorAll('.cv .cx, .esc.cd .card, .ll .lin')) {
+    let g = 0;
+    while (cx.scrollHeight > cx.clientHeight + 1 && g++ < 40) {
+      for (const el of cx.querySelectorAll('b, span')) { el.style.fontSize = parseFloat(getComputedStyle(el).fontSize) * 0.96 + 'px'; }
     }
   }
   for (const box of document.querySelectorAll('.fit')) {
@@ -461,8 +516,10 @@ def _k_sticker(s):
 def _k_antes_hoje(s):
     f1, f2 = (s.get("fotos") or [s.get("foto"), s.get("foto")])[:2]
     r1, r2 = (s.get("rotulos") or ["Antes", "Hoje"])[:2]
-    return (f'<div class="slide ah"><div class="meia m1"><img src="{f1}"><div class="rot">{html.escape(r1)}</div></div>'
-            f'<div class="meia m2"><img src="{f2}"><div class="rot">{html.escape(r2)}</div></div>'
+    seta = '<svg viewBox="0 0 24 24"><path d="M12 4v15M6 13l6 6 6-6" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    return (f'<div class="slide ah"><div class="meia m1"><img src="{f1}"><div class="rot"><i>✕</i>{html.escape(r1)}</div></div>'
+            f'<div class="meia m2"><img src="{f2}"><div class="rot"><i>✓</i>{html.escape(r2)}</div></div>'
+            f'<div class="costura"></div><div class="seta">{seta}</div>'
             f'<div class="texto fit"><p>{marcar(s.get("texto",""))}</p></div></div>')
 
 
@@ -477,12 +534,21 @@ def _k_lista(s):
 
 
 def _k_conta(s):
-    partes = []
-    for i, c in enumerate(s.get("caixas") or []):
+    partes, n = [], 0
+    caixas = s.get("caixas") or []
+    for i, c in enumerate(caixas):
+        fim = bool(c.get("fim")) or (i == len(caixas) - 1 and (c.get("op") or "").strip() == "=")
         if i and c.get("op"):
-            partes.append(f'<div class="op">{html.escape(c["op"])}</div>')
-        partes.append(f'<div class="cx{" fim" if c.get("fim") else ""}"><b>{html.escape(c["valor"])}</b><span>{html.escape(c.get("rotulo",""))}</span></div>')
-    return (f'<div class="slide cv"><div class="tit cond">{marcar(s.get("titulo",""), cor=True)}</div><div class="conta">{"".join(partes)}</div>{_assin()}</div>')
+            op = c["op"].strip().replace("x", "×").replace("*", "×")
+            partes.append(f'<div class="op{" ig" if op == "=" else ""}"><i>{html.escape(op)}</i></div>')
+        n += 1
+        marca = "✓" if fim else f"{n:02d}"
+        rot = f'<span>{html.escape(c.get("rotulo",""))}</span>' if c.get("rotulo") else ""
+        selo = '<div class="selo">RESULTADO</div>' if fim else ""
+        partes.append(f'<div class="cx{" fim" if fim else ""}"><em>{marca}</em><div class="vt"><b>{html.escape(c["valor"])}</b>{rot}</div>{selo}</div>')
+    chapeu = f'<div class="chapeu"><span>{html.escape(s["chapeu"])}</span></div>' if s.get("chapeu") else ""
+    return (f'<div class="slide cv"><div class="brilho"></div>{chapeu}<div class="tit">{marcar(s.get("titulo",""), cor=True)}</div>'
+            f'<div class="conta">{"".join(partes)}</div>{_assin()}</div>')
 
 
 def _k_citacao(s):
@@ -534,7 +600,7 @@ def slide_html(s: dict) -> str:
     elif m == "capa_perfil":
         foco = html.escape(s.get("foco") or "50% 40%")
         corpo = (f'<div class="slide perfil"><img class="foto" src="{s["foto"]}" style="--foco:{foco}"><div class="grao"></div>'
-                 f'<div class="divisor"><i></i><div class="chip"><img src="{AVATAR}"><div><b>A História que Muda</b><span>{HANDLE}</span></div></div><i></i></div>'
+                 f'<div class="divisor"><i></i><div class="chip"><img src="{AVATAR}"><div><b>Do outro lado da Porta</b><span>{HANDLE}</span></div></div><i></i></div>'
                  f'<div class="texto fit"><p>{marcar(s["texto"], cor=True)}</p></div><div class="arraste">Deslize e veja &gt;&gt;&gt;</div></div>')
     elif m == "capa_comparacao":
         foco = html.escape(s.get("foco") or "50% 45%")
@@ -545,12 +611,12 @@ def slide_html(s: dict) -> str:
     elif m == "capa_tweet":
         foco = html.escape(s.get("foco") or "50% 45%")
         ps = [p.strip() for p in re.split(r"\n+", s["texto"]) if p.strip()]
-        corpo = (f'<div class="slide tw"><div class="topo"><img src="{AVATAR}"><div><b>A História que Muda</b><span>{HANDLE}</span></div></div>'
+        corpo = (f'<div class="slide tw"><div class="topo"><img src="{AVATAR}"><div><b>Do outro lado da Porta</b><span>{HANDLE}</span></div></div>'
                  f'<div class="texto fit" data-max="66">{paras(ps)}</div><div class="img"><img src="{s["foto"]}" style="--foco:{foco}"></div></div>')
     elif m == "capa_tweet2":
         ps = [p.strip() for p in re.split(r"\n+", s["texto"]) if p.strip()]
         f1, f2 = (s.get("fotos") or [s.get("foto"), s.get("foto")])[:2]
-        corpo = (f'<div class="slide tw tw2"><div class="topo"><img src="{AVATAR}"><div><b>A História que Muda</b><span>{HANDLE}</span></div></div>'
+        corpo = (f'<div class="slide tw tw2"><div class="topo"><img src="{AVATAR}"><div><b>Do outro lado da Porta</b><span>{HANDLE}</span></div></div>'
                  f'<div class="texto fit" data-max="64" style="height:380px">{paras(ps)}</div><div class="duas"><img src="{f1}"><img src="{f2}"></div></div>')
     elif m in ("esc_titulo_moldura", "esc_cards", "esc_checklist", "esc_rede"):
         rod = f'<div class="rod"><i></i>{HANDLE}<i></i></div>'

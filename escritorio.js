@@ -1,4 +1,4 @@
-/* Escritório da fábrica v2 — um prédio em pixel art com 6 salas, corredor e placas.
+/* Escritório da fábrica v3 — um prédio em pixel art com 6 salas, corredor e placas.
    Os agentes trabalham, falam em balões e levam a folha de uma sala para outra.
    Uso: const e = Escritorio.criar(container); e.carregar(eventos, aoVivo); e.vivo(evento); e.reanexar(el); e.destruir();
 */
@@ -35,71 +35,140 @@
   };
   const EST = { ocioso: "ocioso", trabalhando: "trabalhando", pronto: "pronto", erro: "erro" };
 
-  const px = (c, x, y, w, h, cor) => { c.fillStyle = cor; c.fillRect(Math.round(x), Math.round(y), w, h); };
+  const px = (c, x, y, w, h, cor) => { c.fillStyle = cor; c.fillRect(Math.round(x * 2) / 2, Math.round(y * 2) / 2, w, h); };
   function tom(hex, f) { const n = parseInt(hex.slice(1), 16); const r = Math.min(255, (n >> 16) * f), g = Math.min(255, ((n >> 8) & 255) * f), b = Math.min(255, (n & 255) * f); return `rgb(${r | 0},${g | 0},${b | 0})`; }
 
-  // ---------- cenário ----------
+  // ---------- cenário v3: prédio de vidro à noite, salas com neon, madeira, plantas (refs AIOffice/Habblaud) ----------
+  const NEON = { redacao: "#60a5fa", plateia: "#fb7185", estudio: "#c084fc", diagramacao: "#4ade80", conferencia: "#2dd4bf", expedicao: "#fbbf24" };
+  const FACE = 24;
+  function brilho(c, x, y, r, rgb, a) { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2); }
+  function oval(c, x, y, rx, ry, cor) { c.fillStyle = cor; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fill(); }
   function piso(c, [x, y, w, h], tipo) {
-    if (tipo === "madeira") { for (let j = y; j < y + h; j += 6) for (let i = x - ((j / 6) % 2) * 12; i < x + w; i += 24) { px(c, Math.max(i, x), j, Math.min(24, x + w - Math.max(i, x)), 6, ((i + j) / 6) % 3 ? "#a87445" : "#9a693d"); px(c, Math.max(i, x), j + 5, Math.min(24, x + w - Math.max(i, x)), 1, "#80552f"); } }
-    else if (tipo === "carpete") { px(c, x, y, w, h, "#7f1d2d"); for (let j = y; j < y + h; j += 4) for (let i = x + (j % 8); i < x + w; i += 8) px(c, i, j, 1, 1, "#8f2536"); }
-    else if (tipo === "concreto") { px(c, x, y, w, h, "#8b8f97"); for (let j = y; j < y + h; j += 32) px(c, x, j, w, 1, "#7b7f87"); for (let i = x; i < x + w; i += 48) px(c, i, y, 1, h, "#7b7f87"); }
-    else if (tipo === "xadrez") { for (let j = y; j < y + h; j += 12) for (let i = x; i < x + w; i += 12) px(c, i, j, 12, 12, ((i + j) / 12) % 2 ? "#e9e4d8" : "#d6cfbf"); }
-    else if (tipo === "azul") { for (let j = y; j < y + h; j += 16) for (let i = x; i < x + w; i += 16) { px(c, i, j, 16, 16, ((i + j) / 16) % 2 ? "#2f5d8a" : "#33669a"); } }
-    else if (tipo === "corredor") { for (let j = y; j < y + h; j += 11) for (let i = x; i < x + w; i += 22) px(c, i, j, 22, 11, ((i / 22 + j / 11) % 2) ? "#cfc8b8" : "#c4bcaa"); }
+    c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip();
+    if (tipo === "madeira" || tipo === "escura") {
+      const cs = tipo === "madeira" ? ["#b07a4a", "#a46f40", "#9b673a", "#b9844f"] : ["#7b4f30", "#70472a", "#86583a", "#6a4227"];
+      for (let j = y, r = 0; j < y + h; j += 5, r++) { const off = (r % 4) * 9; for (let i = x - off, q = 0; i < x + w; i += 34, q++) { px(c, i, j, 34, 5, cs[(q * 3 + r * 7 + (q % 2) * r) % 4]); px(c, i, j + 4.5, 34, .5, "rgba(0,0,0,.28)"); px(c, i, j, .5, 5, "rgba(0,0,0,.3)"); px(c, i + .5, j, 33, .5, "rgba(255,255,255,.07)"); } }
+    } else if (tipo === "carpete") {
+      px(c, x, y, w, h, "#3b2440"); for (let j = y; j < y + h; j += 16) for (let i = x; i < x + w; i += 16) { px(c, i, j, 16, 16, ((i + j) / 16) % 2 ? "#40284a" : "#382143"); px(c, i + 4, j + 6, .5, .5, "#5b3d66"); px(c, i + 11, j + 12, .5, .5, "#5b3d66"); }
+    } else if (tipo === "concreto") {
+      px(c, x, y, w, h, "#3a3f4a"); for (let j = y; j < y + h; j += 24) px(c, x, j, w, .5, "#30343d"); for (let i = x; i < x + w; i += 36) px(c, i, y, .5, h, "#30343d");
+      for (let k = 0; k < 40; k++) px(c, x + ((k * 53) % w), y + ((k * 37) % h), .5, .5, "#474c58");
+    } else if (tipo === "corredor") {
+      px(c, x, y, w, h, "#1d2230"); for (let i = x; i < x + w; i += 20) px(c, i, y, .5, h, "#232a3a");
+      px(c, x, y + h / 2 - 1, w, .5, "rgba(45,212,191,.35)"); px(c, x, y + h / 2 + 7, w, .5, "rgba(45,212,191,.18)");
+      for (let i = x + 6; i < x + w; i += 40) px(c, i, y + 3, 14, 1, "rgba(255,255,255,.05)");
+    }
+    c.restore();
   }
-  function planta(c, x, y, g = 1) { px(c, x, y + 10 * g, 10 * g, 8 * g, "#92400e"); px(c, x + 1, y + 10 * g, 8 * g, 2, "#b45309"); px(c, x + 1, y + 3 * g, 3 * g, 8 * g, "#15803d"); px(c, x + 6 * g, y + 1, 3 * g, 10 * g, "#16a34a"); px(c, x + 3 * g, y - 2, 4 * g, 12 * g, "#22c55e"); }
-  function estante(c, x, y) { px(c, x, y, 26, 40, "#5c4033"); for (let i = 0; i < 3; i++) { px(c, x + 2, y + 3 + i * 12, 22, 9, "#3b2a1f"); for (let k = 0; k < 6; k++) px(c, x + 3 + k * 3.6, y + 4 + i * 12, 3, 8 - (k % 3), ["#ef4444", "#3b82f6", "#eab308", "#22c55e", "#a855f7", "#f97316"][(i + k) % 6]); } }
-  function quadro(c, x, y, w, h, cores) { px(c, x - 2, y - 2, w + 4, h + 4, "#4a3423"); px(c, x, y, w, h, cores[0]); px(c, x, y + h * .6, w, h * .4, cores[1]); if (cores[2]) px(c, x + w * .65, y + 3, w * .2, w * .2, cores[2]); }
-  function tapete(c, x, y, w, h, cor, borda) { px(c, x, y, w, h, borda); px(c, x + 3, y + 3, w - 6, h - 6, cor); }
-  function janela(c, x, y) { px(c, x, y, 40, 18, "#1d2737"); px(c, x + 2, y + 2, 17, 14, "#8ec5ff"); px(c, x + 21, y + 2, 17, 14, "#8ec5ff"); px(c, x + 2, y + 8, 36, 1, "#b9dcff"); }
+  function tapete(c, x, y, w, h, cor, borda, risca) { px(c, x, y, w, h, borda); px(c, x + 2, y + 2, w - 4, h - 4, cor); px(c, x + 5, y + 5, w - 10, .8, risca); px(c, x + 5, y + h - 6, w - 10, .8, risca); px(c, x + 5, y + 5, .8, h - 10, risca); px(c, x + w - 6, y + 5, .8, h - 10, risca); px(c, x, y + h, w, 1, "rgba(0,0,0,.25)"); }
+  function planta(c, x, y, g = 1) {
+    oval(c, x, y + .5, 6 * g, 2 * g, "rgba(0,0,0,.35)");
+    px(c, x - 5 * g, y - 7 * g, 10 * g, 7 * g, "#e7e5e4"); px(c, x - 5 * g, y - 7 * g, 10 * g, 1.5, "#fafaf9"); px(c, x + 3 * g, y - 7 * g, 2 * g, 7 * g, "#a8a29e");
+    const v = ["#14532d", "#166534", "#15803d", "#22c55e", "#4ade80"];
+    [[-5, -11, 5, 4, 0], [5, -12, 5, 4, 1], [0, -16, 6, 5, 1], [-6, -18, 4, 4, 2], [6, -19, 4, 4, 2], [0, -22, 4, 4, 3], [-2, -14, 3, 3, 3], [3, -20, 2.5, 2.5, 4], [-4, -21, 2, 2, 4]].forEach(([dx, dy, rx, ry, k]) => oval(c, x + dx * g, y + dy * g, rx * g, ry * g, v[k]));
+  }
+  function palmeira(c, x, y) {
+    oval(c, x, y + .5, 7, 2.2, "rgba(0,0,0,.35)"); px(c, x - 6, y - 9, 12, 9, "#44403c"); px(c, x - 6, y - 9, 12, 1.5, "#57534e");
+    px(c, x - .5, y - 26, 1.5, 18, "#65a30d");
+    c.save(); c.translate(x, y - 26);
+    [[-.9, "#15803d"], [-.3, "#16a34a"], [.3, "#22c55e"], [.9, "#15803d"], [2.3, "#166534"], [-2.3, "#166534"], [3.14, "#16a34a"]].forEach(([a, cor]) => { c.save(); c.rotate(a); oval(c, 0, -8, 2.6, 9, cor); c.restore(); });
+    c.restore();
+  }
+  function suculenta(c, x, y) { px(c, x - 2, y - 3, 4, 3, "#f5f5f4"); oval(c, x - 1, y - 4, 1.5, 1.5, "#4ade80"); oval(c, x + 1, y - 4.5, 1.5, 1.5, "#22c55e"); oval(c, x, y - 5.5, 1.2, 1.2, "#86efac"); }
+  function estante(c, x, y, w = 26, h = 40) {
+    px(c, x, y, w, h, "#5c4033"); px(c, x, y, w, 1.5, "#7a5642"); px(c, x, y + h, w, 1.5, "rgba(0,0,0,.35)");
+    const cores = ["#ef4444", "#3b82f6", "#eab308", "#22c55e", "#a855f7", "#f97316", "#e5e7eb", "#14b8a6"];
+    const n = Math.floor((h - 4) / 12);
+    for (let i = 0; i < n; i++) { px(c, x + 2, y + 3 + i * 12, w - 4, 9, "#2a1d15"); let k = 0; for (let bx = x + 3; bx < x + w - 4; bx += 2.5 + (k % 2)) { const hh = 8 - (k % 3); px(c, bx, y + 4 + i * 12 + (8 - hh), 2, hh, cores[(i * 3 + k) % 8]); k++; } }
+  }
+  function puff(c, x, y, cor, claro) { oval(c, x, y + 4, 8, 3, "rgba(0,0,0,.3)"); oval(c, x, y, 8, 6, cor); oval(c, x - 2, y - 2, 4, 2.5, claro); }
+  function sofa(c, x, y, w, cor, esc, claro) { px(c, x, y + 1, w, 4, "rgba(0,0,0,.25)"); px(c, x, y - 14, w, 8, esc); px(c, x, y - 8, w, 9, cor); px(c, x - 4, y - 12, 5, 13, esc); px(c, x + w - 1, y - 12, 5, 13, esc); for (let i = x + w / 3; i < x + w - 1; i += w / 3) px(c, i, y - 8, .5, 8, esc); px(c, x + 1, y - 13, w - 2, 1, claro); }
+  function janelaCidade(c, x, y, w, h) {
+    px(c, x - 1.5, y - 1.5, w + 3, h + 3, "#111827"); const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, "#1e1b4b"); g.addColorStop(1, "#7c3aed"); c.fillStyle = g; c.fillRect(x, y, w, h);
+    for (let i = 0; i < w; i += 5) { const bh = Math.min(h - 2, 4 + ((i * 13) % 9)); px(c, x + i, y + h - bh, Math.min(4.5, w - i), bh, "#0f172a"); for (let k = 0; k < bh - 2; k += 2) if ((i + k) % 3 && i + 2 < w) px(c, x + i + 1, y + h - bh + 1 + k, 1, .7, "#fde68a"); }
+    px(c, x + w / 2 - .5, y, 1, h, "#111827"); px(c, x + 2, y + 2, w * .3, .6, "rgba(255,255,255,.25)");
+  }
+  function quadroBranco(c, x, y, w, h) { px(c, x - 1, y - 1, w + 2, h + 2, "#9ca3af"); px(c, x, y, w, h, "#f8fafc"); const cs = ["#ef4444", "#2563eb", "#16a34a", "#111"]; for (let i = 0; i < 4; i++) px(c, x + 4, y + 3 + i * 3.5, 14 + ((i * 11) % 16), .8, cs[i]); [["#fde047", 0], ["#f9a8d4", 1], ["#86efac", 2]].forEach(([cor, i]) => px(c, x + w - 22 + i * 7, y + 3 + (i % 2) * 5, 5, 5, cor)); px(c, x + 3, y + h, w - 6, 1.5, "#6b7280"); }
+  function tela(c, x, y, w, h, linhas) { px(c, x - 1.5, y - 1.5, w + 3, h + 3, "#0b0f19"); px(c, x, y, w, h, "#0f172a"); linhas.forEach(([lx, ly, lw, cor]) => px(c, x + lx, y + ly, lw, 2, cor)); }
+  function luminaria(c, x, y) { oval(c, x, y, 3, 1.5, "#fef3c7"); }
+
+  function paredeSala(c, k) {
+    const s = SALAS[k], [x, y, w, h] = s.r, neon = NEON[k], emCima = y < 176, p0 = s.porta - 11, p1 = s.porta + 11;
+    if (emCima) {
+      px(c, x, y, w, FACE, "#262d40"); px(c, x, y, w, 1.5, "#323b54"); px(c, x, y + FACE - 3, w, 3, "#1b2030");
+      for (let i = x + 12; i < x + w; i += 26) px(c, i, y + 2, .5, FACE - 5, "rgba(255,255,255,.035)");
+      [[x, p0], [p1, x + w]].forEach(([a, b]) => { px(c, a, y + h - 7, b - a, 7, "rgba(170,210,255,.10)"); for (let i = a + 3; i < b - 4; i += 22) { px(c, i, y + h - 7, .5, 7, "rgba(255,255,255,.18)"); px(c, i + 5, y + h - 6, 4, .5, "rgba(255,255,255,.14)"); } });
+    } else {
+      [[x, p0], [p1, x + w]].forEach(([a, b]) => { px(c, a, y - 10, b - a, 10, "rgba(170,210,255,.10)"); for (let i = a + 3; i < b - 4; i += 22) { px(c, i, y - 10, .5, 10, "rgba(255,255,255,.18)"); px(c, i + 5, y - 8, 5, .5, "rgba(255,255,255,.14)"); } });
+    }
+    c.save(); c.shadowColor = neon; c.shadowBlur = 5; c.fillStyle = neon;
+    const topo = emCima ? y - 1.5 : y - 10, alt = emCima ? h + 3 : h + 11.5;
+    c.fillRect(x - 1.5, topo, 1.5, alt); c.fillRect(x + w, topo, 1.5, alt);
+    if (emCima) { c.fillRect(x - 1.5, y - 1.5, w + 3, 1.5); c.fillRect(x - 1.5, y + h, p0 - x + 1.5, 1.5); c.fillRect(p1, y + h, x + w + 1.5 - p1, 1.5); c.fillRect(x - 1.5, y + h - 7, p0 - x + 1.5, .8); c.fillRect(p1, y + h - 7, x + w + 1.5 - p1, .8); }
+    else { c.fillRect(x - 1.5, y + h, w + 3, 1.5); c.fillRect(x - 1.5, y - 10, p0 - x + 1.5, .8); c.fillRect(p1, y - 10, x + w + 1.5 - p1, .8); c.fillRect(x - 1.5, y, p0 - x + 1.5, 1.5); c.fillRect(p1, y, x + w + 1.5 - p1, 1.5); }
+    c.restore();
+    const cy = emCima ? y + h + 2 : y - 15;
+    px(c, s.porta - 9, emCima ? y + h + 1.5 : y - 4, 18, 3, "#3f3f46");
+    px(c, s.porta + 15, cy, 46, 11, "#0b0d12"); c.save(); c.shadowColor = neon; c.shadowBlur = 4; c.strokeStyle = neon; c.lineWidth = .8; c.strokeRect(s.porta + 15.5, cy + .5, 45, 10); c.restore();
+  }
 
   function desenharCenario(c) {
-    px(c, 0, 0, W, H, "#1a1f29");
-    // fachada de cima com janelas
-    px(c, 0, 0, W, 34, "#3a4a63"); px(c, 0, 30, W, 4, "#2b384c");
-    for (let x = 18; x < W - 40; x += 74) janela(c, x, 7);
-    px(c, 268, 6, 104, 22, "#111"); px(c, 270, 8, 100, 18, "#FFD21F"); // placa da fábrica (texto no HUD)
-    // pisos
+    px(c, 0, 0, W, H, "#0c0f17");
+    const g = c.createLinearGradient(0, 0, 0, 34); g.addColorStop(0, "#0b1023"); g.addColorStop(1, "#2a1b4d"); c.fillStyle = g; c.fillRect(0, 0, W, 34);
+    for (let i = 0; i < W; i += 7) { const bh = 8 + ((i * 29) % 18); px(c, i, 34 - bh, 6.5, bh, i % 3 ? "#111833" : "#151d3d"); for (let k = 2; k < bh - 2; k += 3) for (let j = 1; j < 6; j += 2) if ((i + k * j) % 5 < 2) px(c, i + j, 34 - bh + k, 1, 1, "#fcd34d"); }
+    for (let k = 0; k < 30; k++) px(c, (k * 97) % W, (k * 13) % 14, .5, .5, "#e0e7ff");
+    px(c, 0, 31, W, 3, "#1f2433");
+    brilho(c, 320, 17, 80, "255,210,31", .35); px(c, 250, 6, 140, 22, "#0b0d12"); c.save(); c.shadowColor = "#FFD21F"; c.shadowBlur = 8; px(c, 252, 8, 136, 18, "#FFD21F"); c.restore();
     piso(c, SALAS.redacao.r, "madeira"); piso(c, SALAS.plateia.r, "carpete"); piso(c, SALAS.estudio.r, "concreto");
-    piso(c, SALAS.diagramacao.r, "xadrez"); piso(c, SALAS.conferencia.r, "azul"); piso(c, SALAS.expedicao.r, "concreto");
+    piso(c, SALAS.diagramacao.r, "madeira"); piso(c, SALAS.conferencia.r, "escura"); piso(c, SALAS.expedicao.r, "concreto");
     piso(c, [0, 176, W, 44], "corredor");
-    // paredes (com vãos de porta)
-    const parede = "#2b2f3a", topo = "#454b5a";
-    for (const s of Object.values(SALAS)) {
-      const [x, y, w, h] = s.r; const emCima = y < 176;
-      px(c, x - 4, y - 4, w + 8, 4, parede); px(c, x - 4, y + h, w + 8, 4, parede); px(c, x - 4, y - 4, 4, h + 8, parede); px(c, x + w, y - 4, 4, h + 8, parede);
-      // vão da porta no lado do corredor
-      const py = emCima ? y + h : y - 4;
-      px(c, s.porta - 11, py, 22, 4, "#cfc8b8"); px(c, s.porta - 13, py, 2, 4, topo); px(c, s.porta + 11, py, 2, 4, topo);
-      // placa ao lado da porta (o texto vem no HUD)
-      px(c, s.porta + 15, emCima ? y + h + 6 : y - 16, 46, 10, "#111"); px(c, s.porta + 16, emCima ? y + h + 7 : y - 15, 44, 8, "#FFD21F");
-    }
-    // ---- Redação: quadro branco, estante, tapete, planta, luminárias
-    px(c, 30, 40, 70, 30, "#e5e7eb"); px(c, 31, 41, 68, 28, "#f8fafc"); for (let i = 0; i < 4; i++) px(c, 36, 46 + i * 6, 30 + (i * 13) % 25, 1, ["#ef4444", "#2563eb", "#16a34a", "#111"][i]); px(c, 78, 48, 12, 12, "#FFD21F");
-    estante(c, 172, 44); planta(c, 14, 150); tapete(c, 30, 136, 150, 30, "#1e3a8a", "#172554");
-    // ---- Plateia: sofá, TV na parede, mesinha, planta
-    px(c, 262, 40, 82, 44, "#111"); px(c, 265, 43, 76, 38, "#0b1220"); px(c, 270, 50, 30, 20, "#FFD21F"); px(c, 304, 50, 32, 4, "#e5e7eb"); px(c, 304, 58, 26, 3, "#9ca3af"); px(c, 304, 64, 22, 3, "#9ca3af");
-    px(c, 258, 112, 92, 20, "#b91c1c"); px(c, 258, 106, 92, 8, "#991b1b"); px(c, 252, 108, 8, 24, "#991b1b"); px(c, 348, 108, 8, 24, "#991b1b");
-    px(c, 284, 146, 40, 14, "#5c4033"); px(c, 290, 142, 8, 6, "#f8fafc"); px(c, 306, 141, 10, 7, "#f59e0b"); planta(c, 364, 148); planta(c, 224, 148);
-    // ---- Estúdio: fundo infinito, 2 softboxes, cabos
-    px(c, 520, 38, 100, 86, "#e7e5e4"); px(c, 520, 110, 100, 14, "#d6d3d1");
-    for (const sx of [506, 618]) { px(c, sx, 60, 2, 70, "#374151"); px(c, sx - 10, 52, 22, 14, "#f8fafc"); px(c, sx - 10, 52, 22, 2, "#e5e7eb"); px(c, sx - 6, 128, 14, 2, "#374151"); }
-    px(c, 410, 150, 60, 2, "#111"); px(c, 470, 150, 2, 18, "#111"); quadro(c, 404, 44, 34, 24, ["#60a5fa", "#16a34a", "#fde047"]);
-    // ---- Corredor: café, bebedouro, banco, quadros, plantas, relógio
-    px(c, 236, 180, 18, 14, "#1f2937"); px(c, 238, 182, 14, 6, "#4b5563"); px(c, 242, 189, 6, 4, "#f5f5f5");
-    px(c, 262, 178, 10, 16, "#93c5fd"); px(c, 263, 180, 8, 6, "#dbeafe"); px(c, 262, 194, 10, 2, "#64748b");
-    px(c, 540, 202, 50, 8, "#78350f"); px(c, 542, 210, 4, 6, "#451a03"); px(c, 584, 210, 4, 6, "#451a03");
-    planta(c, 4, 180); planta(c, 624, 180); planta(c, 400, 182, 1);
-    // ---- Diagramação: mural com slides, impressora, pilhas de papel
-    px(c, 26, 226, 90, 34, "#a16207"); for (let i = 0; i < 8; i++) px(c, 30 + (i % 4) * 21, 230 + Math.floor(i / 4) * 15, 17, 12, ["#111", "#f8fafc", "#FFD21F", "#111", "#f8fafc", "#111", "#FFD21F", "#f8fafc"][i]);
-    estante(c, 180, 230); planta(c, 14, 366); px(c, 120, 370, 30, 12, "#f8fafc"); px(c, 122, 366, 26, 4, "#e5e7eb");
-    // ---- Conferência: telão com nota, planta, tapete
-    px(c, 252, 226, 120, 40, "#111"); px(c, 255, 229, 114, 34, "#0f172a"); px(c, 262, 236, 40, 20, "#334155"); px(c, 308, 238, 54, 4, "#4ade80"); px(c, 308, 246, 40, 4, "#facc15"); px(c, 308, 254, 26, 4, "#f87171");
-    tapete(c, 238, 340, 170, 36, "#0f766e", "#115e59"); planta(c, 400, 366);
-    // ---- Expedição: prateleiras com caixas, carrinho, porta de saída
-    for (let i = 0; i < 3; i++) { px(c, 590, 232 + i * 40, 36, 3, "#78350f"); for (let k = 0; k < 3; k++) px(c, 592 + k * 11, 220 + i * 40, 10, 12, ["#b45309", "#a16207", "#92400e"][(i + k) % 3]); }
-    px(c, 470, 360, 40, 20, "#64748b"); px(c, 472, 352, 16, 10, "#b45309"); px(c, 490, 354, 14, 8, "#a16207"); px(c, 474, 380, 6, 6, "#111"); px(c, 500, 380, 6, 6, "#111");
-    px(c, 600, 380, 26, 12, "#166534"); px(c, 602, 382, 22, 3, "#4ade80");
+    tapete(c, 28, 98, 156, 50, "#1e3a8a", "#172554", "#3b82f6");
+    tapete(c, 240, 96, 128, 70, "#9f1239", "#4c0519", "#fb7185");
+    tapete(c, 26, 284, 160, 52, "#14532d", "#052e16", "#4ade80");
+    tapete(c, 238, 338, 170, 40, "#115e59", "#042f2e", "#2dd4bf");
+    for (const k of Object.keys(SALAS)) paredeSala(c, k);
+    // ---- Redação
+    quadroBranco(c, 22, 37, 66, 17); janelaCidade(c, 98, 37, 44, 16); janelaCidade(c, 150, 37, 30, 16);
+    oval(c, 198, 45, 5, 5, "#f8fafc"); px(c, 197.5, 42, .8, 3.5, "#111"); px(c, 198, 45, 2.5, .8, "#111");
+    estante(c, 188, 62, 24, 52); palmeira(c, 22, 92); planta(c, 18, 170); puff(c, 42, 160, "#f59e0b", "#fcd34d"); suculenta(c, 196, 126);
+    // ---- Plateia
+    tela(c, 252, 36, 96, 19, [[6, 4, 26, "#FFD21F"], [36, 4, 40, "#e5e7eb"], [36, 9, 30, "#9ca3af"], [36, 14, 24, "#9ca3af"], [6, 9, 26, "#FFD21F"], [6, 14, 26, "#FFD21F"]]);
+    brilho(c, 300, 60, 46, "147,197,253", .12);
+    sofa(c, 258, 131, 92, "#b91c1c", "#7f1d1d", "#ef4444");
+    px(c, 284, 146, 40, 14, "#5c4033"); px(c, 284, 146, 40, 1.5, "#7a5642"); px(c, 290, 142, 8, 6, "#f8fafc"); px(c, 306, 141, 10, 7, "#f59e0b"); suculenta(c, 320, 146);
+    puff(c, 236, 80, "#2563eb", "#60a5fa"); puff(c, 372, 80, "#16a34a", "#4ade80"); planta(c, 228, 172); planta(c, 380, 172); palmeira(c, 372, 112);
+    // ---- Estúdio
+    px(c, 518, 36, 104, 22, "#f5f5f4"); const gb = c.createLinearGradient(0, 56, 0, 70); gb.addColorStop(0, "#f5f5f4"); gb.addColorStop(1, "#e7e5e4"); c.fillStyle = gb; c.fillRect(518, 56, 104, 60);
+    for (const sx of [506, 630]) { px(c, sx, 60, 1.5, 70, "#374151"); px(c, sx - 10, 50, 21, 15, "#f8fafc"); px(c, sx - 10, 50, 21, 2, "#cbd5e1"); px(c, sx - 6, 128, 13, 1.5, "#374151"); brilho(c, sx, 64, 34, "255,255,255", .18); }
+    px(c, 398, 37, 48, 18, "#1f2937"); [["#60a5fa", 0], ["#fde047", 1], ["#fb7185", 2], ["#4ade80", 3]].forEach(([cor, i]) => px(c, 401 + i * 11, 40 + (i % 2) * 6, 9, 7, cor));
+    janelaCidade(c, 456, 37, 50, 16); px(c, 410, 150, 60, 1, "#111"); px(c, 470, 150, 1, 18, "#111");
+    palmeira(c, 402, 96); planta(c, 624, 172); puff(c, 470, 160, "#7c3aed", "#a78bfa");
+    // ---- Corredor
+    px(c, 262, 178, 18, 15, "#111827"); px(c, 264, 180, 14, 6, "#374151"); px(c, 268, 188, 6, 4, "#f5f5f4"); px(c, 265, 181, 3, 2, "#ef4444");
+    px(c, 286, 177, 10, 16, "#93c5fd"); px(c, 287, 179, 8, 6, "#dbeafe"); px(c, 286, 193, 10, 1.5, "#475569");
+    px(c, 540, 202, 50, 6, "#78350f"); px(c, 540, 202, 50, 1.5, "#a16207"); px(c, 542, 208, 3, 5, "#451a03"); px(c, 585, 208, 3, 5, "#451a03");
+    planta(c, 6, 197, .9); planta(c, 634, 197, .9); planta(c, 400, 196, .9); planta(c, 108, 196, .8); planta(c, 512, 196, .8);
+    for (const lx of [60, 160, 240, 360, 470, 600]) brilho(c, lx, 198, 26, "45,212,191", .08);
+    // ---- Diagramação
+    px(c, 24, 230, 96, 34, "#3f2a1c"); px(c, 26, 232, 92, 30, "#a16207"); for (let i = 0; i < 8; i++) px(c, 29 + (i % 4) * 22, 235 + Math.floor(i / 4) * 13, 18, 11, ["#111", "#f8fafc", "#FFD21F", "#111", "#f8fafc", "#111", "#FFD21F", "#f8fafc"][i]);
+    px(c, 176, 244, 26, 16, "#d1d5db"); px(c, 176, 244, 26, 3, "#f3f4f6"); px(c, 180, 256, 18, 4, "#f8fafc"); px(c, 196, 247, 3, 2, "#22c55e");
+    px(c, 120, 368, 30, 12, "#f8fafc"); px(c, 122, 364, 26, 4, "#e5e7eb"); planta(c, 18, 388); palmeira(c, 202, 384); puff(c, 100, 370, "#ec4899", "#f9a8d4");
+    // ---- Conferência
+    tela(c, 226, 230, 76, 30, [[6, 6, 24, "#334155"], [36, 6, 32, "#4ade80"], [36, 13, 24, "#facc15"], [36, 20, 16, "#f87171"], [6, 13, 24, "#334155"], [6, 20, 24, "#334155"]]); px(c, 262, 260, 4, 6, "#1f2937");
+    brilho(c, 264, 248, 44, "45,212,191", .14);
+    oval(c, 323, 357, 46, 10, "#3b2a1f"); oval(c, 323, 355.5, 46, 9, "#7a5642");
+    estante(c, 390, 234, 26, 40); planta(c, 226, 388); planta(c, 414, 388);
+    // ---- Expedição
+    for (let i = 0; i < 3; i++) { px(c, 588, 236 + i * 40, 38, 2, "#78350f"); for (let k = 0; k < 3; k++) { px(c, 590 + k * 12, 224 + i * 40, 11, 12, ["#b45309", "#a16207", "#92400e"][(i + k) % 3]); px(c, 590 + k * 12, 229 + i * 40, 11, 1, "#fcd34d"); } }
+    px(c, 470, 360, 40, 18, "#64748b"); px(c, 470, 360, 40, 1.5, "#94a3b8"); px(c, 472, 352, 16, 10, "#b45309"); px(c, 490, 354, 14, 8, "#a16207"); oval(c, 476, 380, 3, 3, "#111"); oval(c, 504, 380, 3, 3, "#111");
+    px(c, 598, 378, 30, 12, "#14532d"); c.save(); c.shadowColor = "#4ade80"; c.shadowBlur = 6; px(c, 600, 380, 26, 3, "#4ade80"); c.restore();
+    janelaCidade(c, 440, 252, 40, 18); planta(c, 438, 388); palmeira(c, 560, 386);
+    // luz ambiente
+    c.save(); c.globalCompositeOperation = "lighter";
+    for (const s of Object.values(SALAS)) { const [x, y, w, h] = s.r; for (let i = 1; i <= 2; i++) brilho(c, x + (w * i) / 3, y + h * .55, Math.min(w, h) * .45, "255,214,150", .07); }
+    c.restore();
+    for (const s of Object.values(SALAS)) { const [x, y, w] = s.r; for (let i = 1; i <= 2; i++) luminaria(c, x + (w * i) / 3, y + (y < 176 ? FACE + 4 : 6)); }
+    const v = c.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, W * .65); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.35)"); c.fillStyle = v; c.fillRect(0, 0, W, H);
   }
 
   // ---------- mobília por agente (desenhada por cima de quem está sentado) ----------
@@ -109,6 +178,7 @@
     px(c, x - 18, y + 2, 36, 4, "#a06a35"); px(c, x - 18, y + 2, 36, 1, "#bd8148"); px(c, x - 18, y + 6, 36, 9, "#7a4a22"); px(c, x - 16, y + 15, 3, 5, "#4a2f15"); px(c, x + 13, y + 15, 3, 5, "#4a2f15");
     const big = a === "conferente";
     const mw = big ? 16 : 12, mx = x - 17;
+    if (ativo) { c.save(); c.globalAlpha = .22; px(c, mx - 3, y - 13, mw + 6, 18, "#4ade80"); c.restore(); }
     px(c, mx, y - 9, mw, 11, "#0f172a"); px(c, mx + 1, y - 8, mw - 2, 8, ativo ? "#0c3b28" : "#1e293b");
     if (ativo) for (let i = 0; i < 3; i++) px(c, mx + 2, y - 7 + i * 3, ((t / 110 + i * 5) % (mw - 5)) + 2, 1, i === 1 ? "#FFD21F" : "#4ade80");
     px(c, mx + mw / 2 - 1, y + 1, 2, 2, "#0f172a");
@@ -206,21 +276,21 @@
     const raiz = document.createElement("div"); raiz.className = "escr"; container.appendChild(raiz);
     raiz.innerHTML = `<div class="escr-topo"><b>Escritório</b><span class="escr-st">—</span><span class="sp"></span>
       <button class="escr-bt" data-escr="rever">▶ Rever como foi feito</button><button class="escr-bt" data-escr="vel" title="Velocidade">1×</button></div>
-      <div class="escr-palco"><div class="escr-tela"><canvas class="escr-fundo" width="${W}" height="${H}"></canvas><canvas class="escr-cena" width="${W}" height="${H}"></canvas><div class="escr-hud"></div></div>
+      <div class="escr-palco"><div class="escr-tela"><canvas class="escr-fundo" width="${W * 2}" height="${H * 2}"></canvas><canvas class="escr-cena" width="${W}" height="${H}"></canvas><div class="escr-hud"></div></div>
       <div class="escr-ficha" hidden></div></div><div class="escr-feed"></div>`;
     const palco = raiz.querySelector(".escr-palco"), tela = raiz.querySelector(".escr-tela");
     const fundo = raiz.querySelector(".escr-fundo"), cena = raiz.querySelector(".escr-cena"), hud = raiz.querySelector(".escr-hud");
     const ficha = raiz.querySelector(".escr-ficha"), feed = raiz.querySelector(".escr-feed"), st = raiz.querySelector(".escr-st");
-    desenharCenario(fundo.getContext("2d"));
+    { const fc = fundo.getContext("2d"); fc.scale(2, 2); desenharCenario(fc); }
     const c = cena.getContext("2d");
     let s = 1;
     function encaixar() { const cw = palco.clientWidth, ch = palco.clientHeight; if (!cw || !ch) return; s = Math.min(cw / W, ch / H); tela.style.width = W * s + "px"; tela.style.height = H * s + "px"; }
     // placas (salas e marca) — posições em coordenadas do mundo
     const fixos = [];
-    const marca = document.createElement("div"); marca.className = "escr-marca"; marca.textContent = "A HISTÓRIA QUE MUDA"; hud.appendChild(marca); fixos.push([marca, 320, 17]);
+    const marca = document.createElement("div"); marca.className = "escr-marca"; marca.textContent = "DO OUTRO LADO DA PORTA"; hud.appendChild(marca); fixos.push([marca, 320, 17]);
     for (const sa of Object.values(SALAS)) {
-      const el = document.createElement("div"); el.className = "escr-plaq"; el.textContent = sa.nome.length > 14 ? sa.nome.split(" ")[0] : sa.nome; hud.appendChild(el);
-      const emCima = sa.r[1] < 176; fixos.push([el, sa.porta + 38, emCima ? sa.r[1] + sa.r[3] + 11 : sa.r[1] - 11]);
+      const el = document.createElement("div"); el.className = "escr-plaq"; el.textContent = sa.nome.length > 14 ? sa.nome.split(" ")[0] : sa.nome; el.style.color = NEON[Object.keys(SALAS).find((k) => SALAS[k] === sa)]; hud.appendChild(el);
+      const emCima = sa.r[1] < 176; fixos.push([el, sa.porta + 38, emCima ? sa.r[1] + sa.r[3] + 7.5 : sa.r[1] - 9.5]);
     }
     const S = {}, tags = {}, nomes = {};
     ORDEM.forEach((k) => {
@@ -228,7 +298,7 @@
       const d = document.createElement("div"); d.className = "escr-ag"; d.dataset.ag = k; d.innerHTML = `<div class="escr-bolha" hidden></div><div class="escr-ponto"></div>`; hud.appendChild(d); tags[k] = d;
       const n = document.createElement("div"); n.className = "escr-nome"; n.dataset.ag = k; n.textContent = AG[k].nome; hud.appendChild(n); nomes[k] = n;
     });
-    let entregaTxt = "", fila = [], ultimoPronto = null, vel = 1, rodando = true, t0 = performance.now(), aoVivo = false, todos = [];
+    let tocando = false, entregaTxt = "", fila = [], ultimoPronto = null, vel = 1, rodando = true, t0 = performance.now(), aoVivo = false, todos = [];
 
     function portaDe(k) { const sa = SALAS[AG[k].sala]; const emCima = sa.r[1] < 176; return [sa.porta, emCima ? sa.r[1] + sa.r[3] - 8 : sa.r[1] + 8]; }
     function rotaEntre(k, de, para, destino) {
@@ -271,14 +341,14 @@
       if (ev.estado === "pronto") ultimoPronto = k;
       ORDEM.forEach((o) => { if (o !== k && S[o].estado === "trabalhando" && ev.estado === "trabalhando") { S[o].estado = "pronto"; tags[o].dataset.st = "pronto"; nomes[o].classList.remove("on"); } });
     }
-    function tocarFila() { if (!fila.length) return; const ev = fila.shift(); processar(ev); setTimeout(tocarFila, (ev.estado === "pronto" ? 2800 : 3600) / vel); }
+    function tocarFila() { if (!fila.length) { tocando = false; return; } tocando = true; const ev = fila.shift(); processar(ev); setTimeout(tocarFila, (ev.estado === "pronto" ? 2800 : 3600) / vel); }
 
     let proxPasseio = performance.now() + 5000;
     function passeios(agora) {
       if (agora < proxPasseio) return; proxPasseio = agora + 6000 + Math.random() * 7000;
       if (ORDEM.some((k) => S[k].estado === "trabalhando" || S[k].rota.length)) return;
       const livres = ORDEM.filter((k) => k !== "plateia"); const k = livres[(Math.random() * livres.length) | 0];
-      const destinos = [[246, 204], [266, 204], [565, 214], [130, 204]];
+      const destinos = [[271, 202], [291, 202], [565, 214], [150, 204]];
       const d = destinos[(Math.random() * destinos.length) | 0];
       const [pa, pya] = portaDe(k);
       S[k].rota = [[pa, pya], [pa, CORR_Y], d];
@@ -303,6 +373,7 @@
         const a = S[k], sentado = !a.rota.length && Math.abs(a.x - a.casa[0]) < 1 && Math.abs(a.y - a.casa[1]) < 1;
         if (k === "plateia") { plateiaGrupo(c, t, a.estado === "trabalhando"); continue; }
         if (sentado) {
+          px(c, a.x - 7, a.y - 9, 14, 12, "#1f2937"); px(c, a.x - 6, a.y - 8, 12, 2, "#374151");
           boneco(c, k, a.x, a.y + 6, { sentado: true, quadro: q, digitando: a.estado === "trabalhando", dir: 0, feliz: agora < a.feliz });
           mesa(c, k, t, a.estado === "trabalhando"); mesas.add(k);
           if (a.papelNaMesa && agora - a.papelNaMesa < 6000) px(c, a.x + 3, a.y + 3, 6, 4, "#f8fafc");
@@ -311,7 +382,7 @@
           boneco(c, k, a.x, a.y, { quadro: q, dir: a.dir, costas: a.costas, papel: a.papel });
         }
       }
-      if (((t / 400) | 0) % 2) px(c, 245, 176 - ((t / 90) % 5), 1, 2, "rgba(255,255,255,.6)");
+      if (((t / 400) | 0) % 2) px(c, 271, 176 - ((t / 90) % 5), 1, 2, "rgba(255,255,255,.6)");
       // HUD
       for (const [el, wx, wy] of fixos) { el.style.left = wx * s + "px"; el.style.top = wy * s + "px"; el.style.fontSize = Math.max(7, 4.6 * s) + "px"; }
       ORDEM.forEach((k) => {
@@ -353,7 +424,7 @@
         const ult = eventos[eventos.length - 1];
         if (aoVivo && ult) falar(ult.agente, ult.fala, ult.estado);
       },
-      vivo(ev) { aoVivo = true; todos.push(ev); fila.push(ev); if (fila.length === 1) tocarFila(); },
+      vivo(ev) { aoVivo = true; todos.push(ev); const u = fila[fila.length - 1]; if (u && u.agente === ev.agente && u.estado === ev.estado) fila[fila.length - 1] = ev; else fila.push(ev); while (fila.length > 6) fila.shift(); if (!tocando) tocarFila(); },
       reanexar(novo) { if (novo && raiz.parentNode !== novo) novo.appendChild(raiz); },
       destruir() { rodando = false; raiz.remove(); },
       el: raiz,

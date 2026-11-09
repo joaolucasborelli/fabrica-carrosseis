@@ -76,6 +76,14 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 .cover .n{position:absolute;top:8px;left:8px;font-family:var(--f-b);font-size:.66rem;font-weight:700;background:rgba(0,0,0,.5);color:#FFFFFF;padding:1px 6px;border-radius:3px}
 /* tela do post */
 .postview{display:block;height:100%;overflow:auto}
+.capgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;max-height:62vh;overflow:auto}
+.capopt{display:flex;flex-direction:column;gap:6px;background:none;border:2px solid var(--line,#2a2d33);border-radius:12px;padding:6px;cursor:pointer;color:inherit;font:600 12px Inter,sans-serif}
+.capopt img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;display:block;background:#111}
+.capopt.on{border-color:#FFD21F}.capopt:hover{border-color:#FFD21F}
+.listaesc{display:grid;grid-template-columns:minmax(0,1fr) minmax(420px,44%);gap:18px;padding:18px 18px 28px;align-items:start}
+.lcol{min-width:0}
+.escgeral{position:sticky;top:12px;height:calc(100vh - 96px);min-height:520px;display:flex;flex-direction:column}.escgeral>.escr{flex:1}
+@media (max-width:1000px){.listaesc{grid-template-columns:1fr}.escgeral{position:static;height:560px}}
 .pbaixo{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(320px,1fr);gap:14px;padding:12px 16px 14px;height:min(780px,calc(100vh - 70px));min-height:560px}
 .escbox{min-height:0;display:flex;flex-direction:column}.escbox>.escr{flex:1}
 .pchat{display:flex;flex-direction:column;min-height:0;border:1px solid var(--line,#2a2d33);border-radius:14px;overflow:hidden;background:var(--panel,transparent)}
@@ -321,10 +329,10 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
   <div class="prow" style="justify-content:flex-end"><button type="button" class="btn" id="l-criar">Criar acesso</button><button class="btn primary">Entrar</button></div>
 </form></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="escritorio.js?v=2"></script>
+<script src="escritorio.js?v=3"></script>
 <script>
 const sb=supabase.createClient("https://kfvugtrjuqdakbpzvsxq.supabase.co","sb_publishable_hMCt4kaGtY75gMEb3aRi-g_Xh3OkPhx");
-const ACC={a1:{nome:"A História que Muda",at:"@ahistoriaquemuda",av:"AH",cls:"c1",avc:"av1"}};
+const ACC={a1:{nome:"Do outro lado da Porta",at:"@ahistoriaquemuda",av:"DP",cls:"c1",avc:"av1"}};
 // status provisórios: ainda vamos decidir quais ficam
 const ST={prop:["Proposta","st-prop"],gen:["Gerando","st-draft"],draft:["Rascunho","st-draft"],wait:["Para revisar","st-wait"],sched:["Agendado","st-sched"],ok:["Publicado","st-ok"],fail:["Falhou","st-rej"]};
 const AGENDA={a1:["09:00","12:35","17:50","02:00"]};
@@ -358,9 +366,9 @@ function renderTop(){
 }
 function renderPosts(){
   const L=POSTS.filter(p=>p.a===acc&&(filtro==="todos"||p.s===filtro)).sort((x,y)=>(y.t||new Date(2100,0))-(x.t||new Date(2100,0)));
-  return `<div class="pad"><div class="listhead"><div><h2>Posts e capas · ${ACC[acc].nome}</h2><p class="sub">Os status são provisórios: ainda vamos decidir quais ficam.</p></div><button class="btn primary" data-genopen>+ Gerar conteúdo</button></div>${PIPE[acc]&&!PIPE[acc].oculto?renderPipe():""}
+  return `<div class="listaesc"><div class="lcol"><div class="listhead"><div><h2>Posts e capas · ${ACC[acc].nome}</h2><p class="sub">Os agentes à direita mostram o que está sendo feito agora.</p></div><button class="btn primary" data-genopen>+ Gerar conteúdo</button></div>
   <div class="filters" role="group" aria-label="Filtrar por status">${[["todos","Todos"],...Object.entries(ST).map(([k,v])=>[k,v[0]])].map(([k,l])=>`<button class="f" data-f="${k}" aria-pressed="${filtro===k}">${l}</button>`).join("")}</div>
-  <div class="grid">${L.map(p=>`<button class="card ${p.s==="gen"?"gen":""}" data-post="${p.id}" ${p.s==="gen"?"disabled":""}>${cover(p)}<div class="meta"><span class="when">${fdt(p.t)}<small>${p.s==="ok"?"publicado":p.s==="sched"?"agendado":p.s==="prop"?esc(p.rot||"proposta"):"ainda sem data"}</small></span><span class="st ${ST[p.s][1]}">${ST[p.s][0]}</span></div></button>`).join("")||'<p class="sub">Nenhum post com esse status.</p>'}</div></div>`;
+  <div class="grid">${L.map(p=>`<button class="card ${p.s==="gen"?"gen":""}" data-post="${p.id}" ${p.s==="gen"?"disabled":""}>${cover(p)}<div class="meta"><span class="when">${fdt(p.t)}<small>${p.s==="ok"?"publicado":p.s==="sched"?"agendado":p.s==="prop"?esc(p.rot||"proposta"):"ainda sem data"}</small></span><span class="st ${ST[p.s][1]}">${ST[p.s][0]}</span></div></button>`).join("")||'<p class="sub">Nenhum post com esse status.</p>'}</div></div><aside class="escgeral" id="escgeral" aria-label="Agentes trabalhando"></aside></div>`;
 }
 function renderPost(){
   const p=POSTS.find(x=>x.id===aberto);const pode=p.s==="wait"||p.s==="draft"||p.s==="sched";
@@ -425,6 +433,7 @@ function render(){
   v.innerHTML=tab==="posts"?(aberto?renderPost():renderPosts()):renderChat();
   v.style.overflow=(tab==="chat"||aberto)?"hidden":"auto";
   if(tab==="posts"&&aberto){const p=POSTS.find(x=>x.id===aberto);if(p)anexarEscritorio(p)}else fecharEscritorio();
+  if(tab==="posts"&&!aberto)anexarGeral();
   document.getElementById("layer").innerHTML=renderDrawer();
   if(gen)drawGen();else if(capas)drawCapas();else if(modal)drawCal();
   const ms=document.getElementById("msgs");if(ms)ms.scrollTop=ms.scrollHeight;
@@ -475,6 +484,12 @@ async function startPipe(o){
   conta("Você","pediu "+o.qtd+" variações"+(o.assunto?` sobre "${o.assunto}"`:"")+".");
   try{
     let np=0;rr();
+    if(o.assunto){
+      equipe("planejadora","trabalhando",`Pesquisando na imprensa o que está acontecendo AGORA sobre "${o.assunto}" (fatos com data e fonte). Leva uns 50 segundos.`);
+      try{const d=await chamar({acao:"pesquisar",lote,assunto:o.assunto});
+        if(d.dossie){equipe("planejadora","trabalhando",`Pesquisa pronta: ${(d.dossie.fatos||[]).length} fatos com fonte. ${String(d.dossie.resumo_do_momento||"").slice(0,160)}`);conta("Planejadora",`pesquisou "${o.assunto}": ${String(d.dossie.resumo_do_momento||"").slice(0,200)}`)}}
+      catch(e){equipe("planejadora","trabalhando",`A pesquisa falhou (${e.message}). Vou seguir sem afirmar fato nenhum sobre o assunto.`)}
+    }
     const planos=await emFila(combos,5,(c,i)=>chamar({acao:"planejar",lote,...c,giro:i,quantidade:por,assunto:o.assunto,dia:new Date().toISOString().slice(0,10)}).then(r=>{np++;
       equipe("planejadora","trabalhando",`Já planejei ${np} de 9 combinações. Acabei de fazer ${ROT[c.tipo]} para ${ROT[c.persona_id]}.`);
       conta("Planejadora",`planejou ${ROT[c.tipo]} · ${ROT[c.persona_id]}: "${r.candidatos[0]?.gancho_capa||""}"`);rr();return r}));
@@ -530,7 +545,27 @@ const AGENTES=[
  {id:"assistente",nome:"Assistente do chat",b:["#c45a2a","#7a4fd6","#2b2f36"],faz:"Responde o que você pergunta no Chat, ouve seus áudios, olha suas fotos, edita o post que você pedir e manda a fábrica gerar posts novos."}];
 const EQUIPE=Object.fromEntries(AGENTES.map(a=>[a.id,{estado:"livre",fala:"Esperando trabalho."}]));
 const FEED=[];let agenteAberto=null;
-function equipe(id,estado,fala){Object.assign(EQUIPE[id],{estado,fala});}
+// o "+ Gerar conteúdo" é trabalho da Redação: Planejadora → Escritora → Plateia (que também confere)
+const MAPA_GERAR={planejadora:"planejadora",escritor:"escritora",plateia:"plateia"};
+function equipe(id,estado,fala){Object.assign(EQUIPE[id],{estado,fala});
+  const ag=MAPA_GERAR[id];if(!ag||estado==="livre")return;
+  const ev={agente:ag,estado:estado==="pronto"?"pronto":estado==="erro"?"erro":"trabalhando",fala,criado_em:new Date().toISOString()};
+  if(ESCG)ESCG.vivo(ev);else FILA_GERAL.push(ev);}
+// ----- escritório geral (tela da lista): geração de prévias e montagem de todos os posts, ao vivo -----
+let ESCG=null,CANAL_G=null;const FILA_GERAL=[];
+function tituloPost(pid){const p=POSTS.find(x=>x.postId===pid);return p?plain(p.capa).slice(0,28)+"…":"post "+pid}
+async function anexarGeral(){
+  const box=document.getElementById("escgeral");if(!box||!window.Escritorio)return;
+  if(ESCG){ESCG.reanexar(box);return}
+  ESCG=Escritorio.criar(box);
+  const {data}=await sb.from("eventos_agente").select("post_id,agente,estado,fala,criado_em").order("criado_em",{ascending:false}).limit(30);
+  ESCG.carregar((data||[]).reverse().map(e=>({...e,fala:`[${tituloPost(e.post_id)}] ${e.fala}`})),false);
+  while(FILA_GERAL.length)ESCG.vivo(FILA_GERAL.shift());
+  CANAL_G=sb.channel("escgeral").on("postgres_changes",{event:"INSERT",schema:"public",table:"eventos_agente"},({new:e})=>{
+    if(!ESCG)return;ESCG.vivo({...e,fala:`[${tituloPost(e.post_id)}] ${e.fala}`});
+    if(e.agente==="entregador"&&e.estado==="pronto")setTimeout(carregar,1500);
+  }).subscribe();
+}
 function conta(quem,texto){FEED.unshift({t:new Date(),quem,texto});if(FEED.length>80)FEED.pop();}
 function rrTudo(){if(!aberto&&!modal&&!gen&&!capas&&!viewer&&(tab==="escritorio"||tab==="posts"))render()}
 function renderEscritorio(cheio){
@@ -627,12 +662,12 @@ async function enviarMensagem(w,texto){
   render();
 }
 async function carregar(){
-  const {data,error}=await sb.from("variacoes").select("id,status,pecas,variaveis,remodelagem,por_que_para,forca,risco,painel,eixo,ordem,pautas(dia,tipo,persona_id,assunto,lote),posts(id,status,agendado_para,montagem_status,imagens,montagem_log)").in("status",["mostrada","escolhida"]).order("forca",{ascending:false,nullsFirst:false}).order("id",{ascending:false}).limit(500);
+  const {data,error}=await sb.from("variacoes").select("id,status,pecas,variaveis,remodelagem,por_que_para,forca,risco,painel,eixo,ordem,pautas(dia,tipo,persona_id,assunto,lote),posts(id,status,agendado_para,montagem_status,imagens,montagem_log,capas_status)").in("status",["mostrada","escolhida"]).order("forca",{ascending:false,nullsFirst:false}).order("id",{ascending:false}).limit(500);
   if(error){toast("Não consegui ler o banco: "+error.message);return}
   POSTS=data.map(v=>{const pc=v.pecas||{},va=v.variaveis||{},rm=v.remodelagem||{},pa=v.pautas||{},pn=v.painel||{},R=pn.risco;
     const po=(v.posts||[])[0];const ag=po&&po.agendado_para?new Date(po.agendado_para):null;
     return {id:v.id,a:"a1",s:ag?"sched":v.status==="mostrada"?"prop":"draft",t:ag,rot:`${ROT[pa.tipo]||pa.tipo||""} · ${ROT[pa.persona_id]||pa.persona_id||""} · força ${v.forca??"-"}`,capa:esc(pc.capa||""),sl:pc.slides||[],leg:pc.legenda||"",hs:pc.hashtags||[],
-      postId:po?po.id:null,mont:po?po.montagem_status:null,mlog:po?po.montagem_log:"",paths:po&&Array.isArray(po.imagens)?po.imagens:[],
+      postId:po?po.id:null,mont:po?po.montagem_status:null,capasSt:po?po.capas_status:null,mlog:po?po.montagem_log:"",paths:po&&Array.isArray(po.imagens)?po.imagens:[],
       log:v.status==="escolhida"?[{w:"ag",f:"Equipe",t:"Você escolheu esta variação. O robô monta os slides e eles aparecem acima."}]:[],
       esb:ESB("a1",(v.ordem||1)-1),
       pr:{capa:pc.thumb_descricao||"",
@@ -674,12 +709,23 @@ function montar(){
   filtro="todos";render();toast(`${L.length} post${L.length>1?"s":""} sendo montado${L.length>1?"s":""}: capa, slides e foto`);
 }
 let capas=null;
-function drawCapas(){
-  const p=POSTS.find(x=>x.id===capas.id);
-  document.getElementById("layer").innerHTML=`<div class="shade" data-mclose></div><div class="modal" role="dialog" aria-modal="true" aria-label="Escolher capa" style="width:min(560px,calc(100% - 32px))">
-   <h3>4 opções de capa</h3><p class="sub" style="margin:0">Clique na que você quer usar. Para pedir outro estilo, use o campo aberto do post.</p>
-   <div class="opts">${["vA","vB","vC","vD"].map(v=>`<button class="opt" data-pickcapa="${v}" aria-label="Usar a capa ${v.slice(1)}">${cover(p,v)}</button>`).join("")}</div>
-   <div class="prow" style="justify-content:flex-end"><button class="btn" data-mclose>Fechar</button><button class="btn" data-capas>Gerar outras 4</button></div></div>`;
+// capas alternativas com IMAGEM de verdade (o robô monta 3 versões em moldes diferentes)
+async function drawCapas(){
+  const p=POSTS.find(x=>x.id===capas.id);const L=document.getElementById("layer");
+  const caixa=(corpo,rodape)=>`<div class="shade" data-mclose></div><div class="modal" role="dialog" aria-modal="true" aria-label="Escolher capa" style="width:min(820px,calc(100% - 32px))">${corpo}<div class="prow" style="justify-content:flex-end;margin-top:12px">${rodape}</div></div>`;
+  if(!p||!p.postId||p.mont!=="pronta"){L.innerHTML=caixa(`<h3>Capas</h3><p class="sub">Primeiro clique em "Gerar post e thumbnails". Quando o post estiver montado, aqui aparecem as capas em imagem para você escolher.</p>`,`<button class="btn" data-mclose>Fechar</button>`);return}
+  L.innerHTML=caixa(`<h3>Capas deste post</h3><p class="sub">Carregando…</p>`,`<button class="btn" data-mclose>Fechar</button>`);
+  const {data:ops}=await sb.from("capas_opcoes").select("id,molde,imagem,atual").eq("post_id",p.postId).order("id");
+  const lista=(ops&&ops.length)?ops:[{id:0,molde:"original",imagem:p.paths[0],atual:true}];
+  const {data:urls}=await sb.storage.from("montagens").createSignedUrls(lista.map(o=>o.imagem),3600);
+  const U={};(urls||[]).forEach(u=>U[u.path]=u.signedUrl);
+  const NOME={original:"a primeira",capa_f1:"foto + manchete",capa_f3b:"foto cheia + legenda",capa_marcatexto:"marca-texto",capa_f1b:"portal",capa_f3a:"foto + frase"};
+  const fazendo=p.capasSt==="pendente"||p.capasSt==="montando";
+  if(!capas||capas.id!==p.id)return;
+  L.innerHTML=caixa(`<h3>Capas deste post</h3><p class="sub" style="margin:0 0 12px">Clique na capa que você quer usar. ${fazendo?"<b>Os agentes estão fazendo 3 capas novas agora</b> (veja o Estúdio no escritório); elas aparecem aqui em alguns minutos.":"Quer outras? Clique em \"Gerar 3 novas\": a equipe faz versões em moldes diferentes, com o mesmo texto."}</p>
+   <div class="capgrid">${lista.map(o=>`<button class="capopt ${o.atual?"on":""}" data-escolhercapa="${o.id}" ${o.id?"":"disabled"}><img src="${U[o.imagem]||""}" alt="Capa ${esc(NOME[o.molde]||o.molde)}" loading="lazy"><span>${o.atual?"✓ em uso · ":""}${esc(NOME[o.molde]||o.molde)}</span></button>`).join("")}</div>`,
+   `<button class="btn" data-mclose>Fechar</button><button class="btn primary" data-novascapas ${fazendo?"disabled":""}>${fazendo?"Fazendo…":"Gerar 3 novas"}</button>`);
+  clearTimeout(window._tCapas);if(fazendo)window._tCapas=setTimeout(async()=>{await carregar();if(capas)drawCapas()},15000);
 }
 let modal=null;
 const MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
@@ -750,7 +796,10 @@ document.addEventListener("click",e=>{
   if("papr" in ds){const p=POSTS.find(x=>x.id===aberto);b.disabled=true;chamar({acao:"escolher",variacao_id:p.id,decisao:"montar"}).then(()=>{toast("Escolhida! O robô monta os slides em até ~10 minutos e eles aparecem aqui.");aberto=null;return carregar()}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
   if("prej" in ds){const p=POSTS.find(x=>x.id===aberto);const motivo=prompt("Por que você recusou? A fábrica usa isso para aprender (pode deixar em branco).");if(motivo===null)return;chamar({acao:"escolher",variacao_id:p.id,decisao:"recusar",motivo:motivo||null}).then(()=>{POSTS=POSTS.filter(x=>x.id!==p.id);aberto=null;render();toast("Recusada. O motivo foi guardado.")}).catch(e=>toast("Erro: "+e.message));return}
   if("capas" in ds){capas={id:aberto};drawCapas();return}
-  if(ds.pickcapa){const p=POSTS.find(x=>x.id===capas.id);p.capaVar=ds.pickcapa;p.log.push({w:"ag",f:"Designer",t:`Troquei a capa pela opção ${ds.pickcapa.slice(1)}.`});capas=null;render();toast("Capa trocada");return}
+  if(ds.escolhercapa){const p=POSTS.find(x=>x.id===capas.id);b.disabled=true;
+    sb.functions.invoke("opcoes",{body:{acao:"escolher",post_id:p.postId,opcao_id:+ds.escolhercapa}}).then(async({error})=>{if(error)throw error;toast("Capa trocada");await carregar();if(capas)drawCapas()}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
+  if("novascapas" in ds){const p=POSTS.find(x=>x.id===capas.id);b.disabled=true;
+    sb.functions.invoke("opcoes",{body:{acao:"pedir",post_id:p.postId}}).then(async({error})=>{if(error)throw error;toast("A equipe começou 3 capas novas");await carregar();if(capas)drawCapas()}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
   if(ds.mmes){modal.m+=+ds.mmes;if(modal.m<0){modal.m=11;modal.y--}if(modal.m>11){modal.m=0;modal.y++}drawCal();return}
   if(ds.mdia){modal.dia=new Date(modal.y,modal.m,+ds.mdia);modal.hora=null;drawCal();return}
   if(ds.slot){modal.hora=ds.slot;drawCal();return}
