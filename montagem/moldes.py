@@ -17,7 +17,7 @@ PORTA = ('<svg class="emblema" viewBox="380 280 280 560" aria-hidden="true">'
 
 FONTES = ("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700"
           "&family=Archivo:wdth,wght@62..125,500..900&family=Bitter:wght@400;600"
-          "&family=Archivo+Black&family=Crimson+Pro:wght@400;600;700&family=Source+Sans+3:wght@400;600;700;800&display=block")
+          "&family=Archivo+Black&family=Space+Mono:wght@400;700&family=Crimson+Pro:wght@400;600;700&family=Source+Sans+3:wght@400;600;700;800&display=block")
 
 # trama de papel (feTurbulence) — 4% de contraste, como nos vencedores
 PAPEL = ("data:image/svg+xml;utf8," +
@@ -570,6 +570,87 @@ KIT2 = {
     "foto_sticker": _k_sticker, "antes_hoje": _k_antes_hoje, "lista_linhas": _k_lista, "conta_visual": _k_conta,
     "citacao": _k_citacao, "fecho_foto": _k_fecho, "miolo_revista": _k_revista,
 }
+
+
+# ---------- moldes do Diretor de Arte: cartão de notícia e cupom que cresce ----------
+CSS_DA = """
+.nt{background:#0b0b0c}
+.nt .foto{position:absolute;left:0;top:0;width:1080px;height:660px;object-fit:cover;object-position:var(--foco,50% 30%)}
+.nt .sombra{position:absolute;left:0;top:0;width:1080px;height:660px;background:linear-gradient(180deg,rgba(0,0,0,.25) 0,transparent 30%,transparent 60%,#0b0b0c 100%)}
+.nt .cred{position:absolute;right:28px;top:578px;background:rgba(0,0,0,.55);padding:6px 10px;border-radius:6px;font:500 17px/1.2 'Inter',sans-serif;color:rgba(255,255,255,.78);text-shadow:0 1px 3px #000;max-width:620px;text-align:right}
+.nt .topo{position:absolute;left:64px;top:56px;display:flex;gap:12px;align-items:center}
+.nt .pil{background:#FFD21F;color:#111;font:800 24px/1 'Inter',sans-serif;letter-spacing:.08em;padding:12px 18px;border-radius:999px}
+.nt .pil.esc{background:rgba(10,10,10,.75);color:#F5F5F0;border:1.5px solid rgba(255,255,255,.25)}
+.nt .data{position:absolute;left:64px;top:150px;font:400 210px/.9 'Bebas Neue',sans-serif;color:#F5F5F0;letter-spacing:.01em}
+.nt .data small{display:block;font:700 30px/1.3 'Inter',sans-serif;color:#9a9a9a;letter-spacing:.12em;margin-top:14px}
+.nt .card{position:absolute;left:56px;right:56px;top:630px;bottom:150px;background:linear-gradient(180deg,#171719,#121213);border:1px solid #2a2a2e;border-radius:28px;box-shadow:0 30px 60px rgba(0,0,0,.55);padding:44px 52px 44px 64px;overflow:hidden}
+.nt.semfoto .card{top:470px;bottom:170px}
+.nt.semfoto .card .texto p{font-size:54px}
+.nt .card::before{content:"";position:absolute;left:0;top:34px;bottom:34px;width:8px;border-radius:0 8px 8px 0;background:#FFD21F;box-shadow:0 0 22px rgba(255,210,31,.55)}
+.nt .fonte{display:flex;align-items:center;gap:14px;font:800 24px/1 'Inter',sans-serif;letter-spacing:.1em;color:#FFD21F;text-transform:uppercase;margin-bottom:26px}
+.nt .fonte span{color:#8d8d92;font-weight:600;letter-spacing:.06em}
+.nt .card .texto{position:absolute;left:64px;right:52px;top:104px;bottom:40px}
+.nt .card .texto p{font:600 46px/1.28 'Inter',sans-serif;color:#F5F5F0;letter-spacing:-.01em;margin-bottom:22px}
+.nt .card .texto p .am{color:#FFD21F}
+.cp{background:#0c0c0d;background-image:radial-gradient(rgba(255,255,255,.05) 1.5px,transparent 1.5px);background-size:34px 34px}
+.cp .texto{position:absolute;left:72px;right:72px;top:80px;height:330px;display:flex;flex-direction:column;justify-content:center}
+.cp .texto p{font:700 52px/1.22 'Inter',sans-serif;color:#F5F5F0;letter-spacing:-.015em;margin-bottom:16px}
+.cp .texto p .am{color:#FFD21F}
+.cp .zona{position:absolute;left:0;right:0;top:420px;bottom:130px;display:flex;align-items:center;justify-content:center}
+.cp .papel{position:relative;width:820px;transform:rotate(-1.6deg);background:#f7f4ec;color:#1b1b1b;padding:46px 54px 40px;font-family:'Space Mono',monospace;
+  box-shadow:0 40px 80px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.05);
+  -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/28px 100%,conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) 50%/28px 100%;
+  -webkit-mask-composite:source-in;mask-composite:intersect}
+.cp .cab{text-align:center;font:700 42px/1.2 'Space Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
+.cp .cab small{display:block;font:400 24px/1.4 'Space Mono',monospace;color:#777;letter-spacing:.04em;margin-top:6px}
+.cp .tr{border-top:3px dashed #bdb8aa;margin:22px 0}
+.cp .lin{display:flex;align-items:baseline;gap:12px;font:400 38px/1.55 'Space Mono',monospace;color:#8a867c;padding:4px 10px;margin:0 -10px;border-radius:6px}
+.cp .lin b{font-weight:700}
+.cp .lin i{flex:1;border-bottom:3px dotted #cfc9b9;transform:translateY(-8px)}
+.cp .lin.novo{color:#111;background:#FFD21F;font-weight:700}
+.cp .lin.novo i{border-color:rgba(0,0,0,.35)}
+.cp .lin.novo::after{content:"NOVO";font:700 16px/1 'Inter',sans-serif;letter-spacing:.1em;background:#111;color:#FFD21F;padding:6px 8px;border-radius:5px;align-self:center}
+.cp .tot{display:flex;justify-content:space-between;align-items:baseline;font:700 46px/1 'Space Mono',monospace;color:#111}
+.cp .tot b{font:400 120px/1 'Bebas Neue',sans-serif;letter-spacing:.02em}
+.cp .barras{height:54px;margin-top:22px;background:repeating-linear-gradient(90deg,#1b1b1b 0 3px,transparent 3px 6px,#1b1b1b 6px 7px,transparent 7px 11px,#1b1b1b 11px 15px,transparent 15px 18px);opacity:.85}
+"""
+CSS += CSS_DA
+
+
+def _k_noticia(s):
+    ps = s.get("paragrafos") or [s.get("texto", "")]
+    fonte = html.escape(s.get("chapeu") or "NOTÍCIA"); data = html.escape(s.get("rotulo") or "")
+    linha = f'<div class="fonte">{fonte}{f"<span>· {data}</span>" if data else ""}</div>'
+    texto = f'<div class="texto fit" data-max="52">{"".join(f"<p>{marcar(p, cor=True)}</p>" for p in ps)}</div>'
+    if s.get("foto"):
+        cred = f'<div class="cred">{html.escape(s["credito"])}</div>' if s.get("credito") else ""
+        return (f'<div class="slide nt"><img class="foto" src="{s["foto"]}" style="--foco:{_foco(s,"50% 30%")}"><div class="sombra"></div>{cred}'
+                f'<div class="topo"><span class="pil">NOTÍCIA</span>{f"<span class=pil esc>{data}</span>" if data else ""}</div>'
+                f'<div class="card">{linha}{texto}</div>{_assin()}</div>')
+    grande = f'<div class="data">{data or "AGORA"}<small>{fonte}</small></div>'
+    return (f'<div class="slide nt semfoto"><div class="topo"><span class="pil">NOTÍCIA</span></div>{grande}'
+            f'<div class="card">{linha}{texto}</div>{_assin()}</div>')
+
+
+def _k_cupom(s):
+    ps = s.get("paragrafos") or ([s["texto"]] if s.get("texto") else [])
+    itens = s.get("itens") or []
+    linhas = []
+    for k, it in enumerate(itens):
+        if "|" in it:
+            nome, val = [x.strip() for x in it.split("|", 1)]
+        else:
+            m = re.search(r"(R\$\s?[\d.,]+)\s*$", it); nome, val = (it[:m.start()].strip(), m.group(1)) if m else (it, "")
+        novo = " novo" if k == len(itens) - 1 else ""
+        linhas.append(f'<div class="lin{novo}"><b>{html.escape(nome)}</b><i></i><span>{html.escape(val)}</span></div>')
+    titulo = html.escape(s.get("titulo") or "CUPOM")
+    texto = f'<div class="texto fit" data-max="56">{"".join(f"<p>{marcar(p, cor=True)}</p>" for p in ps)}</div>' if ps else ""
+    return (f'<div class="slide cp">{texto}<div class="zona"><div class="papel"><div class="cab">{titulo}<small>{html.escape(s.get("sub") or "")}</small></div><div class="tr"></div>'
+            f'{"".join(linhas)}<div class="tr"></div><div class="tot"><span>TOTAL</span><b>{html.escape(s.get("rotulo") or "")}</b></div><div class="barras"></div></div></div>{_assin()}</div>')
+
+
+KIT2["noticia"] = _k_noticia
+KIT2["cupom"] = _k_cupom
 
 
 def _normalizar(s: dict) -> dict:
