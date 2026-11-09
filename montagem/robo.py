@@ -50,6 +50,19 @@ def chamar(corpo, timeout=200, url=None):
     return res
 
 
+EVENTOS = "https://kfvugtrjuqdakbpzvsxq.supabase.co/functions/v1/eventos"
+
+
+def evento(post_id, agente, fala, estado="trabalhando", **detalhe):
+    """O agente avisa o que está fazendo (aparece ao vivo no escritório dentro do post). Nunca derruba a montagem."""
+    if not post_id:
+        return
+    try:
+        chamar({"post_id": post_id, "agente": agente, "fala": fala, "estado": estado, "detalhe": detalhe}, timeout=20, url=EVENTOS)
+    except Exception:
+        pass
+
+
 def baixar(caminho, destino: Path):
     r = chamar({"acao": "baixar", "caminho": caminho})
     if not r.get("ok"):
@@ -60,13 +73,19 @@ def baixar(caminho, destino: Path):
 def montar(post_id: int):
     from render import renderizar  # só carrega o navegador quando vai desenhar
     t0 = time.time(); passos = []
+    ev = lambda agente, fala, estado="trabalhando", **k: evento(post_id, agente, fala, estado, **k)
+    ev("diagramador", "Peguei o texto aprovado. Vou dividir em slides e escolher o molde de cada um.")
     d = chamar({"acao": "diagramar", "post_id": post_id})
     if not d.get("ok"):
+        ev("diagramador", "Não consegui diagramar. Avisei o erro.", "erro")
         raise RuntimeError(f"diagramar: {d}")
     ficha = d["ficha"]; passos.append(f"diagramado por {ficha.get('modelo')} {d.get('log') or ''}".strip())
+    conf = ficha.get("conferencia") or {}
+    ev("diagramador", f"Pronto: {len(ficha['slides'])} slides. " + ("Conferi palavra por palavra: nenhuma mudou." if conf.get("ok") else "Usei a diagramação de reserva."), "pronto",
+       slides=len(ficha["slides"]))
     from foto_fiel import foto_fiel  # diretor de cena -> foto -> conferente (visão) -> correção
     capa = next((s for s in ficha["slides"] if s["molde"].startswith("capa_")), ficha["slides"][0])
-    ff = foto_fiel(capa.get("texto", ""), capa["molde"], ficha.get("foto_prompt", ""), f"post_{post_id}/foto", log=lambda *_: None)
+    ff = foto_fiel(capa.get("texto", ""), capa["molde"], ficha.get("foto_prompt", ""), f"post_{post_id}/foto", log=lambda *_: None, ev=ev)
     passos.append(f"foto conferida nota {ff['nota']} ({len(ff['historico'])} conferências)")
     pasta = SAIDA / f"post_{post_id}"; pasta.mkdir(parents=True, exist_ok=True)
     foto = pasta / "foto.png"; baixar(ff["melhor"], foto)
@@ -74,7 +93,10 @@ def montar(post_id: int):
     for s in slides:
         if s["molde"] == "capa_f1":
             s["foto"] = foto.resolve().as_uri(); s["foco"] = ficha.get("foco")
+    ev("montador", f"Desenhando os {len(slides)} slides em 1080×1350 com os moldes dos vencedores.")
     feitos = renderizar(slides, pasta)
+    ev("montador", f"{len(feitos)} slides desenhados. Conferi se nenhum texto ficou cortado.", "pronto")
+    ev("entregador", "Guardando os slides no banco e mandando para a sua tela.")
     caminhos = []
     for f in feitos:
         c = f"post_{post_id}/slide_{f['slide']:02d}.png"
@@ -88,6 +110,7 @@ def montar(post_id: int):
         passos.append(f"texto apertado nos slides {encolhidos}")
     passos.append(f"{len(caminhos)} slides em {time.time()-t0:.0f}s")
     chamar({"acao": "concluir", "post_id": post_id, "imagens": caminhos, "log": " · ".join(passos)})
+    ev("entregador", f"Entregue! {len(caminhos)} slides prontos no post em {time.time()-t0:.0f}s.", "pronto")
     return passos
 
 
@@ -108,6 +131,7 @@ def main():
             print(pid, montar(pid))
         except Exception as e:  # registra o erro no post e segue
             print(pid, "ERRO", e)
+            evento(pid, "entregador", f"Deu erro na montagem: {str(e)[:160]}", "erro")
             chamar({"acao": "erro", "post_id": pid, "log": str(e)})
 
 

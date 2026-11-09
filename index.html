@@ -75,7 +75,13 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 .esb .etq{position:absolute;top:8px;right:8px;font-family:var(--f-b);font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:var(--panel);padding:1px 6px;border-radius:3px}
 .cover .n{position:absolute;top:8px;left:8px;font-family:var(--f-b);font-size:.66rem;font-weight:700;background:rgba(0,0,0,.5);color:#FFFFFF;padding:1px 6px;border-radius:3px}
 /* tela do post */
-.postview{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100%;min-height:0}
+.postview{display:block;height:100%;overflow:auto}
+.pbaixo{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(320px,1fr);gap:14px;padding:12px 16px 14px;height:min(780px,calc(100vh - 70px));min-height:560px}
+.escbox{min-height:0;display:flex;flex-direction:column}.escbox>.escr{flex:1}
+.pchat{display:flex;flex-direction:column;min-height:0;border:1px solid var(--line,#2a2d33);border-radius:14px;overflow:hidden;background:var(--panel,transparent)}
+.pchat-h{display:flex;align-items:baseline;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line,#2a2d33)}
+.pchat .pbody{flex:1;min-height:0}
+@media (max-width:900px){.pbaixo{grid-template-columns:1fr;overflow:auto}.escbox{min-height:520px}.pchat{min-height:360px}}
 .phead{background:var(--panel);border-bottom:1px solid var(--line);padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px}
 .prow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .back{border:0;background:transparent;color:var(--accent);font-weight:700;padding:0}
@@ -315,6 +321,7 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
   <div class="prow" style="justify-content:flex-end"><button type="button" class="btn" id="l-criar">Criar acesso</button><button class="btn primary">Entrar</button></div>
 </form></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="escritorio.js?v=1"></script>
 <script>
 const sb=supabase.createClient("https://kfvugtrjuqdakbpzvsxq.supabase.co","sb_publishable_hMCt4kaGtY75gMEb3aRi-g_Xh3OkPhx");
 const ACC={a1:{nome:"A História que Muda",at:"@ahistoriaquemuda",av:"AH",cls:"c1",avc:"av1"}};
@@ -347,11 +354,11 @@ function composer(where,ph){
 }
 function renderTop(){
   document.getElementById("accts").innerHTML=Object.entries(ACC).map(([k,A])=>`<button class="acct" data-acc="${k}" aria-pressed="${k===acc}"><span class="av ${A.avc}">${A.av}</span>${A.nome}</button>`).join("");
-  document.getElementById("tabs").innerHTML=[["posts","Posts e capas"],["escritorio","Escritório"],["chat","Chat"]].map(([k,l])=>`<button class="tab" data-tab="${k}" ${tab===k?'aria-current="page"':""}>${l}</button>`).join("");
+  document.getElementById("tabs").innerHTML=[["posts","Posts e capas"],["chat","Chat"]].map(([k,l])=>`<button class="tab" data-tab="${k}" ${tab===k?'aria-current="page"':""}>${l}</button>`).join("");
 }
 function renderPosts(){
   const L=POSTS.filter(p=>p.a===acc&&(filtro==="todos"||p.s===filtro)).sort((x,y)=>(y.t||new Date(2100,0))-(x.t||new Date(2100,0)));
-  return `<div class="pad"><div class="listhead"><div><h2>Posts e capas · ${ACC[acc].nome}</h2><p class="sub">Os status são provisórios: ainda vamos decidir quais ficam.</p></div><button class="btn primary" data-genopen>+ Gerar conteúdo</button></div>${PIPE[acc]&&!PIPE[acc].oculto?renderEscritorio(false):""}
+  return `<div class="pad"><div class="listhead"><div><h2>Posts e capas · ${ACC[acc].nome}</h2><p class="sub">Os status são provisórios: ainda vamos decidir quais ficam.</p></div><button class="btn primary" data-genopen>+ Gerar conteúdo</button></div>${PIPE[acc]&&!PIPE[acc].oculto?renderPipe():""}
   <div class="filters" role="group" aria-label="Filtrar por status">${[["todos","Todos"],...Object.entries(ST).map(([k,v])=>[k,v[0]])].map(([k,l])=>`<button class="f" data-f="${k}" aria-pressed="${filtro===k}">${l}</button>`).join("")}</div>
   <div class="grid">${L.map(p=>`<button class="card ${p.s==="gen"?"gen":""}" data-post="${p.id}" ${p.s==="gen"?"disabled":""}>${cover(p)}<div class="meta"><span class="when">${fdt(p.t)}<small>${p.s==="ok"?"publicado":p.s==="sched"?"agendado":p.s==="prop"?esc(p.rot||"proposta"):"ainda sem data"}</small></span><span class="st ${ST[p.s][1]}">${ST[p.s][0]}</span></div></button>`).join("")||'<p class="sub">Nenhum post com esse status.</p>'}</div></div>`;
 }
@@ -364,10 +371,12 @@ function renderPost(){
     ${p.mont==="pendente"||p.mont==="montando"?`<p class="montaviso">🛠️ O robô está montando este post: diagramação, foto da capa e os slides. Fica pronto em até ~10 minutos e aparece aqui sozinho.</p>`:p.mont==="erro"?`<p class="montaviso erro">A montagem deu erro: ${esc(p.mlog||"")}. Me avise no chat que eu refaço.</p>`:p.mont==="pronta"&&p.mlog?`<p class="small" style="margin:8px 0 0">Montado: ${esc(p.mlog)}</p>`:""}
     ${legendaIG(p)}${p.pr?`<details class="why"><summary>Por que esta proposta</summary><dl><dt>Na capa</dt><dd>${esc(p.pr.capa)}</dd><dt>O que testa</dt><dd>${esc(p.pr.est)}</dd><dt>Por quê</dt><dd>${esc(p.pr.pq)}</dd><dt>Origem</dt><dd>${esc(p.pr.base)}</dd>${p.pr.pl?`<dt>Plateia</dt><dd>${esc(p.pr.pl)}</dd>`:""}${p.pr.pb?`<dt>Conferente</dt><dd>${esc(p.pr.pb)}</dd>`:""}</dl></details>`:""}
   </div>
-  <div class="pbody"><div class="pad">
-    ${p.log.length?`<div class="fieldlab">Edições deste post</div><div class="log">${p.log.map(m=>`<div class="m ${m.w}">${m.f?`<span class="from">${esc(m.f)}</span>`:""}${m.atts?m.atts.map(a=>`<span class="att">📎<b>${esc(a)}</b></span>`).join(""):""}${esc(m.t)}</div>`).join("")}</div>`:""}
-  </div></div>
-  ${composer("post",p.s==="prop"?"Peça qualquer mudança: frase, onde fica a pessoa, o texto, a história, a legenda":"Peça qualquer edição: capa, foto, slide, legenda, hashtags")}</div>`;
+  <div class="pbaixo"><div class="escbox" id="escbox"></div>
+   <div class="pchat"><div class="pchat-h"><b>Chat deste post</b><span class="small">peça qualquer mudança</span></div>
+    <div class="pbody"><div class="pad">
+     ${p.log.length?`<div class="log">${p.log.map(m=>`<div class="m ${m.w}">${m.f?`<span class="from">${esc(m.f)}</span>`:""}${m.atts?m.atts.map(a=>`<span class="att">📎<b>${esc(a)}</b></span>`).join(""):""}${esc(m.t)}</div>`).join("")}</div>`:`<p class="small">Escreva, mande áudio ou foto. O pedido vai para a equipe e você vê ela trabalhando ao lado.</p>`}
+    </div></div>
+    ${composer("post",p.s==="prop"?"Peça qualquer mudança: frase, onde fica a pessoa, o texto, a história, a legenda":"Peça qualquer edição: capa, foto, slide, legenda, hashtags")}</div></div></div>`;
 }
 const PESS='<svg viewBox="0 0 100 120" aria-hidden="true"><circle cx="50" cy="30" r="22"/><path d="M8 120c2-34 20-52 42-52s40 18 42 52z"/></svg>';
 function esbCapa(p,n=""){const e=p.esb||{pessoa:"dir",texto:"topo"};
@@ -413,8 +422,9 @@ function renderDrawer(){
 function render(){
   renderTop();
   const v=document.getElementById("view");
-  v.innerHTML=tab==="posts"?(aberto?renderPost():renderPosts()):tab==="escritorio"?`<div class="pad">${renderEscritorio(true)}</div>`:renderChat();
+  v.innerHTML=tab==="posts"?(aberto?renderPost():renderPosts()):renderChat();
   v.style.overflow=(tab==="chat"||aberto)?"hidden":"auto";
+  if(tab==="posts"&&aberto){const p=POSTS.find(x=>x.id===aberto);if(p)anexarEscritorio(p)}else fecharEscritorio();
   document.getElementById("layer").innerHTML=renderDrawer();
   if(gen)drawGen();else if(capas)drawCapas();else if(modal)drawCal();
   const ms=document.getElementById("msgs");if(ms)ms.scrollTop=ms.scrollHeight;
@@ -539,6 +549,36 @@ function renderEscritorio(cheio){
    ${cheio||FEED.length?`<div class="fieldlab" style="margin:0">O que acabou de acontecer</div><div class="feed">${FEED.map(f=>`<p><time>${String(f.t.getHours()).padStart(2,"0")}:${String(f.t.getMinutes()).padStart(2,"0")}:${String(f.t.getSeconds()).padStart(2,"0")}</time><b>${esc(f.quem)}</b> ${esc(f.texto)}</p>`).join("")||"<p>Nada ainda. Clique em + Gerar conteúdo ou escreva no Chat.</p>"}</div>`:""}
   </section>`;
 }
+// ----- escritório dentro do post: os agentes trabalhando naquele post, ao vivo -----
+let ESC=null; // {chave, inst, canal}
+function historicoRedacao(p){
+  // o que a Redação fez quando o post foi escrito (vem dos dados da variação)
+  const ev=[],corta=s=>String(s||"").replace(/\s+/g," ").slice(0,230);
+  if(p.pr&&p.pr.est)ev.push({agente:"planejadora",estado:"pronto",fala:corta("Planejei: "+p.pr.est.replace(/^Gerada em [^·]*· /,""))});
+  if(p.pr&&p.pr.base)ev.push({agente:"escritora",estado:"pronto",fala:corta(`Escrevi a capa e ${p.sl.length} slides. ${p.pr.base}`)});
+  if(p.pr&&p.pr.pl)ev.push({agente:"plateia",estado:"pronto",fala:corta(p.pr.pl)});
+  return ev;
+}
+async function anexarEscritorio(p){
+  const box=document.getElementById("escbox");if(!box||!window.Escritorio)return;
+  const chave=p.postId?"post"+p.postId:"var"+p.id;
+  if(ESC&&ESC.chave===chave){ESC.inst.reanexar(box);return}
+  fecharEscritorio();
+  const inst=Escritorio.criar(box);ESC={chave,inst,canal:null};
+  let eventos=historicoRedacao(p);
+  if(p.postId){
+    const {data}=await sb.from("eventos_agente").select("agente,estado,fala,criado_em").eq("post_id",p.postId).order("criado_em").limit(300);
+    eventos=eventos.concat(data||[]);
+    if(ESC&&ESC.chave===chave){
+      ESC.canal=sb.channel("esc"+p.postId).on("postgres_changes",{event:"INSERT",schema:"public",table:"eventos_agente",filter:`post_id=eq.${p.postId}`},({new:e})=>{
+        if(!ESC||ESC.chave!==chave)return;ESC.inst.vivo(e);
+        if(e.agente==="entregador"&&e.estado==="pronto")setTimeout(carregar,1500);
+      }).subscribe();
+    }
+  }
+  if(ESC&&ESC.chave===chave)inst.carregar(eventos,p.mont==="pendente"||p.mont==="montando");
+}
+function fecharEscritorio(){if(!ESC)return;try{ESC.canal&&sb.removeChannel(ESC.canal)}catch(e){}ESC.inst.destruir();ESC=null}
 const msgDoBanco=m=>({w:m.papel==="dono"?"me":"ag",f:m.papel==="fabrica"?"Fábrica":null,t:m.texto,atts:(m.anexos||[]).map(a=>({kind:a.tipo,name:a.tipo==="audio"&&a.transcricao?`áudio: "${a.transcricao.slice(0,60)}${a.transcricao.length>60?"…":""}"`:a.nome}))});
 async function carregarChat(){
   const {data,error}=await sb.from("chat").select("papel,texto,anexos").is("variacao_id",null).order("id",{ascending:true}).limit(300);
@@ -587,12 +627,12 @@ async function enviarMensagem(w,texto){
   render();
 }
 async function carregar(){
-  const {data,error}=await sb.from("variacoes").select("id,status,pecas,variaveis,remodelagem,por_que_para,forca,risco,painel,eixo,ordem,pautas(dia,tipo,persona_id,assunto,lote),posts(status,agendado_para,montagem_status,imagens,montagem_log)").in("status",["mostrada","escolhida"]).order("forca",{ascending:false,nullsFirst:false}).order("id",{ascending:false}).limit(500);
+  const {data,error}=await sb.from("variacoes").select("id,status,pecas,variaveis,remodelagem,por_que_para,forca,risco,painel,eixo,ordem,pautas(dia,tipo,persona_id,assunto,lote),posts(id,status,agendado_para,montagem_status,imagens,montagem_log)").in("status",["mostrada","escolhida"]).order("forca",{ascending:false,nullsFirst:false}).order("id",{ascending:false}).limit(500);
   if(error){toast("Não consegui ler o banco: "+error.message);return}
   POSTS=data.map(v=>{const pc=v.pecas||{},va=v.variaveis||{},rm=v.remodelagem||{},pa=v.pautas||{},pn=v.painel||{},R=pn.risco;
     const po=(v.posts||[])[0];const ag=po&&po.agendado_para?new Date(po.agendado_para):null;
     return {id:v.id,a:"a1",s:ag?"sched":v.status==="mostrada"?"prop":"draft",t:ag,rot:`${ROT[pa.tipo]||pa.tipo||""} · ${ROT[pa.persona_id]||pa.persona_id||""} · força ${v.forca??"-"}`,capa:esc(pc.capa||""),sl:pc.slides||[],leg:pc.legenda||"",hs:pc.hashtags||[],
-      mont:po?po.montagem_status:null,mlog:po?po.montagem_log:"",paths:po&&Array.isArray(po.imagens)?po.imagens:[],
+      postId:po?po.id:null,mont:po?po.montagem_status:null,mlog:po?po.montagem_log:"",paths:po&&Array.isArray(po.imagens)?po.imagens:[],
       log:v.status==="escolhida"?[{w:"ag",f:"Equipe",t:"Você escolheu esta variação. O robô monta os slides e eles aparecem acima."}]:[],
       esb:ESB("a1",(v.ordem||1)-1),
       pr:{capa:pc.thumb_descricao||"",
