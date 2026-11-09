@@ -101,6 +101,61 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .tw .img{position:absolute;left:84px;right:84px;top:740px;height:520px;border-radius:30px;overflow:hidden;border:1px solid #e6e9ec}
 .tw .img img{width:100%;height:100%;object-fit:cover;object-position:var(--foco,50% 45%)}
 
+/* ESCURO · miolos estilo páginas grandes de IA/negócio: fundo preto com grade de pontos, título condensado com palavra em destaque,
+   moldura com brilho, cards numerados, checklist, rede de rostos, rodapé ——— @handle ——— */
+.esc{background:#0c0c0d}
+.esc::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.075) 1.6px,transparent 1.7px);background-size:22px 22px}
+.esc::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(255,210,31,.05),transparent 60%)}
+.esc>*{position:relative;z-index:1}
+.esc .rod{position:absolute;left:56px;right:56px;bottom:62px;display:flex;align-items:center;gap:22px;font:500 30px/1 'Inter',sans-serif;color:#e9e9e6}
+.esc .rod i{flex:1;height:2px;background:rgba(255,255,255,.75)}
+.esc .tit{position:absolute;left:60px;right:60px;text-align:center;font:400 112px/.95 'Bebas Neue',sans-serif;color:#fff;text-transform:uppercase}
+.esc .tit .am,.esc .am{color:#FFD21F}
+.esc .sub{position:absolute;left:60px;right:60px;text-align:center;font:400 40px/1.3 'Inter',sans-serif;color:#e6e6e3}
+.esc .moldura{position:absolute;border:4px solid #FFD21F;border-radius:30px;overflow:hidden;box-shadow:0 0 34px rgba(255,210,31,.45),0 0 4px rgba(255,210,31,.9)}
+.esc .moldura img{width:100%;height:100%;object-fit:cover;object-position:var(--foco,50% 40%);display:block}
+/* título + moldura + legenda */
+.esc.tm .tit{top:250px}
+.esc.tm .moldura{left:72px;right:72px;top:420px;height:440px}
+.esc.tm .sub{top:900px;height:280px}
+/* cards numerados */
+.esc.cd .tit{top:120px;font-size:96px}
+.esc.cd .sub{top:232px;font-size:34px;color:#cfcfcb}
+.esc.cd .cards{position:absolute;left:44px;right:44px;top:360px;bottom:150px;display:flex;flex-direction:column;justify-content:center;gap:22px}
+.esc.cd .card{display:flex;align-items:center;gap:26px;background:#141416;border:2px solid #2a2a2e;border-radius:22px;padding:24px 30px;min-height:122px}
+.esc.cd .card .n{font:400 70px/1 'Bebas Neue',sans-serif;color:#FFD21F;width:70px}
+.esc.cd .card .ic{width:84px;height:84px;border-radius:18px;object-fit:cover;flex:none}
+.esc.cd .card b{font:700 38px/1.15 'Inter',sans-serif;color:#fff;flex:0 0 300px}
+.esc.cd .card span{flex:1;border-left:2px solid #3a3a3e;padding-left:24px;font:400 31px/1.3 'Inter',sans-serif;color:#d7d7d3}
+/* checklist + foto */
+.esc.ck .tit{top:110px;font-size:112px}
+.esc.ck .sub{top:232px;font-weight:700;color:#fff}
+.esc.ck .sub u{text-decoration:none;border-bottom:3px solid #FFD21F;padding-bottom:6px}
+.esc.ck .corpo{position:absolute;left:60px;right:60px;top:320px;bottom:150px;display:flex;flex-direction:column;gap:44px}
+.esc.ck .itens{display:flex;flex-direction:column;gap:26px}
+.esc.ck .corpo .moldura{position:relative;left:auto;right:auto;top:auto;height:auto;flex:1;min-height:380px}
+.esc.ck .it{display:flex;gap:22px;font:400 38px/1.3 'Inter',sans-serif;color:#f2f2ef}
+.esc.ck .it::before{content:"✓";flex:none;width:44px;height:44px;margin-top:4px;border-radius:9px;background:#FFD21F;color:#111;font:800 30px/44px 'Inter',sans-serif;text-align:center}
+.esc.ck .moldura{left:60px;right:60px;top:640px;height:510px}
+/* rede de rostos */
+.esc.rd .tit{top:70px;font-size:104px}
+.esc.rd .lista{position:absolute;left:56px;right:56px;top:190px;display:flex;flex-direction:column;gap:14px}
+.esc.rd .lista div{background:#141416;border:2px solid #2a2a2e;border-radius:18px;padding:14px 24px;font:400 30px/1.3 'Inter',sans-serif;color:#eee}
+.esc.rd .lista b{color:#FFD21F;font:400 44px/1 'Bebas Neue',sans-serif;margin-right:14px}
+.esc.rd .rede{position:absolute;left:0;right:0;top:500px;height:560px}
+.esc.rd .rede svg{position:absolute;inset:0}
+.esc.rd .no{position:absolute;width:150px;text-align:center;transform:translate(-50%,-50%)}
+.esc.rd .no img{width:118px;height:118px;border-radius:50%;object-fit:cover;border:4px solid #FFD21F;box-shadow:0 0 22px rgba(255,210,31,.5);background:#222}
+.esc.rd .no b{display:block;font:700 25px/1.15 'Inter',sans-serif;color:#fff;margin-top:6px;text-shadow:0 2px 6px #000}
+.esc.rd .no span{display:block;font:400 21px/1.2 'Inter',sans-serif;color:#c9c9c4;text-shadow:0 2px 6px #000}
+.esc.rd .centro{position:absolute;left:540px;top:280px;width:120px;height:120px;transform:translate(-50%,-50%);border-radius:50%;background:#141416;border:4px solid #FFD21F;display:flex;align-items:center;justify-content:center;font:400 48px/1 'Bebas Neue',sans-serif;color:#FFD21F;text-align:center;box-shadow:0 0 30px rgba(255,210,31,.45)}
+.esc.rd .caixa{position:absolute;left:56px;right:56px;bottom:140px;border:3px solid #FFD21F;border-radius:20px;padding:18px;text-align:center;font:700 40px/1.2 'Inter',sans-serif;color:#fff;background:rgba(20,20,22,.9)}
+
+/* Tweet com 2 fotos lado a lado (capa ou miolo) */
+.tw2 .img{display:none}
+.tw2 .duas{position:absolute;left:58px;right:58px;top:690px;height:560px;display:flex;gap:22px}
+.tw2 .duas img{flex:1;min-width:0;height:100%;object-fit:cover;border-radius:26px;border:1px solid #e6e9ec}
+
 /* F3a · foto cheia escurecida, frase pequena no centro (legenda de story) */
 .f3a,.f3b{background:#111}
 .f3a .foto,.f3b .foto{position:absolute;inset:0;width:1080px;height:1350px;object-fit:cover;object-position:var(--foco,50% 50%)}
@@ -226,6 +281,44 @@ def slide_html(s: dict) -> str:
         ps = [p.strip() for p in re.split(r"\n+", s["texto"]) if p.strip()]
         corpo = (f'<div class="slide tw"><div class="topo"><img src="{AVATAR}"><div><b>A História que Muda</b><span>{HANDLE}</span></div></div>'
                  f'<div class="texto fit" data-max="66">{paras(ps)}</div><div class="img"><img src="{s["foto"]}" style="--foco:{foco}"></div></div>')
+    elif m == "capa_tweet2":
+        ps = [p.strip() for p in re.split(r"\n+", s["texto"]) if p.strip()]
+        f1, f2 = (s.get("fotos") or [s.get("foto"), s.get("foto")])[:2]
+        corpo = (f'<div class="slide tw tw2"><div class="topo"><img src="{AVATAR}"><div><b>A História que Muda</b><span>{HANDLE}</span></div></div>'
+                 f'<div class="texto fit" data-max="64" style="height:380px">{paras(ps)}</div><div class="duas"><img src="{f1}"><img src="{f2}"></div></div>')
+    elif m in ("esc_titulo_moldura", "esc_cards", "esc_checklist", "esc_rede"):
+        rod = f'<div class="rod"><i></i>{HANDLE}<i></i></div>'
+        tit = marcar(s.get("titulo", ""), cor=True)
+        if m == "esc_titulo_moldura":
+            foco = html.escape(s.get("foco") or "50% 40%")
+            corpo = (f'<div class="slide esc tm"><div class="tit">{tit}</div><div class="moldura"><img src="{s["foto"]}" style="--foco:{foco}"></div>'
+                     f'<div class="sub fit" data-max="46">{paras(s.get("paragrafos") or [s.get("texto", "")])}</div>{rod}</div>')
+        elif m == "esc_cards":
+            def _card(i, c):
+                ic = f'<img class="ic" src="{c["icone"]}">' if c.get("icone") else ""
+                return f'<div class="card"><div class="n">{i:02d}</div>{ic}<b>{marcar(c["nome"])}</b><span>{marcar(c["texto"])}</span></div>'
+            cards = "".join(_card(i, c) for i, c in enumerate(s["cards"], 1))
+            sub = f'<div class="sub">{marcar(s["sub"])}</div>' if s.get("sub") else ""
+            corpo = f'<div class="slide esc cd"><div class="tit">{tit}</div>{sub}<div class="cards">{cards}</div>{rod}</div>'
+        elif m == "esc_checklist":
+            foco = html.escape(s.get("foco") or "50% 35%")
+            itens = "".join(f'<div class="it"><span>{marcar(t)}</span></div>' for t in s["itens"])
+            sub = f'<div class="sub"><u>{marcar(s["sub"], cor=True)}</u></div>' if s.get("sub") else ""
+            corpo = (f'<div class="slide esc ck"><div class="tit">{tit}</div>{sub}<div class="corpo"><div class="itens">{itens}</div>'
+                     f'<div class="moldura"><img src="{s["foto"]}" style="--foco:{foco}"></div></div>{rod}</div>')
+        else:  # esc_rede: até 6 rostos em hexágono ao redor de um centro
+            import math
+            nos = s["nos"][:6]; cx, cy, r = 540, 280, 200
+            pts = [(cx + r * math.sin(2 * math.pi * k / len(nos)), cy - r * math.cos(2 * math.pi * k / len(nos))) for k in range(len(nos))]
+            linhas = "".join(f'<line x1="{cx}" y1="{cy}" x2="{x:.0f}" y2="{y:.0f}"/>' for x, y in pts)
+            linhas += "".join(f'<line x1="{pts[k][0]:.0f}" y1="{pts[k][1]:.0f}" x2="{pts[(k+1)%len(pts)][0]:.0f}" y2="{pts[(k+1)%len(pts)][1]:.0f}"/>' for k in range(len(pts)))
+            svg = f'<svg viewBox="0 0 1080 560"><g stroke="#FFD21F" stroke-opacity=".75" stroke-width="3">{linhas}</g></svg>'
+            nos_html = "".join(f'<div class="no" style="left:{x:.0f}px;top:{y:.0f}px"><img src="{n["foto"]}"><b>{html.escape(n["nome"])}</b><span>{html.escape(n.get("papel",""))}</span></div>'
+                               for n, (x, y) in zip(nos, pts))
+            lista = "".join(f'<div><b>{i}.</b>{marcar(t)}</div>' for i, t in enumerate(s.get("itens", []), 1))
+            caixa = f'<div class="caixa">{marcar(s["caixa"])}</div>' if s.get("caixa") else ""
+            corpo = (f'<div class="slide esc rd"><div class="tit">{tit}</div><div class="lista">{lista}</div>'
+                     f'<div class="rede">{svg}<div class="centro">{html.escape(s.get("centro","VOCÊ"))}</div>{nos_html}</div>{caixa}{rod}</div>')
     elif m in ("capa_f3a", "capa_f3b"):
         foco = html.escape(s.get("foco") or "50% 50%")
         cls = m[-3:]
