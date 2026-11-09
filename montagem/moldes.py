@@ -9,7 +9,12 @@ from pathlib import Path
 LOGO = (Path(__file__).resolve().parent / "assets" / "logo-horizontal.svg").as_uri()
 HANDLE = "@ahistoriaquemuda"
 
-FONTES = ("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900"
+PORTA = ('<svg class="emblema" viewBox="380 280 280 560" aria-hidden="true">'
+         '<rect x="470" y="300" width="170" height="512" fill="#FFD21F"/>'
+         '<polygon points="470,300 392,338 392,850 470,812" fill="#262626" stroke="#F5F5F0" stroke-width="10" stroke-linejoin="round"/>'
+         '<rect x="458" y="288" width="194" height="536" fill="none" stroke="#F5F5F0" stroke-width="18" stroke-linejoin="round"/></svg>')
+
+FONTES = ("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700"
           "&family=Archivo+Black&family=Crimson+Pro:wght@400;600;700&family=Source+Sans+3:wght@400;600;700;800&display=block")
 
 # trama de papel (feTurbulence) — 4% de contraste, como nos vencedores
@@ -37,6 +42,38 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .f1 .texto{position:absolute;left:66px;right:66px;top:870px;height:360px;display:flex;align-items:center;justify-content:center}
 .f1 .texto p{font:700 66px/1.12 'Inter',sans-serif;letter-spacing:-.012em;color:#fff;text-align:center;text-wrap:balance}
 .f1 .handle{color:#8C8C8C}
+
+/* F1b · portal: foto em cima, divisor com emblema, manchete em caixa alta condensada com palavras amarelas */
+.f1b{background:#0b0b0b}
+.f1b .foto{position:absolute;left:0;top:0;width:1080px;height:1000px;object-fit:cover;object-position:var(--foco,50% 50%);filter:contrast(1.04) saturate(.95);
+  -webkit-mask-image:linear-gradient(to bottom,#000 0,#000 640px,rgba(0,0,0,.6) 820px,transparent 990px);mask-image:linear-gradient(to bottom,#000 0,#000 640px,rgba(0,0,0,.6) 820px,transparent 990px)}
+.f1b .grao{position:absolute;inset:0;background-image:url("__PAPEL__");opacity:.10;mix-blend-mode:overlay}
+.f1b .divisor{position:absolute;left:150px;right:150px;top:968px;height:64px;display:flex;align-items:center;gap:26px}
+.f1b .divisor i{flex:1;height:2px;background:rgba(255,255,255,.7)}
+.f1b .emblema{width:34px;height:64px}
+.f1b .texto{position:absolute;left:70px;right:70px;top:1046px;height:200px;display:flex;align-items:center;justify-content:center}
+.f1b .texto p{font:400 104px/.98 'Bebas Neue',sans-serif;letter-spacing:.005em;color:#fff;text-align:center;text-transform:uppercase;text-wrap:balance}
+.f1b .texto p .am{color:#FFD21F}
+.f1b .arraste{position:absolute;left:0;right:0;top:1276px;text-align:center;font:600 25px/1 'Barlow Condensed',sans-serif;letter-spacing:.06em;color:rgba(255,255,255,.85);text-transform:uppercase}
+.f1b .arraste b{color:#FFD21F;font-weight:700}
+.f1b .seta{position:absolute;right:46px;top:46px;width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center}
+.f1b .seta svg{width:26px;height:26px}
+
+/* F3a · foto cheia escurecida, frase pequena no centro (legenda de story) */
+.f3a,.f3b{background:#111}
+.f3a .foto,.f3b .foto{position:absolute;inset:0;width:1080px;height:1350px;object-fit:cover;object-position:var(--foco,50% 50%)}
+.f3a .foto{filter:brightness(.9) contrast(1.02) saturate(.9)}
+.f3a .vinheta{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,rgba(0,0,0,.28) 0,rgba(0,0,0,.08) 45%,rgba(0,0,0,.4) 100%)}
+.f3a .grao,.f3b .grao{position:absolute;inset:0;background-image:url("__PAPEL__");opacity:.16;mix-blend-mode:overlay}
+.f3a .texto{position:absolute;left:190px;right:190px;top:330px;height:420px;display:flex;align-items:center;justify-content:center}
+.f3a .texto p{font:500 46px/1.28 'Inter',sans-serif;color:#fff;text-align:center;text-shadow:0 2px 14px rgba(0,0,0,.55);text-wrap:balance}
+.f3a .handle,.f3b .handle{color:rgba(255,255,255,.72);text-shadow:0 1px 6px rgba(0,0,0,.5)}
+
+/* F3b · foto cheia, legenda grande no terço de baixo */
+.f3b .foto{filter:contrast(1.03) saturate(.92)}
+.f3b .sombra{position:absolute;left:0;right:0;bottom:0;height:720px;background:linear-gradient(to bottom,rgba(8,8,8,0) 0,rgba(8,8,8,.55) 38%,rgba(8,8,8,.88) 78%,rgba(8,8,8,.95) 100%)}
+.f3b .texto{position:absolute;left:74px;right:74px;top:840px;height:380px;display:flex;align-items:flex-end;justify-content:center}
+.f3b .texto p{font:700 62px/1.13 'Inter',sans-serif;letter-spacing:-.012em;color:#fff;text-align:center;text-wrap:balance}
 
 /* F2 · papel claro com texto corrido (o miolo que mais separa vencedor do resto) */
 .f2{background:#F1F0EC}
@@ -94,9 +131,9 @@ SVG_FILTROS = """<svg width="0" height="0" style="position:absolute"><filter id=
 <feDisplacementMap in="SourceGraphic" in2="t" scale="3"/></filter></svg>"""
 
 
-def marcar(txt: str) -> str:
+def marcar(txt: str, cor: bool = False) -> str:
     t = html.escape(txt, quote=False)
-    t = re.sub(r"\*\*(.+?)\*\*", r"<mark>\1</mark>", t)
+    t = re.sub(r"\*\*(.+?)\*\*", r'<span class="am">\1</span>' if cor else r"<mark>\1</mark>", t)
     t = re.sub(r"\[\[(.+?)\]\]", r'<span class="carimbo">\1</span>', t)
     return t
 
@@ -109,10 +146,10 @@ def paras(ps, cls=""):
 def _normalizar(s: dict) -> dict:
     s = dict(s)
     ps = [p for p in (s.get("paragrafos") or []) if p and p.strip()]
-    if not ps and s.get("texto") and s["molde"] != "capa_f1":
+    if not ps and s.get("texto") and not s["molde"].startswith("capa_"):
         ps = [p.strip() for p in re.split(r"\n\s*\n|\n", s["texto"]) if p.strip()]
     s["paragrafos"] = ps
-    if s["molde"] == "capa_f1" and not s.get("texto"):
+    if s["molde"].startswith("capa_") and not s.get("texto"):
         s["texto"] = " ".join(ps)
     return s
 
@@ -123,7 +160,21 @@ def slide_html(s: dict) -> str:
     if m == "capa_f1":
         foco = html.escape(s.get("foco") or "50% 60%")
         corpo = (f'<div class="slide f1"><img class="foto" src="{s["foto"]}" style="--foco:{foco}"><div class="degrade"></div><div class="grao"></div>'
-                 f'<div class="texto fit"><p>{marcar(s["texto"])}</p></div><div class="handle">{HANDLE}</div></div>')
+                 f'<div class="texto fit" data-max="82"><p>{marcar(s["texto"])}</p></div><div class="handle">{HANDLE}</div></div>')
+    elif m == "capa_f1b":
+        foco = html.escape(s.get("foco") or "50% 50%")
+        seta = '<svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="#111" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        corpo = (f'<div class="slide f1b"><img class="foto" src="{s["foto"]}" style="--foco:{foco}"><div class="grao"></div>'
+                 f'<div class="seta">{seta}</div><div class="divisor"><i></i>{PORTA}<i></i></div>'
+                 f'<div class="texto fit"><p>{marcar(s["texto"], cor=True)}</p></div>'
+                 f'<div class="arraste">Arrasta pro lado <b>&gt;&gt;&gt;&gt;</b></div></div>')
+    elif m in ("capa_f3a", "capa_f3b"):
+        foco = html.escape(s.get("foco") or "50% 50%")
+        cls = m[-3:]
+        extra = '<div class="vinheta"></div>' if cls == "f3a" else '<div class="sombra"></div>'
+        dmax = ' data-max="76"' if cls == "f3b" else ""
+        corpo = (f'<div class="slide {cls}"><img class="foto" src="{s["foto"]}" style="--foco:{foco}">{extra}<div class="grao"></div>'
+                 f'<div class="texto fit"{dmax}><p>{marcar(s["texto"])}</p></div><div class="handle">{HANDLE}</div></div>')
     elif m == "papel_f2":
         corpo = f'<div class="slide f2"><div class="texto fit" data-max="62">{paras(s["paragrafos"])}</div><div class="handle">{HANDLE}</div></div>'
     elif m == "preto_f5":
