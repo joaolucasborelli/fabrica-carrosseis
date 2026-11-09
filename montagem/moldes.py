@@ -16,6 +16,7 @@ PORTA = ('<svg class="emblema" viewBox="380 280 280 560" aria-hidden="true">'
          '<rect x="458" y="288" width="194" height="536" fill="none" stroke="#F5F5F0" stroke-width="18" stroke-linejoin="round"/></svg>')
 
 FONTES = ("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700"
+          "&family=Archivo:wdth,wght@62..125,500..900&family=Bitter:wght@400;600"
           "&family=Archivo+Black&family=Crimson+Pro:wght@400;600;700&family=Source+Sans+3:wght@400;600;700;800&display=block")
 
 # trama de papel (feTurbulence) — 4% de contraste, como nos vencedores
@@ -156,6 +157,135 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .tw2 .duas{position:absolute;left:58px;right:58px;top:690px;height:560px;display:flex;gap:22px}
 .tw2 .duas img{flex:1;min-width:0;height:100%;object-fit:cover;border-radius:26px;border:1px solid #e6e9ec}
 
+/* ===== KIT 2 (catálogo de 60 formatos, 09/11) ===== */
+.cond{font-family:'Archivo',sans-serif;font-weight:900;font-stretch:62%;text-transform:uppercase;line-height:.92}
+.assin{position:absolute;left:62px;right:62px;bottom:52px;display:flex;align-items:center;gap:18px;font:600 24px/1 'Inter',sans-serif;color:#F5F5F0}
+.assin::before,.assin::after{content:"";flex:1;height:2px;background:currentColor;opacity:.8}
+.assin img{width:46px;height:46px;border-radius:50%}
+/* capa · rostos em círculo */
+.circ{background:#0b0b0b}
+.circ .foto{position:absolute;inset:0 0 auto 0;width:1080px;height:980px;object-fit:cover;object-position:var(--foco,50% 35%);
+  -webkit-mask-image:linear-gradient(#000 0,#000 640px,transparent 960px);mask-image:linear-gradient(#000 0,#000 640px,transparent 960px)}
+.circ .bolas{position:absolute;right:56px;top:60px;display:flex;flex-direction:column;gap:22px}
+.circ .bolas img{width:300px;height:300px;border-radius:50%;object-fit:cover;border:7px solid #fff;box-shadow:0 10px 34px rgba(0,0,0,.55)}
+.circ .texto{position:absolute;left:62px;right:62px;top:900px;height:330px;display:flex;align-items:center;justify-content:center}
+.circ .texto p{font:400 104px/.96 'Bebas Neue',sans-serif;color:#fff;text-align:center;text-transform:uppercase;text-wrap:balance}
+.circ .texto .am{color:#FFD21F}
+/* capa · marca-texto amarelo sobre foto */
+.mt{background:#0a0a0a}
+.mt .foto{position:absolute;inset:0;width:1080px;height:1350px;object-fit:cover;object-position:var(--foco,50% 40%)}
+.mt .sombra{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,.15) 0,transparent 30%,transparent 42%,#0A0A0A 80%)}
+.mt .logo{position:absolute;left:70px;top:64px;width:210px}
+.mt .texto{position:absolute;left:84px;right:84px;top:700px;height:420px;display:flex;flex-direction:column;justify-content:flex-end}
+.mt .texto p{font:600 70px/1.2 'Inter',sans-serif;color:#111;letter-spacing:-.01em}
+.mt .texto p span.l{background:#FFD21F;padding:2px 12px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.mt .sub{position:absolute;left:84px;right:84px;top:1150px;font:700 38px/1.25 'Inter',sans-serif;color:#F5F5F0}
+/* capa · revista cor chapada + objeto */
+.rv{background:var(--bg,#F3EEDC);color:var(--tx,#111)}
+.rv .tit{position:absolute;left:52px;right:52px;top:70px;font-size:150px;color:var(--tx,#111)}
+.rv .tit u{text-decoration:none;border-bottom:8px solid #FFD21F}
+.rv .corpo{position:absolute;left:56px;width:560px;top:var(--ty,640px);bottom:150px;display:flex;flex-direction:column;justify-content:center}
+.rv .corpo p{font:500 46px/1.18 'Inter',sans-serif;color:var(--tx,#111)}
+.rv .corpo p+p{margin-top:.6em}
+.rv .corpo mark{background:#111;color:#F3EEDC;padding:0 .14em}
+.rv .obj{position:absolute;right:20px;bottom:120px;width:470px;height:720px;object-fit:contain;mix-blend-mode:multiply}
+.rv.escuro .obj{mix-blend-mode:normal;border-radius:24px}
+.rv .rodape{position:absolute;left:56px;bottom:56px;font:700 24px/1 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--tx,#111)}
+/* capa · número gigante */
+.ng{background:#0b0b0b}
+.ng .foto{position:absolute;inset:0;width:1080px;height:1350px;object-fit:cover;object-position:var(--foco,50% 45%);filter:brightness(.45) saturate(.9)}
+.ng .num{position:absolute;left:30px;right:30px;top:300px;text-align:center;color:#FFD21F;font-size:270px;text-shadow:0 8px 40px rgba(0,0,0,.6)}
+.ng .num small{display:block;font-size:110px;color:#F5F5F0;margin-top:10px}
+.ng .faixa{position:absolute;left:0;right:0;top:860px;display:flex;justify-content:center}
+.ng .faixa span{background:#FFD21F;color:#111;font:800 34px/1.25 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.02em;padding:12px 22px;max-width:900px;text-align:center}
+.ng .texto{position:absolute;left:84px;right:84px;top:990px;font:600 44px/1.25 'Inter',sans-serif;color:#F5F5F0;text-align:center}
+/* capa · caderno com faixa */
+.cad{background:#2a2621}
+.cad .foto{position:absolute;inset:-12px;width:1104px;height:1374px;object-fit:cover;filter:blur(1.6px) brightness(.92)}
+.cad .faixa{position:absolute;left:0;right:0;top:var(--fy,430px);min-height:430px;background:rgba(17,17,17,.93);display:flex;align-items:center;padding:50px 74px}
+.cad .faixa p{font:400 58px/1.45 'Bitter',serif;color:#F5F5F0}
+.cad .faixa p .am{color:#FFD21F;font-weight:600}
+.cad .handle{color:#F5F5F0;opacity:.85}
+/* miolo · F1 corrido */
+.fc{background:#000}
+.fc .foto{position:absolute;inset:0 0 auto 0;width:1080px;height:780px;object-fit:cover;object-position:var(--foco,50% 40%);
+  -webkit-mask-image:linear-gradient(#000 0,#000 600px,transparent 770px);mask-image:linear-gradient(#000 0,#000 600px,transparent 770px)}
+.fc .texto{position:absolute;left:40px;right:40px;top:735px;height:470px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.fc .texto p{font:700 60px/1.12 'Inter',sans-serif;color:#fff;text-align:center;text-wrap:balance}
+.fc .texto p+p{margin-top:.5em}
+.fc .assin{bottom:40px;color:#BDBDBD}
+/* miolo · meia tela */
+.mtela{background:#111}
+.mtela .col{position:absolute;top:0;bottom:0;width:540px;padding:0 44px;display:flex;flex-direction:column;justify-content:center}
+.mtela .col p{font:400 37px/1.38 'Inter',sans-serif;color:#F5F5F0}
+.mtela .col p+p{margin-top:26px}
+.mtela .col b,.mtela .col .am{color:#FFD21F;font-weight:700}
+.mtela .foto{position:absolute;top:0;bottom:0;width:540px;height:1350px;object-fit:cover;object-position:var(--foco,50% 40%)}
+.mtela.esq .col{left:0}.mtela.esq .foto{right:0}.mtela.dir .col{right:0}.mtela.dir .foto{left:0}
+.mtela .handle{width:540px;text-align:left;padding-left:44px;font-size:20px;color:#777}.mtela.dir .handle{left:540px}
+/* miolo · faixa amarela */
+.fx{background:#F5F5F0}
+.fx .texto{position:absolute;left:0;right:0;top:150px;bottom:180px;display:flex;flex-direction:column;justify-content:center;gap:42px}
+.fx .texto p{font:400 52px/1.12 'Inter',sans-serif;color:#13161b;letter-spacing:-.02em;padding:0 100px}
+.fx .texto p.faixa{background:#FFD21F;margin-left:84px;padding:40px 60px 40px 40px;font-weight:800;font-size:50px;line-height:1.12}
+.fx .seta{position:absolute;left:115px;right:110px;bottom:120px;height:2px;background:#8A99AA}
+.fx .seta::after{content:"";position:absolute;right:-2px;top:-7px;border:8px solid transparent;border-left:14px solid #8A99AA}
+.fx .handle{color:#8E8E8E}
+/* miolo · foto + legenda-adesivo */
+.stk{background:#111}
+.stk .foto{position:absolute;inset:0;width:1080px;height:1350px;object-fit:cover;object-position:var(--foco,50% 45%)}
+.stk .texto{position:absolute;left:90px;right:90px;top:var(--sy,860px);display:flex;flex-direction:column;align-items:center;gap:0}
+.stk .texto p{text-align:center}
+.stk .texto p span{background:#fff;color:#111;font:600 42px/1.5 'Inter',sans-serif;padding:6px 16px;border-radius:12px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.stk .handle{color:rgba(255,255,255,.8);text-shadow:0 1px 6px #000}
+/* miolo · antes e hoje empilhados */
+.ah{background:#0b0b0b}
+.ah .meia{position:absolute;left:0;right:0;height:560px;overflow:hidden}
+.ah .meia img{width:100%;height:100%;object-fit:cover;object-position:var(--foco,50% 40%)}
+.ah .m1{top:0}.ah .m2{top:566px}
+.ah .rot{position:absolute;left:40px;top:34px;font:400 64px/1 'Bebas Neue',sans-serif;padding:10px 20px 6px;border-radius:8px}
+.ah .m1 .rot{background:rgba(17,17,17,.88);color:#F5F5F0}.ah .m2 .rot{background:#FFD21F;color:#111}
+.ah .texto{position:absolute;left:70px;right:70px;top:1140px;height:150px;display:flex;align-items:center;justify-content:center}
+.ah .texto p{font:700 44px/1.2 'Inter',sans-serif;color:#F5F5F0;text-align:center}
+/* miolo · lista com linhas sobre foto escura */
+.ll{background:#0b0b0b}
+.ll .foto{position:absolute;inset:0;width:1080px;height:1350px;object-fit:cover;filter:brightness(.6)}
+.ll .veu{position:absolute;inset:0;background:rgba(10,10,10,.82)}
+.ll .chapeu{position:absolute;left:84px;top:150px;display:flex;align-items:center;gap:16px;font:800 28px/1 'Archivo',sans-serif;letter-spacing:.22em;color:#FFD21F;text-transform:uppercase}
+.ll .chapeu::before{content:"";width:40px;height:4px;background:#FFD21F}
+.ll .tit{position:absolute;left:84px;right:84px;top:205px;font:400 116px/.95 'Bebas Neue',sans-serif;color:#fff;text-transform:uppercase}
+.ll .linhas{position:absolute;left:84px;right:84px;top:var(--ly,470px);bottom:150px;display:flex;flex-direction:column;justify-content:center}
+.ll .lin{display:flex;align-items:center;gap:30px;min-height:120px;border-bottom:2px solid rgba(255,255,255,.28)}
+.ll .lin b{font:400 64px/1 'Bebas Neue',sans-serif;color:#FFD21F;width:64px}
+.ll .lin span{font:500 38px/1.25 'Inter',sans-serif;color:#fff}
+.ll .barra{position:absolute;left:0;bottom:0;height:10px;background:#FFD21F}
+.ll .handle{color:#cfcfcb;top:1290px}
+/* miolo · conta visual */
+.cv{background:#111}
+.cv .tit{position:absolute;left:70px;right:70px;top:110px;text-align:center;font-size:104px;color:#F5F5F0}
+.cv .conta{position:absolute;left:110px;right:110px;top:300px;bottom:170px;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:10px}
+.cv .cx{background:#1b1d22;border:2px solid #2c2f36;border-radius:22px;padding:22px 34px;display:flex;align-items:baseline;justify-content:space-between;gap:20px}
+.cv .cx b{font:900 72px/1 'Archivo',sans-serif;font-stretch:80%;color:#F5F5F0}
+.cv .cx span{font:500 30px/1.2 'Inter',sans-serif;color:#b8bcc4;text-align:right}
+.cv .op{text-align:center;font:800 46px/1 'Inter',sans-serif;color:#FFD21F}
+.cv .cx.fim{background:#FFD21F;border-color:#FFD21F}.cv .cx.fim b,.cv .cx.fim span{color:#111}
+/* miolo · citação com assinatura */
+.ct{background:#000}
+.ct .aspas{position:absolute;left:84px;top:170px;font:900 260px/1 'Archivo',sans-serif;color:#FFD21F}
+.ct .texto{position:absolute;left:96px;right:96px;top:330px;bottom:330px;display:flex;align-items:center}
+.ct .texto p{font:700 58px/1.22 'Inter',sans-serif;color:#fff;letter-spacing:-.01em}
+.ct .ass{position:absolute;left:96px;bottom:170px;display:flex;align-items:center;gap:20px}
+.ct .ass i{width:76px;height:76px;border-radius:50%;background:#FFD21F;color:#111;font:900 34px/76px 'Archivo',sans-serif;text-align:center;font-style:normal}
+.ct .ass b{display:block;font:700 30px/1.2 'Inter',sans-serif;color:#fff}.ct .ass span{display:block;font:400 26px/1.3 'Inter',sans-serif;color:#c9c9c4}
+/* fechamento · foto + caixa branca */
+.fcb{background:#111}
+.fcb .foto{position:absolute;inset:0;width:1080px;height:1350px;object-fit:cover;object-position:var(--foco,50% 40%);filter:brightness(.8)}
+.fcb .caixa{position:absolute;left:80px;right:80px;bottom:150px;background:#fff;border-radius:26px;padding:44px 48px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.fcb .caixa p{font:500 40px/1.3 'Inter',sans-serif;color:#111}
+.fcb .caixa p+p{margin-top:.5em}
+.fcb .caixa .carimbo2{display:inline-block;background:#FFD21F;color:#111;font:900 54px/1 'Archivo',sans-serif;padding:10px 18px 8px;border-radius:10px;margin:0 6px}
+.fcb .caixa .siga{font:700 30px/1 'Inter',sans-serif;color:#555;margin-top:24px}
+
 /* F3a · foto cheia escurecida, frase pequena no centro (legenda de story) */
 .f3a,.f3b{background:#111}
 .f3a .foto,.f3b .foto{position:absolute;inset:0;width:1080px;height:1350px;object-fit:cover;object-position:var(--foco,50% 50%)}
@@ -255,6 +385,125 @@ def paras(ps, cls=""):
     return "".join(f"<p{c}>{marcar(p)}</p>" for p in ps)
 
 
+# ---------- KIT 2: moldes do catálogo de 60 formatos ----------
+def _foco(s, padrao="50% 40%"):
+    return html.escape(s.get("foco") or padrao)
+
+
+def _assin():
+    return f'<div class="assin"><img src="{AVATAR}">{HANDLE}</div>'
+
+
+def _k_circulos(s):
+    bolas = "".join(f'<img src="{u}">' for u in (s.get("fotos_circulo") or [])[:2])
+    return (f'<div class="slide circ"><img class="foto" src="{s["foto"]}" style="--foco:{_foco(s,"50% 30%")}"><div class="bolas">{bolas}</div>'
+            f'<div class="texto fit"><p>{marcar(s["texto"], cor=True)}</p></div><div class="handle" style="color:#8C8C8C">{HANDLE}</div></div>')
+
+
+def _k_marcatexto(s):
+    linhas = "".join(f'<span class="l">{marcar(l)}</span><br>' for l in re.split(r"\n+", s["texto"]) if l.strip())
+    sub = f'<div class="sub">{marcar(s["sub"])}</div>' if s.get("sub") else ""
+    return (f'<div class="slide mt"><img class="foto" src="{s["foto"]}" style="--foco:{_foco(s)}"><div class="sombra"></div>'
+            f'<img class="logo" src="{LOGO}"><div class="texto fit"><p>{linhas}</p></div>{sub}</div>')
+
+
+def _k_revista(s):
+    cores = {"creme": ("#F3EEDC", "#111"), "preto": ("#111", "#F3EEDC"), "amarelo": ("#FFD21F", "#111"), "lilas": ("#B49CFF", "#111")}
+    bg, tx = cores.get(s.get("cor") or "creme", cores["creme"])
+    tit = marcar(s.get("titulo", ""), cor=False).replace("<mark>", "<u>").replace("</mark>", "</u>")
+    obj = f'<img class="obj" src="{s["foto"]}">' if s.get("foto") else ""
+    esc_cls = " escuro" if (s.get("cor") == "preto") else ""
+    return (f'<div class="slide rv{esc_cls}" style="--bg:{bg};--tx:{tx}"><div class="tit cond">{tit}</div>{obj}'
+            f'<div class="corpo fit" data-max="52">{paras(s.get("paragrafos") or [])}</div><div class="rodape">{HANDLE}</div></div>')
+
+
+def _k_numero(s):
+    linhas = (s.get("numero") or "").split("\n")
+    num = html.escape(linhas[0]) + (f"<small>{html.escape(linhas[1])}</small>" if len(linhas) > 1 else "")
+    faixa = f'<div class="faixa"><span>{html.escape(s.get("faixa",""))}</span></div>' if s.get("faixa") else ""
+    txt = f'<div class="texto">{marcar(s.get("texto",""))}</div>' if s.get("texto") else ""
+    return (f'<div class="slide ng"><img class="foto" src="{s["foto"]}" style="--foco:{_foco(s)}"><div class="num cond">{num}</div>{faixa}{txt}'
+            f'<div class="handle" style="color:#bdbdbd">{HANDLE}</div></div>')
+
+
+def _k_caderno(s):
+    return (f'<div class="slide cad"><img class="foto" src="{s["foto"]}"><div class="faixa"><p>{marcar(s["texto"], cor=True)}</p></div>'
+            f'<div class="handle">{HANDLE}</div></div>')
+
+
+def _k_corrido(s):
+    ps = s.get("paragrafos") or [s.get("texto", "")]
+    return (f'<div class="slide fc"><img class="foto" src="{s["foto"]}" style="--foco:{_foco(s)}">'
+            f'<div class="texto fit" data-max="66">{"".join(f"<p>{marcar(p, cor=True)}</p>" for p in ps)}</div>{_assin()}</div>')
+
+
+def _k_meiatela(s):
+    lado = "dir" if s.get("lado") == "dir" else "esq"
+    ps = s.get("paragrafos") or [s.get("texto", "")]
+    return (f'<div class="slide mtela {lado}"><div class="col fit" data-max="42">{"".join(f"<p>{marcar(p, cor=True)}</p>" for p in ps)}</div>'
+            f'<img class="foto" src="{s["foto"]}" style="--foco:{_foco(s)}"><div class="handle">{HANDLE}</div></div>')
+
+
+def _k_faixa(s):
+    antes = "".join(f"<p>{marcar(p)}</p>" for p in (s.get("antes") or []))
+    depois = "".join(f"<p>{marcar(p)}</p>" for p in (s.get("depois") or []))
+    return (f'<div class="slide fx"><div class="texto fit">{antes}<p class="faixa">{marcar(s.get("faixa",""))}</p>{depois}</div>'
+            f'<div class="seta"></div><div class="handle">{HANDLE}</div></div>')
+
+
+def _k_sticker(s):
+    ps = s.get("paragrafos") or [s.get("texto", "")]
+    return (f'<div class="slide stk"><img class="foto" src="{s["foto"]}" style="--foco:{_foco(s)}">'
+            f'<div class="texto">{"".join(f"<p><span>{marcar(p)}</span></p>" for p in ps)}</div><div class="handle">{HANDLE}</div></div>')
+
+
+def _k_antes_hoje(s):
+    f1, f2 = (s.get("fotos") or [s.get("foto"), s.get("foto")])[:2]
+    r1, r2 = (s.get("rotulos") or ["Antes", "Hoje"])[:2]
+    return (f'<div class="slide ah"><div class="meia m1"><img src="{f1}"><div class="rot">{html.escape(r1)}</div></div>'
+            f'<div class="meia m2"><img src="{f2}"><div class="rot">{html.escape(r2)}</div></div>'
+            f'<div class="texto fit"><p>{marcar(s.get("texto",""))}</p></div></div>')
+
+
+def _k_lista(s):
+    lins = "".join(f'<div class="lin"><b>{i}</b><span>{marcar(t)}</span></div>' for i, t in enumerate(s.get("itens") or [], 1))
+    fundo = f'<img class="foto" src="{s["foto"]}">' if s.get("foto") else ""
+    prog = s.get("progresso") or 0
+    return (f'<div class="slide ll">{fundo}<div class="veu"></div><div class="chapeu">{html.escape(s.get("chapeu",""))}</div>'
+            f'<div class="tit">{marcar(s.get("titulo",""), cor=True)}</div><div class="linhas">{lins}</div>'
+            f'<div class="barra" style="width:{max(0,min(1,prog))*100:.0f}%"></div><div class="handle">{HANDLE}</div></div>')
+
+
+def _k_conta(s):
+    partes = []
+    for i, c in enumerate(s.get("caixas") or []):
+        if i and c.get("op"):
+            partes.append(f'<div class="op">{html.escape(c["op"])}</div>')
+        partes.append(f'<div class="cx{" fim" if c.get("fim") else ""}"><b>{html.escape(c["valor"])}</b><span>{html.escape(c.get("rotulo",""))}</span></div>')
+    return (f'<div class="slide cv"><div class="tit cond">{marcar(s.get("titulo",""), cor=True)}</div><div class="conta">{"".join(partes)}</div>{_assin()}</div>')
+
+
+def _k_citacao(s):
+    nome = s.get("nome", ""); ini = (nome[:1] or "•").upper()
+    return (f'<div class="slide ct"><div class="aspas">“</div><div class="texto fit" data-max="64"><p>{marcar(s.get("texto",""), cor=True)}</p></div>'
+            f'<div class="ass"><i>{html.escape(ini)}</i><div><b>{html.escape(nome)}</b><span>{html.escape(s.get("papel",""))}</span></div></div>{_assin()}</div>')
+
+
+def _k_fecho(s):
+    ps = s.get("paragrafos") or [s.get("texto", "")]
+    corpo = "".join(f"<p>{marcar(p)}</p>" for p in ps).replace('class="carimbo"', 'class="carimbo2"')
+    return (f'<div class="slide fcb"><img class="foto" src="{s["foto"]}" style="--foco:{_foco(s)}"><div class="caixa">{corpo}'
+            f'<div class="siga">Siga {HANDLE}</div></div></div>')
+
+
+KIT2 = {
+    "capa_circulos": _k_circulos, "capa_marcatexto": _k_marcatexto, "capa_revista": _k_revista, "capa_numero": _k_numero,
+    "capa_caderno": _k_caderno, "f1_corrido": _k_corrido, "meia_tela": _k_meiatela, "faixa_amarela": _k_faixa,
+    "foto_sticker": _k_sticker, "antes_hoje": _k_antes_hoje, "lista_linhas": _k_lista, "conta_visual": _k_conta,
+    "citacao": _k_citacao, "fecho_foto": _k_fecho, "miolo_revista": _k_revista,
+}
+
+
 def _normalizar(s: dict) -> dict:
     s = dict(s)
     ps = [p for p in (s.get("paragrafos") or []) if p and p.strip()]
@@ -335,6 +584,8 @@ def slide_html(s: dict) -> str:
             caixa = f'<div class="caixa">{marcar(s["caixa"])}</div>' if s.get("caixa") else ""
             corpo = (f'<div class="slide esc rd"><div class="tit">{tit}</div><div class="lista">{lista}</div>'
                      f'<div class="rede">{svg}<div class="centro">{html.escape(s.get("centro","VOCÊ"))}</div>{nos_html}</div>{caixa}{rod}</div>')
+    elif m in KIT2:
+        corpo = KIT2[m](s)
     elif m in ("capa_f3a", "capa_f3b"):
         foco = html.escape(s.get("foco") or "50% 50%")
         cls = m[-3:]
