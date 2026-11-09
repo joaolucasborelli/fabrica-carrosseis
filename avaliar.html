@@ -66,7 +66,8 @@ a{color:var(--am)}
 const sb=supabase.createClient("https://kfvugtrjuqdakbpzvsxq.supabase.co","sb_publishable_hMCt4kaGtY75gMEb3aRi-g_Xh3OkPhx");
 const BOM=["Gancho forte","Texto curto e claro","Foto realista","Foto conta a história","Layout / molde","Emoção","Cara da marca","Letra legível"];
 const RUIM=["Gancho fraco","Texto longo","Foto artificial","Foto não combina","Layout feio","Sem emoção","Clichê","Letra difícil de ler","Parece anúncio"];
-const ROT={capa_f1:"Foto + manchete no preto",capa_f1b:"Portal (caixa alta)",capa_f3a:"Foto cheia · frase no centro",capa_f3b:"Foto cheia · legenda embaixo"};
+const ROT={capa_f1:"Foto + manchete no preto",capa_f1b:"Portal (caixa alta)",capa_perfil:"Portal com o nosso perfil",capa_comparacao:"Comparação cortada ao meio",capa_tweet:"Print de tweet + foto",capa_f3a:"Foto cheia · frase no centro",capa_f3b:"Foto cheia · legenda embaixo"};
+const EST={foto_real:"foto real",famoso:"famoso",ilustracao:"ilustração",produto:"produto"};
 let T=[],A={};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 async function iniciar(){
@@ -89,7 +90,8 @@ async function carregar(lote){
 function card(t,url){const a=A[t.id];
   return `<article class="card ${a.nota!=null?"feito":""}" id="c${t.id}">
    <div class="img" data-zoom="${esc(url)}"><img src="${esc(url)}" alt="Capa ${t.ordem}" loading="lazy"><span class="num">${t.ordem}</span><span class="selo">${a.nota??""}</span></div>
-   <div class="corpo"><div class="meta">${esc(ROT[t.molde]||t.molde)} · ${esc(t.tipo)} · ${esc(t.persona)} · ${esc(t.assunto)}</div>
+   <div class="corpo"><div class="meta">${esc(ROT[t.molde]||t.molde)}${t.extra&&t.extra.estilo?" · "+esc(EST[t.extra.estilo]||t.extra.estilo):""} · ${esc(t.tipo)} · ${esc(t.persona)} · ${esc(t.assunto)}${t.extra&&t.extra.marca?" · marca: "+esc(t.extra.marca):""}</div>
+    ${t.extra&&t.extra.famoso?`<div class="pq"><b>Famoso:</b> ${esc(t.extra.famoso)}. <b>Fato usado:</b> ${esc(t.extra.fato)}</div>`:""}
     <div class="pq"><b>Por que deve parar o dedo:</b> ${esc(t.por_que)}</div>
     <div class="lab">Nota</div><div class="notas">${[...Array(11).keys()].map(n=>`<button type="button" data-nota="${t.id}:${n}" class="${a.nota===n?"on":""}">${n}</button>`).join("")}</div>
     <div class="lab">O que funcionou</div><div class="chips bom">${BOM.map(x=>`<button type="button" data-chip="${t.id}|gostei|${esc(x)}" class="${a.gostei.includes(x)?"on":""}">${esc(x)}</button>`).join("")}</div>

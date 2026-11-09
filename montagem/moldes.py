@@ -7,6 +7,7 @@ import html, re
 from pathlib import Path
 
 LOGO = (Path(__file__).resolve().parent / "assets" / "logo-horizontal.svg").as_uri()
+AVATAR = (Path(__file__).resolve().parent / "assets" / "logo-perfil.svg").as_uri()
 HANDLE = "@ahistoriaquemuda"
 
 PORTA = ('<svg class="emblema" viewBox="380 280 280 560" aria-hidden="true">'
@@ -58,6 +59,47 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .f1b .arraste b{color:#FFD21F;font-weight:700}
 .f1b .seta{position:absolute;right:46px;top:46px;width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center}
 .f1b .seta svg{width:26px;height:26px}
+
+/* Perfil · portal com o nosso perfil no divisor (estilo das páginas de IA que o dono mandou) */
+.perfil{background:#0b0b0b}
+.perfil .foto{position:absolute;left:0;top:0;width:1080px;height:960px;object-fit:cover;object-position:var(--foco,50% 40%);filter:contrast(1.04) saturate(.96);
+  -webkit-mask-image:linear-gradient(to bottom,#000 0,#000 640px,rgba(0,0,0,.55) 820px,transparent 950px);mask-image:linear-gradient(to bottom,#000 0,#000 640px,rgba(0,0,0,.55) 820px,transparent 950px)}
+.perfil .grao{position:absolute;inset:0;background-image:url("__PAPEL__");opacity:.08;mix-blend-mode:overlay}
+.perfil .divisor{position:absolute;left:60px;right:60px;top:880px;height:76px;display:flex;align-items:center;gap:22px}
+.perfil .divisor i{flex:1;height:2px;background:rgba(255,255,255,.55)}
+.perfil .chip{display:flex;align-items:center;gap:14px}
+.perfil .chip img{width:66px;height:66px;border-radius:50%;border:2px solid rgba(255,255,255,.85)}
+.perfil .chip b{display:block;font:700 27px/1.1 'Inter',sans-serif;color:#fff}
+.perfil .chip span{display:block;font:400 21px/1.2 'Inter',sans-serif;color:#a6a9ae}
+.perfil .texto{position:absolute;left:56px;right:56px;top:972px;height:280px;display:flex;align-items:center;justify-content:center}
+.perfil .texto p{font:400 92px/.98 'Bebas Neue',sans-serif;color:#fff;text-align:center;text-transform:uppercase;text-wrap:balance}
+.perfil .texto p .am{color:#FFD21F}
+.perfil .arraste{position:absolute;left:0;right:0;top:1282px;text-align:center;font:600 26px/1 'Barlow Condensed',sans-serif;letter-spacing:.06em;color:#fff;text-transform:uppercase}
+
+/* Comparação · foto cortada ao meio (antes x depois), rótulos e manchete no preto */
+.comp{background:#0b0b0b}
+.comp .foto{position:absolute;left:0;top:0;width:1080px;height:880px;object-fit:cover;object-position:var(--foco,50% 45%);filter:contrast(1.04) saturate(.95);
+  -webkit-mask-image:linear-gradient(to bottom,#000 0,#000 700px,transparent 875px);mask-image:linear-gradient(to bottom,#000 0,#000 700px,transparent 875px)}
+.comp .corte{position:absolute;left:537px;top:0;width:6px;height:800px;background:#0b0b0b}
+.comp .rot{position:absolute;top:48px;font:700 34px/1 'Barlow Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:12px 20px 10px;border-radius:8px}
+.comp .rot.e{left:44px;background:rgba(17,17,17,.88);color:#F5F5F0}
+.comp .rot.d{right:44px;background:#FFD21F;color:#111}
+.comp .texto{position:absolute;left:66px;right:66px;top:850px;height:390px;display:flex;align-items:center;justify-content:center}
+.comp .texto p{font:700 66px/1.12 'Inter',sans-serif;letter-spacing:-.012em;color:#fff;text-align:center;text-wrap:balance}
+.comp .handle{color:#8C8C8C}
+
+/* Tweet · print de post da NOSSA conta (sem selo de verificado) com foto embaixo */
+.tw{background:#fff}
+.tw .topo{position:absolute;left:84px;top:96px;display:flex;align-items:center;gap:26px}
+.tw .topo img{width:128px;height:128px;border-radius:50%}
+.tw .topo b{display:block;font:800 46px/1.1 'Inter',sans-serif;color:#0f1419}
+.tw .topo span{display:block;font:400 34px/1.3 'Inter',sans-serif;color:#536471}
+.tw .texto{position:absolute;left:84px;right:84px;top:280px;height:430px;display:flex;flex-direction:column;justify-content:center}
+.tw .texto p{font:400 58px/1.24 'Inter',sans-serif;color:#0f1419;letter-spacing:-.01em}
+.tw .texto p+p{margin-top:.6em}
+.tw .texto mark{background:none;color:#0f1419;font-weight:800;padding:0;margin:0}
+.tw .img{position:absolute;left:84px;right:84px;top:740px;height:520px;border-radius:30px;overflow:hidden;border:1px solid #e6e9ec}
+.tw .img img{width:100%;height:100%;object-fit:cover;object-position:var(--foco,50% 45%)}
 
 /* F3a · foto cheia escurecida, frase pequena no centro (legenda de story) */
 .f3a,.f3b{background:#111}
@@ -168,6 +210,22 @@ def slide_html(s: dict) -> str:
                  f'<div class="seta">{seta}</div><div class="divisor"><i></i>{PORTA}<i></i></div>'
                  f'<div class="texto fit"><p>{marcar(s["texto"], cor=True)}</p></div>'
                  f'<div class="arraste">Arrasta pro lado <b>&gt;&gt;&gt;&gt;</b></div></div>')
+    elif m == "capa_perfil":
+        foco = html.escape(s.get("foco") or "50% 40%")
+        corpo = (f'<div class="slide perfil"><img class="foto" src="{s["foto"]}" style="--foco:{foco}"><div class="grao"></div>'
+                 f'<div class="divisor"><i></i><div class="chip"><img src="{AVATAR}"><div><b>A História que Muda</b><span>{HANDLE}</span></div></div><i></i></div>'
+                 f'<div class="texto fit"><p>{marcar(s["texto"], cor=True)}</p></div><div class="arraste">Deslize e veja &gt;&gt;&gt;</div></div>')
+    elif m == "capa_comparacao":
+        foco = html.escape(s.get("foco") or "50% 45%")
+        e, d = (s.get("rotulos") or ["Antes", "Depois"])[:2]
+        corpo = (f'<div class="slide comp"><img class="foto" src="{s["foto"]}" style="--foco:{foco}"><div class="corte"></div>'
+                 f'<div class="rot e">{html.escape(e)}</div><div class="rot d">{html.escape(d)}</div>'
+                 f'<div class="texto fit" data-max="80"><p>{marcar(s["texto"])}</p></div><div class="handle">{HANDLE}</div></div>')
+    elif m == "capa_tweet":
+        foco = html.escape(s.get("foco") or "50% 45%")
+        ps = [p.strip() for p in re.split(r"\n+", s["texto"]) if p.strip()]
+        corpo = (f'<div class="slide tw"><div class="topo"><img src="{AVATAR}"><div><b>A História que Muda</b><span>{HANDLE}</span></div></div>'
+                 f'<div class="texto fit" data-max="66">{paras(ps)}</div><div class="img"><img src="{s["foto"]}" style="--foco:{foco}"></div></div>')
     elif m in ("capa_f3a", "capa_f3b"):
         foco = html.escape(s.get("foco") or "50% 50%")
         cls = m[-3:]

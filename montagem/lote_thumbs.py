@@ -40,7 +40,8 @@ slides = []
 for c in capas:
     f = saida / f"{c['ordem']:02d}_foto.png"
     if f.exists():
-        slides.append({"molde": c["molde"], "foto": f.as_uri(), "foco": c.get("foco"), "texto": c["texto"], "_c": c})
+        slides.append({"molde": c["molde"], "foto": f.as_uri(), "foco": c.get("foco"), "texto": c["texto"],
+                       "rotulos": (c.get("extra") or {}).get("rotulos"), "_c": c})
 feitos = renderizar([{k: v for k, v in s.items() if k != "_c"} for s in slides], saida / "capas")
 for s, f in zip(slides, feitos):
     c = s["_c"]; destino = f"thumbs/{nome}/{c['ordem']:02d}.png"
