@@ -384,6 +384,17 @@ FIT_JS = """
       el.style.top = (parseFloat(getComputedStyle(el).top) + extra) + 'px';
     }
   }
+  // subtítulo: no máximo 2 linhas (encolhe) e o bloco de baixo nunca encosta nele
+  for (const s of document.querySelectorAll('.esc, .cv, .ll, .rv')) {
+    const sub = s.querySelector(':scope > .sub'); if (!sub) continue;
+    const alt = () => { const lh = parseFloat(getComputedStyle(sub).lineHeight) || parseFloat(getComputedStyle(sub).fontSize) * 1.3; return sub.getBoundingClientRect().height / lh; };
+    let fs = parseFloat(getComputedStyle(sub).fontSize), g = 0;
+    while (alt() > 2.2 && fs > 26 && g++ < 30) { fs *= 0.95; sub.style.fontSize = fs + 'px'; }
+    const fim = sub.getBoundingClientRect().bottom - s.getBoundingClientRect().top + 30;
+    for (const el of s.querySelectorAll(':scope > .cards, :scope > .corpo, :scope > .itens, :scope > .lista, :scope > .conta, :scope > .linhas, :scope > .moldura')) {
+      const t = parseFloat(getComputedStyle(el).top); if (!isNaN(t) && t < fim) el.style.top = fim + 'px';
+    }
+  }
   // valores grandes das caixas: numa linha só, encolhendo; se ainda não couber, quebram em 2 linhas
   // valor nunca encosta no círculo do operador: o tamanho acompanha a altura da caixa
   for (const b of document.querySelectorAll('.cv .cx b')) {
