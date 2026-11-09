@@ -29,8 +29,10 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 
 /* F1 · foto em cima, manchete branca no bloco preto */
 .f1{background:#0b0b0b}
-.f1 .foto{position:absolute;left:0;top:0;width:1080px;height:860px;object-fit:cover;object-position:var(--foco,50% 60%);filter:contrast(1.04) saturate(.92)}
-.f1 .degrade{position:absolute;left:0;right:0;top:770px;height:110px;background:linear-gradient(to bottom,rgba(11,11,11,0) 0%,rgba(11,11,11,.8) 60%,#0b0b0b 100%)}
+.f1 .foto{position:absolute;left:0;top:0;width:1080px;height:920px;object-fit:cover;object-position:var(--foco,50% 60%);filter:contrast(1.04) saturate(.92);
+  -webkit-mask-image:linear-gradient(to bottom,#000 0,#000 560px,rgba(0,0,0,.82) 680px,rgba(0,0,0,.35) 800px,transparent 900px);
+          mask-image:linear-gradient(to bottom,#000 0,#000 560px,rgba(0,0,0,.82) 680px,rgba(0,0,0,.35) 800px,transparent 900px)}
+.f1 .degrade{position:absolute;left:0;right:0;top:0;height:920px;background:linear-gradient(to bottom,rgba(11,11,11,.18) 0,rgba(11,11,11,0) 160px,rgba(11,11,11,0) 600px,rgba(11,11,11,.55) 800px,#0b0b0b 920px)}
 .f1 .grao{position:absolute;inset:0;background-image:url("__PAPEL__");opacity:.10;mix-blend-mode:overlay}
 .f1 .texto{position:absolute;left:66px;right:66px;top:870px;height:360px;display:flex;align-items:center;justify-content:center}
 .f1 .texto p{font:700 66px/1.12 'Inter',sans-serif;letter-spacing:-.012em;color:#fff;text-align:center;text-wrap:balance}
