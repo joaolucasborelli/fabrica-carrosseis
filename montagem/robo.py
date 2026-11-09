@@ -29,12 +29,12 @@ def _cabecalho():
 _CAB = None
 
 
-def chamar(corpo, timeout=200):
+def chamar(corpo, timeout=200, url=None):
     global _CAB
     if _CAB is None or "x-github-oidc" in _CAB and time.time() - _CAB.get("_t", 0) > 240:
         _CAB = _cabecalho(); _CAB["_t"] = time.time()
     cab = {k: v for k, v in _CAB.items() if k != "_t"}
-    req = urllib.request.Request(URL, data=json.dumps(corpo).encode(), method="POST",
+    req = urllib.request.Request(url or URL, data=json.dumps(corpo).encode(), method="POST",
                                  headers={"Content-Type": "application/json", **cab})
     for tentativa in range(4):
         try:
@@ -64,12 +64,12 @@ def montar(post_id: int):
     if not d.get("ok"):
         raise RuntimeError(f"diagramar: {d}")
     ficha = d["ficha"]; passos.append(f"diagramado por {ficha.get('modelo')} {d.get('log') or ''}".strip())
-    img = chamar({"acao": "imagem", "post_id": post_id})
-    if not img.get("ok"):
-        raise RuntimeError(f"imagem: {img}")
-    passos.append(f"foto {img.get('modelo')} em {img.get('segundos')}s")
+    from foto_fiel import foto_fiel  # diretor de cena -> foto -> conferente (visão) -> correção
+    capa = next((s for s in ficha["slides"] if s["molde"].startswith("capa_")), ficha["slides"][0])
+    ff = foto_fiel(capa.get("texto", ""), capa["molde"], ficha.get("foto_prompt", ""), f"post_{post_id}/foto", log=lambda *_: None)
+    passos.append(f"foto conferida nota {ff['nota']} ({len(ff['historico'])} conferências)")
     pasta = SAIDA / f"post_{post_id}"; pasta.mkdir(parents=True, exist_ok=True)
-    foto = pasta / "foto.png"; baixar(img["caminho"], foto)
+    foto = pasta / "foto.png"; baixar(ff["melhor"], foto)
     slides = ficha["slides"]
     for s in slides:
         if s["molde"] == "capa_f1":

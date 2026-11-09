@@ -7,8 +7,33 @@ from playwright.sync_api import sync_playwright
 from moldes import slide_html, FIT_JS
 
 
+def aparar_faixas(uri: str) -> str:
+    """Corta faixas pretas/lisas que a IA às vezes desenha em cima ou embaixo da foto (quebram o degradê)."""
+    from urllib.parse import urlparse, unquote
+    from PIL import Image, ImageStat
+    if not uri.startswith("file:"):
+        return uri
+    p = Path(unquote(urlparse(uri).path.lstrip("/")))
+    im = Image.open(p).convert("RGB"); w, h = im.size
+    def lisa(y):
+        st = ImageStat.Stat(im.crop((0, y, w, y + 1)))
+        return max(st.mean) < 28 and max(st.stddev) < 10
+    baixo = h
+    while baixo > h * 0.5 and lisa(baixo - 1):
+        baixo -= 1
+    topo = 0
+    while topo < h * 0.3 and lisa(topo):
+        topo += 1
+    if baixo >= h - 4 and topo <= 4:
+        return uri
+    novo = p.with_name(p.stem + "_aparada.png")
+    im.crop((0, topo, w, baixo)).save(novo)
+    return novo.as_uri()
+
+
 def renderizar(slides, saida: Path):
     saida.mkdir(parents=True, exist_ok=True)
+    slides = [dict(s, foto=aparar_faixas(s["foto"])) if s.get("foto") else s for s in slides]
     feitos = []
     with sync_playwright() as p:
         nav = p.chromium.launch()
