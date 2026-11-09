@@ -13,7 +13,8 @@ FEEDBACK = """09/11 — o dono viu o lote 1 (20 capas) e disse:
 - Quer MARCAS FAMOSAS na cena (ex.: a mãe segurando um Danoninho). Vale para todas as capas, não só uma: as pessoas param para ver gente usando marcas.
 - Achou que o lote 1 explorou só 2 tipos de capa. Quer muito mais variedade: comparação cortada ao meio, rosto de famoso (como as páginas grandes de IA: foto de famoso + manchete em caixa alta + perfil no divisor), print de tweet com foto, ilustração, produto.
 - Nas capas de frase com fundo de foto, a foto tem que ser MUITO forte (o lote 1 ficou escuro e apagado).
-- Para se diferenciar no meio de milhões de posts: rosto de famoso, marcas famosas, assuntos do momento, expressões fiéis ao momento, ultra-realismo. As pessoas precisam se identificar."""
+- Para se diferenciar no meio de milhões de posts: rosto de famoso, marcas famosas, assuntos do momento, expressões fiéis ao momento, ultra-realismo. As pessoas precisam se identificar.
+- NOTA MÁXIMA (09/11, "muito foda, nota 100000000000000 de detalhamento"): a capa do David Vélez — portal caixa alta "EM 2013, DAVID VÉLEZ CRIOU O NUBANK APÓS ENFRENTAR A BUROCRACIA DOS BANCOS", ano em amarelo, ele sério com papéis do banco, cartão roxo do Nubank GIGANTE ao lado, ícones 3D do app flutuando, fila de banco ao fundo. Faça mais capas com esse nível de detalhe: fato real + marca gigante + objetos-símbolo + cenário que conta a história."""
 
 METADES = [
     ["capa_perfil|famoso", "capa_perfil|ilustracao", "capa_comparacao|foto_real", "capa_comparacao|foto_real", "capa_tweet|foto_real",
