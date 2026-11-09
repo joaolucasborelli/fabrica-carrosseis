@@ -9,11 +9,12 @@ from moldes import slide_html, FIT_JS
 
 def aparar_faixas(uri: str) -> str:
     """Corta faixas pretas/lisas que a IA às vezes desenha em cima ou embaixo da foto (quebram o degradê)."""
-    from urllib.parse import urlparse, unquote
+    from urllib.parse import urlparse
+    from urllib.request import url2pathname
     from PIL import Image, ImageStat
     if not uri.startswith("file:"):
         return uri
-    p = Path(unquote(urlparse(uri).path.lstrip("/")))
+    p = Path(url2pathname(urlparse(uri).path))  # funciona no Windows (/C:/...) e no Linux (/home/...)
     im = Image.open(p).convert("RGB"); w, h = im.size
     def lisa(y):
         st = ImageStat.Stat(im.crop((0, y, w, y + 1)))
