@@ -203,6 +203,21 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 
 FIT_JS = """
 (() => {
+  // títulos condensados: cabem numa linha (encolhe até 62px; se ainda não couber, quebra em 2 linhas)
+  for (const t of document.querySelectorAll('.esc .tit')) {
+    t.style.whiteSpace = 'nowrap'; let fs = parseFloat(getComputedStyle(t).fontSize), g = 0;
+    while (t.scrollWidth > t.clientWidth + 1 && fs > 62 && g++ < 60) { fs *= 0.96; t.style.fontSize = fs + 'px'; }
+    if (t.scrollWidth > t.clientWidth + 1) { t.style.whiteSpace = 'normal'; t.dataset.duas = '1'; }
+  }
+  // se o título quebrou em 2 linhas, empurra o resto do slide para baixo
+  for (const s of document.querySelectorAll('.esc')) {
+    const t = s.querySelector('.tit'); if (!t || !t.dataset.duas) continue;
+    const extra = t.getBoundingClientRect().height - parseFloat(getComputedStyle(t).fontSize) * 1.0;
+    for (const el of s.querySelectorAll('.sub, .cards, .corpo, .itens, .lista, .rede, .moldura')) {
+      if (el.closest('.corpo') && el !== s.querySelector('.corpo')) continue;
+      el.style.top = (parseFloat(getComputedStyle(el).top) + extra) + 'px';
+    }
+  }
   for (const box of document.querySelectorAll('.fit')) {
     const ps = box.querySelectorAll('p');
     // texto curto: cresce até o teto do molde (data-max), sem passar da caixa
@@ -296,7 +311,8 @@ def slide_html(s: dict) -> str:
         elif m == "esc_cards":
             def _card(i, c):
                 ic = f'<img class="ic" src="{c["icone"]}">' if c.get("icone") else ""
-                return f'<div class="card"><div class="n">{i:02d}</div>{ic}<b>{marcar(c["nome"])}</b><span>{marcar(c["texto"])}</span></div>'
+                nome = re.sub(r"^\s*\d+\s*[.)\-–:]\s*", "", c["nome"])  # o número já vem no 01, 02...
+                return f'<div class="card"><div class="n">{i:02d}</div>{ic}<b>{marcar(nome)}</b><span>{marcar(c["texto"])}</span></div>'
             cards = "".join(_card(i, c) for i, c in enumerate(s["cards"], 1))
             sub = f'<div class="sub">{marcar(s["sub"])}</div>' if s.get("sub") else ""
             corpo = f'<div class="slide esc cd"><div class="tit">{tit}</div>{sub}<div class="cards">{cards}</div>{rod}</div>'
@@ -330,6 +346,8 @@ def slide_html(s: dict) -> str:
         corpo = f'<div class="slide f2"><div class="texto fit" data-max="62">{paras(s["paragrafos"])}</div><div class="handle">{HANDLE}</div></div>'
     elif m == "preto_f5":
         rot = f'<div class="rotulo">{html.escape(s["rotulo"])}</div>' if s.get("rotulo") else ""
+        if s.get("rotulo") and s["paragrafos"]:  # não repetir "Moral:" no texto quando já está no rótulo
+            s["paragrafos"][0] = re.sub(rf"^\s*{re.escape(s['rotulo'])}\s*[:\-–]\s*", "", s["paragrafos"][0], flags=re.I)
         corpo = f'<div class="slide f5"><div class="texto fit" data-max="64">{rot}{paras(s["paragrafos"])}</div><div class="handle">{HANDLE}</div></div>'
     elif m == "cta_f6":
         perg = f'<p class="pergunta">{marcar(s["pergunta"])}</p>' if s.get("pergunta") else ""
