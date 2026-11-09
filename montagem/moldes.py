@@ -334,16 +334,16 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 FIT_JS = """
 (() => {
   // títulos condensados: cabem numa linha (encolhe até 62px; se ainda não couber, quebra em 2 linhas)
-  for (const t of document.querySelectorAll('.esc .tit')) {
+  for (const t of document.querySelectorAll('.esc .tit, .cv .tit, .ll .tit, .rv .tit')) {
     t.style.whiteSpace = 'nowrap'; let fs = parseFloat(getComputedStyle(t).fontSize), g = 0;
     while (t.scrollWidth > t.clientWidth + 1 && fs > 62 && g++ < 60) { fs *= 0.96; t.style.fontSize = fs + 'px'; }
     if (t.scrollWidth > t.clientWidth + 1) { t.style.whiteSpace = 'normal'; t.dataset.duas = '1'; }
   }
   // se o título quebrou em 2 linhas, empurra o resto do slide para baixo
-  for (const s of document.querySelectorAll('.esc')) {
+  for (const s of document.querySelectorAll('.esc, .cv, .ll, .rv')) {
     const t = s.querySelector('.tit'); if (!t || !t.dataset.duas) continue;
     const extra = t.getBoundingClientRect().height - parseFloat(getComputedStyle(t).fontSize) * 1.0;
-    for (const el of s.querySelectorAll('.sub, .cards, .corpo, .itens, .lista, .rede, .moldura')) {
+    for (const el of s.querySelectorAll('.sub, .cards, .corpo, .itens, .lista, .rede, .moldura, .conta, .linhas')) {
       if (el.closest('.corpo') && el !== s.querySelector('.corpo')) continue;
       el.style.top = (parseFloat(getComputedStyle(el).top) + extra) + 'px';
     }
@@ -410,7 +410,8 @@ def _k_marcatexto(s):
 def _k_revista(s):
     cores = {"creme": ("#F3EEDC", "#111"), "preto": ("#111", "#F3EEDC"), "amarelo": ("#FFD21F", "#111"), "lilas": ("#B49CFF", "#111")}
     bg, tx = cores.get(s.get("cor") or "creme", cores["creme"])
-    tit = marcar(s.get("titulo", ""), cor=False).replace("<mark>", "<u>").replace("</mark>", "</u>")
+    t0 = re.sub(r"_(.+?)_", lambda m: "**" + m.group(1) + "**", s.get("titulo", ""))  # o modelo às vezes sublinha com _palavra_
+    tit = marcar(t0, cor=False).replace("<mark>", "<u>").replace("</mark>", "</u>")
     obj = f'<img class="obj" src="{s["foto"]}">' if s.get("foto") else ""
     esc_cls = " escuro" if (s.get("cor") == "preto") else ""
     return (f'<div class="slide rv{esc_cls}" style="--bg:{bg};--tx:{tx}"><div class="tit cond">{tit}</div>{obj}'
@@ -466,7 +467,8 @@ def _k_antes_hoje(s):
 
 
 def _k_lista(s):
-    lins = "".join(f'<div class="lin"><b>{i}</b><span>{marcar(t)}</span></div>' for i, t in enumerate(s.get("itens") or [], 1))
+    _semnum = lambda t: re.sub(r"^\s*\d+\s*[.)\-:]\s*", "", t)
+    lins = "".join(f'<div class="lin"><b>{i}</b><span>{marcar(_semnum(t))}</span></div>' for i, t in enumerate(s.get("itens") or [], 1))
     fundo = f'<img class="foto" src="{s["foto"]}">' if s.get("foto") else ""
     prog = s.get("progresso") or 0
     return (f'<div class="slide ll">{fundo}<div class="veu"></div><div class="chapeu">{html.escape(s.get("chapeu",""))}</div>'
