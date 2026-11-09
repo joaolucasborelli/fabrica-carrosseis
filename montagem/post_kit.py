@@ -1,4 +1,5 @@
-"""Post completo com o KIT 2: roteiro (função roteiro, gpt-5.5) -> fotos certas para cada molde -> slides.
+"""Post completo com o KIT 2 (teste): roteiro (função roteiro, gpt-5.5) -> fotos certas para cada molde -> slides.
+O robô do botão usa o mesmo motor em kit.py (aqui ficou a versão de teste, autocontida).
 Uso: python post_kit.py pedidos.json pasta_saida
 """
 import json, sys, time

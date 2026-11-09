@@ -70,7 +70,55 @@ def baixar(caminho, destino: Path):
     urllib.request.urlretrieve(r["url"], destino)
 
 
+ROTEIRO = "https://kfvugtrjuqdakbpzvsxq.supabase.co/functions/v1/roteiro"
+
+
+def entregar(post_id, arquivos, passos, t0, ev):
+    ev("entregador", "Guardando os slides no banco e mandando para a sua tela.")
+    caminhos = []
+    for i, arq in enumerate(arquivos, 1):
+        c = f"post_{post_id}/slide_{i:02d}.png"
+        r = chamar({"acao": "salvar", "caminho": c, "base64": base64.b64encode(Path(arq).read_bytes()).decode()})
+        if not r.get("ok"):
+            raise RuntimeError(f"salvar {c}: {r}")
+        caminhos.append(c)
+    passos.append(f"{len(caminhos)} slides em {time.time()-t0:.0f}s")
+    chamar({"acao": "concluir", "post_id": post_id, "imagens": caminhos, "log": " · ".join(passos)})
+    ev("entregador", f"Entregue! {len(caminhos)} slides prontos no post em {time.time()-t0:.0f}s.", "pronto")
+    return passos
+
+
 def montar(post_id: int):
+    """Caminho novo (kit 2 + receitas). Se a diagramação perder frases do texto aprovado, cai no caminho antigo."""
+    import kit
+    t0 = time.time(); passos = []
+    ev = lambda agente, fala, estado="trabalhando", **k: evento(post_id, agente, fala, estado, **k)
+    ev("diagramador", "Peguei o texto aprovado. Vou escolher a receita e os moldes do kit para cada slide, sem mudar as frases.")
+    melhor = None
+    for tentativa in range(2):
+        d = chamar({"acao": "diagramar", "post_id": post_id}, timeout=220, url=ROTEIRO)
+        if not d.get("ok"):
+            continue
+        cob = kit.cobertura(d["pecas"], d["post"])
+        if not melhor or cob > melhor[0]:
+            melhor = (cob, d["post"])
+        if cob >= 0.97:
+            break
+        ev("diagramador", f"Conferi: {cob:.0%} das palavras do texto aprovado apareceram. Vou refazer para não perder nenhuma frase.")
+    if not melhor or melhor[0] < 0.93:
+        ev("diagramador", "A diagramação nova perdeu frases do texto. Vou usar o jeito antigo, que é seguro.", "pronto")
+        return montar_antigo(post_id)
+    cob, post = melhor
+    nomes = sorted({s["molde"] for s in post["slides"]})
+    ev("diagramador", f"Pronto: receita {post['receita'][:40]}, capa {post['capa']['molde']}, {len(post['slides'])+1} slides, {len(nomes)} moldes diferentes. "
+                      f"Conferi: {cob:.0%} das palavras aprovadas estão lá.", "pronto")
+    passos.append(f"kit · {post['receita'][:30]} · cobertura {cob:.0%}")
+    pasta = SAIDA / f"post_{post_id}"
+    arquivos = kit.montar(post, pasta, f"post_{post_id}/kit", ev=ev, log=passos.append)
+    return entregar(post_id, arquivos, passos, t0, ev)
+
+
+def montar_antigo(post_id: int):
     from render import renderizar  # só carrega o navegador quando vai desenhar
     t0 = time.time(); passos = []
     ev = lambda agente, fala, estado="trabalhando", **k: evento(post_id, agente, fala, estado, **k)
