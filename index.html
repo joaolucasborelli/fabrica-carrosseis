@@ -54,6 +54,13 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 .when{font-size:.84rem;font-weight:600;font-variant-numeric:tabular-nums}
 .when small{display:block;font-weight:400;color:var(--muted);font-size:.74rem}
 .st{font-size:.68rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.fmt{position:absolute;left:8px;bottom:8px;right:8px;z-index:3;background:rgba(17,17,17,.88);color:#FFD21F;font:700 .66rem/1.25 Inter,sans-serif;padding:5px 7px;border-radius:6px;display:flex;flex-direction:column;gap:2px}.fmt i{font-style:normal;color:#ddd;font-weight:600}.fmt.carregando{color:#ddd;animation:pisca 1.2s infinite}
+.da{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel)}
+.da-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.da-h .small{flex:1;min-width:200px}
+.da-lista{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px}
+.da-it{flex:none;width:190px;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:.78rem;background:var(--bg,#fff)}
+.da-top{display:flex;gap:6px;align-items:center}.da-top .n{font-weight:800;min-width:18px}.da-top select{flex:1;min-width:0;font:600 .74rem Inter,sans-serif;padding:4px;border-radius:6px;border:1px solid var(--line);background:transparent;color:inherit}
+.da-it .fonte{display:inline-block;margin:6px 0 4px;font-weight:700;font-size:.72rem}.da-it .fonte.real{color:#b45309}.da-it p{margin:0;line-height:1.35;color:var(--muted,#666)}
 .selos{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
 .st-mont{background:#FFD21F;color:#111;display:inline-flex;align-items:center;gap:5px}.st-mont i{width:6px;height:6px;border-radius:50%;background:#111;animation:pisca 1s infinite}
 @keyframes pisca{50%{opacity:.2}}
@@ -333,7 +340,7 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
   <div class="prow" style="justify-content:flex-end"><button type="button" class="btn" id="l-criar">Criar acesso</button><button class="btn primary">Entrar</button></div>
 </form></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="escritorio.js?v=3"></script>
+<script src="escritorio.js?v=4"></script>
 <script>
 const sb=supabase.createClient("https://kfvugtrjuqdakbpzvsxq.supabase.co","sb_publishable_hMCt4kaGtY75gMEb3aRi-g_Xh3OkPhx");
 const ACC={a1:{nome:"Do outro lado da Porta",at:"@ahistoriaquemuda",av:"DP",cls:"c1",avc:"av1"}};
@@ -391,6 +398,7 @@ function renderPost(){
     <div class="prow"><button class="back" data-back>← Posts</button><span class="st ${ST[p.s][1]}">${ST[p.s][0]}</span><span class="when">${fdt(p.t)}</span><span class="sp"></span>
       <button class="btn" data-expand="0">⤢ Tela cheia</button>${p.s==="prop"?`<button class="btn danger" data-prej>Rejeitar</button><button class="btn primary" data-papr>Gerar post e thumbnails</button>`:`<button class="btn" data-capas ${p.s==="ok"?"disabled":""}>Gerar capas</button><button class="btn primary" data-sched ${pode?"":"disabled"}>Agendar</button>`}</div>
     <div class="strip" aria-label="Slides do post. Clique num slide para abrir em tela cheia">${slidesHTML(p).map((h,i)=>`<button class="sb" data-expand="${i}" aria-label="Abrir o slide ${i+1} em tela cheia">${h}</button>`).join("")}</div>
+    ${painelDA(p)}
     ${p.mont==="pendente"||p.mont==="montando"?`<p class="montaviso">🛠️ O robô está montando este post: diagramação, foto da capa e os slides. Fica pronto em até ~10 minutos e aparece aqui sozinho.</p>`:p.mont==="erro"?`<p class="montaviso erro">A montagem deu erro: ${esc(p.mlog||"")}. Me avise no chat que eu refaço.</p>`:p.mont==="pronta"&&p.mlog?`<p class="small" style="margin:8px 0 0">Montado: ${esc(p.mlog)}</p>`:""}
     ${legendaIG(p)}${p.pr?`<details class="why"><summary>Por que esta proposta</summary><dl><dt>Na capa</dt><dd>${esc(p.pr.capa)}</dd><dt>O que testa</dt><dd>${esc(p.pr.est)}</dd><dt>Por quê</dt><dd>${esc(p.pr.pq)}</dd><dt>Origem</dt><dd>${esc(p.pr.base)}</dd>${p.pr.pl?`<dt>Plateia</dt><dd>${esc(p.pr.pl)}</dd>`:""}${p.pr.pb?`<dt>Conferente</dt><dd>${esc(p.pr.pb)}</dd>`:""}</dl></details>`:""}
   </div>
@@ -403,8 +411,34 @@ function renderPost(){
 }
 const PESS='<svg viewBox="0 0 100 120" aria-hidden="true"><circle cx="50" cy="30" r="22"/><path d="M8 120c2-34 20-52 42-52s40 18 42 52z"/></svg>';
 function esbCapa(p,n=""){const e=p.esb||{pessoa:"dir",texto:"topo"};
-  return `<div class="cover esb">${n?`<span class="n">${n}</span>`:""}<span class="etq">esboço</span>${e.pessoa?`<span class="pess ${e.pessoa}"><i>${esc(e.quem||"pessoa")}</i>${PESS}</span>`:""}<span class="tb ${e.texto}">${p.capa}</span></div>`}
-function esbSlide(p,t,i){return `<div class="cover esb"><span class="n">${i+2}</span><span class="etq">esboço</span><span class="tb meio">${esc(t)}</span></div>`}
+  return `<div class="cover esb">${n?`<span class="n">${n}</span>`:""}<span class="etq">esboço</span>${n?formatoDe(p,1):""}${e.pessoa?`<span class="pess ${e.pessoa}"><i>${esc(e.quem||"pessoa")}</i>${PESS}</span>`:""}<span class="tb ${e.texto}">${p.capa}</span></div>`}
+function esbSlide(p,t,i){const f=formatoDe(p,i+2);return `<div class="cover esb"><span class="n">${i+2}</span><span class="etq">esboço</span>${f}<span class="tb meio">${esc(t)}</span></div>`}
+// ---------- Diretor de Arte: formato de cada slide antes de montar ----------
+const NOME_MOLDE={capa_f1:"Capa: foto + manchete",capa_f1b:"Capa portal",capa_perfil:"Capa portal com perfil",capa_comparacao:"Capa comparação",capa_tweet:"Capa print",capa_f3a:"Capa foto cheia + frase",capa_f3b:"Capa foto cheia + legenda",capa_circulos:"Capa com círculo",capa_marcatexto:"Capa marca-texto",capa_revista:"Capa revista",capa_numero:"Capa número gigante",capa_caderno:"Capa caderno",
+  f1_corrido:"Foto + texto",meia_tela:"Meia tela (texto + foto)",papel_f2:"Papel com texto",faixa_amarela:"Faixa amarela (virada)",foto_sticker:"Foto + adesivo",antes_hoje:"Antes e hoje",lista_linhas:"Lista numerada",esc_checklist:"Checklist + foto",esc_cards:"Cards",esc_titulo_moldura:"Título + foto emoldurada",conta_visual:"Conta em caixas",citacao:"Citação",preto_f5:"Lição",cta_f6:"Pedido do comentário",fecho_foto:"Fecho com foto",noticia:"Cartão de notícia",cupom:"Cupom que cresce"};
+const MIOLOS_DA=["meia_tela","f1_corrido","noticia","cupom","faixa_amarela","esc_checklist","lista_linhas","esc_cards","conta_visual","foto_sticker","antes_hoje","esc_titulo_moldura","citacao","papel_f2","preto_f5","cta_f6","fecho_foto"];
+const CAPAS_DA=["capa_f1","capa_marcatexto","capa_f1b","capa_perfil","capa_f3b","capa_f3a","capa_comparacao","capa_numero","capa_circulos","capa_revista","capa_caderno","capa_tweet"];
+const FONTE_IC={ia:"📷 foto IA",real:"📰 foto real",nenhuma:"▦ sem foto"};
+function slideDoPlano(p,n){const pl=p.plano&&p.plano.post;if(!pl)return null;return n===1?pl.capa:pl.slides[n-2]||null}
+function formatoDe(p,n){const s=slideDoPlano(p,n);if(!s)return p.planejando?`<span class="fmt carregando">Diretor de Arte…</span>`:"";return `<span class="fmt">${esc(NOME_MOLDE[s.molde]||s.molde)}<i>${FONTE_IC[s.foto_fonte]||""}</i></span>`}
+function painelDA(p){
+  if(p.imgs&&p.imgs.length)return "";
+  if(!p.plano)return `<div class="da"><div class="da-h"><b>🎨 Diretor de Arte</b><span class="small">${p.planejando?"lendo o post e escolhendo o formato de cada slide (uns 30 segundos)…":p.planoErro?"não consegui planejar: "+esc(p.planoErro):"vai planejar o formato de cada slide"}</span>${p.planejando?"":`<button class="btn" data-daplanejar>Planejar agora</button>`}</div></div>`;
+  const pl=p.plano.post,itens=[pl.capa,...pl.slides];
+  return `<div class="da"><div class="da-h"><b>🎨 Diretor de Arte</b><span class="small">Receita: ${esc(pl.receita||"")}. A montagem segue este plano. Troque o formato de qualquer slide.</span><button class="btn" data-darefazer ${p.planejando?"disabled":""}>${p.planejando?"Refazendo…":"↻ Refazer plano"}</button></div>
+   <div class="da-lista">${itens.map((s,k)=>{const n=k+1,ops=(n===1?CAPAS_DA:MIOLOS_DA);return `<div class="da-it"><div class="da-top"><span class="n">${n}</span><select data-damolde="${n}" aria-label="Formato do slide ${n}" ${p.planejando?"disabled":""}>${ops.map(m=>`<option value="${m}" ${m===s.molde?"selected":""}>${esc(NOME_MOLDE[m]||m)}</option>`).join("")}</select></div><span class="fonte ${s.foto_fonte}">${FONTE_IC[s.foto_fonte]||""}${s.foto_fonte==="real"&&s.pessoa_real?` · ${esc(s.pessoa_real)}`:""}</span><p>${esc(s.por_que||"")}</p></div>`}).join("")}</div></div>`;
+}
+function falaDA(estado,fala){const ev={agente:"diagramador",estado,fala,criado_em:new Date().toISOString()};try{ESC&&ESC.inst&&ESC.inst.vivo(ev)}catch(_){}try{ESCG&&ESCG.vivo(ev)}catch(_){}}
+async function planejarVisual(p,extra={}){
+  if(p.planejando)return;p.planejando=true;p.planoErro=null;render();
+  falaDA("trabalhando",extra.forcar?`Refazendo o plano com o formato que você escolheu para o slide ${Object.keys(extra.forcar).join(", ")}.`:"Lendo o post aprovado e escolhendo o formato de cada slide: notícia, cupom, foto, checklist…");
+  try{const {data,error}=await sb.functions.invoke("roteiro",{body:{acao:"plano_visual",variacao_id:p.id,...extra}});
+    if(error)throw error;if(!data||!data.ok)throw new Error((data&&data.erro)||"erro");
+    p.plano=data.plano;const pl=data.plano.post,reais=[pl.capa,...pl.slides].filter(s=>s.foto_fonte==="real").length;
+    falaDA("pronto",`Plano pronto: ${pl.slides.length+1} slides, receita ${String(pl.receita||"").slice(0,40)}${reais?`, ${reais} com foto real`:""}. A montagem vai seguir este plano.`);
+  }catch(e){p.planoErro=e.message||String(e);falaDA("erro","Não consegui planejar: "+p.planoErro)}
+  p.planejando=false;render();
+}
 function slidesHTML(p){if(p.imgs&&p.imgs.length)return p.imgs.map((u,i)=>`<div class="cover img"><span class="n">${i+1}</span><img src="${u}" alt="Slide ${i+1} montado" loading="lazy"></div>`);if(p.s==="prop")return [esbCapa(p,"1"),...p.sl.map((t,i)=>esbSlide(p,t,i))];return [cover(p,"","1"),...p.sl.map((t,i)=>`<div class="cover ${ACC[p.a].cls} txt"><span class="n">${i+2}</span><span>${esc(t)}</span></div>`)]}
 let legAberta=false;
 function legendaIG(p){
@@ -449,6 +483,7 @@ function render(){
   v.style.overflow=(tab==="chat"||aberto)?"hidden":"auto";
   if(tab==="posts"&&aberto){const p=POSTS.find(x=>x.id===aberto);if(p)anexarEscritorio(p)}else fecharEscritorio();
   if(tab==="posts"&&!aberto)anexarGeral();
+  if(tab==="posts"&&aberto){const p=POSTS.find(x=>x.id===aberto);if(p&&!(p.imgs&&p.imgs.length)&&!p.plano&&!p.planejando&&!p.planoErro&&p.mont!=="pendente"&&p.mont!=="montando")setTimeout(()=>planejarVisual(p),300)}
   document.getElementById("layer").innerHTML=renderDrawer();
   if(gen)drawGen();else if(capas)drawCapas();else if(modal)drawCal();
   const ms=document.getElementById("msgs");if(ms)ms.scrollTop=ms.scrollHeight;
@@ -677,11 +712,11 @@ async function enviarMensagem(w,texto){
   render();
 }
 async function carregar(){
-  const {data,error}=await sb.from("variacoes").select("id,status,pecas,variaveis,remodelagem,por_que_para,forca,risco,painel,eixo,ordem,pautas(dia,tipo,persona_id,assunto,lote),posts(id,status,agendado_para,montagem_status,imagens,montagem_log,capas_status)").in("status",["mostrada","escolhida"]).order("forca",{ascending:false,nullsFirst:false}).order("id",{ascending:false}).limit(500);
+  const {data,error}=await sb.from("variacoes").select("id,status,pecas,plano_visual,variaveis,remodelagem,por_que_para,forca,risco,painel,eixo,ordem,pautas(dia,tipo,persona_id,assunto,lote),posts(id,status,agendado_para,montagem_status,imagens,montagem_log,capas_status)").in("status",["mostrada","escolhida"]).order("forca",{ascending:false,nullsFirst:false}).order("id",{ascending:false}).limit(500);
   if(error){toast("Não consegui ler o banco: "+error.message);return}
   POSTS=data.map(v=>{const pc=v.pecas||{},va=v.variaveis||{},rm=v.remodelagem||{},pa=v.pautas||{},pn=v.painel||{},R=pn.risco;
     const po=(v.posts||[])[0];const ag=po&&po.agendado_para?new Date(po.agendado_para):null;
-    return {id:v.id,a:"a1",s:ag?"sched":v.status==="mostrada"?"prop":"draft",t:ag,rot:`${ROT[pa.tipo]||pa.tipo||""} · ${ROT[pa.persona_id]||pa.persona_id||""} · força ${v.forca??"-"}`,capa:esc(pc.capa||""),sl:pc.slides||[],leg:pc.legenda||"",hs:pc.hashtags||[],
+    return {id:v.id,a:"a1",s:ag?"sched":v.status==="mostrada"?"prop":"draft",t:ag,rot:`${ROT[pa.tipo]||pa.tipo||""} · ${ROT[pa.persona_id]||pa.persona_id||""} · força ${v.forca??"-"}`,capa:esc(pc.capa||""),sl:pc.slides||[],plano:v.plano_visual||null,leg:pc.legenda||"",hs:pc.hashtags||[],
       postId:po?po.id:null,mont:po?po.montagem_status:null,capasSt:po?po.capas_status:null,mlog:po?po.montagem_log:"",paths:po&&Array.isArray(po.imagens)?po.imagens:[],
       log:v.status==="escolhida"?[{w:"ag",f:"Equipe",t:"Você escolheu esta variação. O robô monta os slides e eles aparecem acima."}]:[],
       esb:ESB("a1",(v.ordem||1)-1),
@@ -811,6 +846,8 @@ document.addEventListener("click",e=>{
   if("papr" in ds){const p=POSTS.find(x=>x.id===aberto);b.disabled=true;chamar({acao:"escolher",variacao_id:p.id,decisao:"montar"}).then(()=>{toast("Escolhida! O robô monta os slides em até ~10 minutos e eles aparecem aqui.");aberto=null;return carregar()}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
   if("prej" in ds){const p=POSTS.find(x=>x.id===aberto);const motivo=prompt("Por que você recusou? A fábrica usa isso para aprender (pode deixar em branco).");if(motivo===null)return;chamar({acao:"escolher",variacao_id:p.id,decisao:"recusar",motivo:motivo||null}).then(()=>{POSTS=POSTS.filter(x=>x.id!==p.id);aberto=null;render();toast("Recusada. O motivo foi guardado.")}).catch(e=>toast("Erro: "+e.message));return}
   if("capas" in ds){capas={id:aberto};drawCapas();return}
+  if("daplanejar" in ds){const p=POSTS.find(x=>x.id===aberto);planejarVisual(p);return}
+  if("darefazer" in ds){const p=POSTS.find(x=>x.id===aberto);planejarVisual(p,{refazer:true});return}
   if(ds.escolhercapa){const p=POSTS.find(x=>x.id===capas.id);b.disabled=true;
     sb.functions.invoke("opcoes",{body:{acao:"escolher",post_id:p.postId,opcao_id:+ds.escolhercapa}}).then(async({error})=>{if(error)throw error;toast("Capa trocada");await carregar();if(capas)drawCapas()}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
   if("novascapas" in ds){const p=POSTS.find(x=>x.id===capas.id);b.disabled=true;
@@ -862,6 +899,7 @@ document.getElementById("lform").addEventListener("submit",async e=>{e.preventDe
   const {error}=await sb.auth.signInWithPassword({email:document.getElementById("l-email").value.trim(),password:document.getElementById("l-pass").value});
   if(error){m.textContent=/confirm/i.test(error.message)?"Falta confirmar o acesso pelo link que chegou no seu e-mail.":"Não entrou: "+error.message;return}
   entrar()});
+document.addEventListener("change",e=>{const sel=e.target.closest("[data-damolde]");if(!sel)return;const p=POSTS.find(x=>x.id===aberto);if(!p)return;planejarVisual(p,{forcar:{[sel.dataset.damolde]:sel.value}})});
 document.getElementById("l-criar").addEventListener("click",async()=>{const m=document.getElementById("l-msg");const email=document.getElementById("l-email").value.trim(),password=document.getElementById("l-pass").value;
   if(!email||password.length<8){m.textContent="Escreva o e-mail e uma senha de pelo menos 8 caracteres.";return}
   m.textContent="Criando…";const {data,error}=await sb.auth.signUp({email,password});

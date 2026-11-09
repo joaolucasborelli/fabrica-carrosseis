@@ -603,6 +603,7 @@ CSS_DA = """
 .nt .card .texto{position:absolute;left:64px;right:52px;top:104px;bottom:40px}
 .nt .card .texto p{font:600 46px/1.28 'Inter',sans-serif;color:#F5F5F0;letter-spacing:-.01em;margin-bottom:22px}
 .nt .card .texto p .am{color:#FFD21F}
+.credito{position:absolute;right:22px;top:22px;z-index:20;max-width:640px;text-align:right;font:500 16px/1.25 Inter,sans-serif;color:rgba(255,255,255,.85);background:rgba(0,0,0,.55);padding:6px 10px;border-radius:6px}
 .cp{background:#0c0c0d;background-image:radial-gradient(rgba(255,255,255,.05) 1.5px,transparent 1.5px);background-size:34px 34px}
 .cp .texto{position:absolute;left:72px;right:72px;top:80px;height:330px;display:flex;flex-direction:column;justify-content:center}
 .cp .texto p{font:700 52px/1.22 'Inter',sans-serif;color:#F5F5F0;letter-spacing:-.015em;margin-bottom:16px}
@@ -766,6 +767,8 @@ def slide_html(s: dict) -> str:
                  f'<div class="siga">Siga {HANDLE}</div><img class="logo" src="{LOGO}"></div>')
     else:
         raise ValueError(m)
+    if s.get("credito") and m != "noticia" and corpo.endswith("</div>"):
+        corpo = corpo[:-6] + f'<div class="credito">{html.escape(s["credito"])}</div></div>'
     css = CSS.replace("__PAPEL__", PAPEL)
     return (f'<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="{FONTES}">'
             f"<style>{css}</style></head><body>{SVG_FILTROS}{corpo}</body></html>")

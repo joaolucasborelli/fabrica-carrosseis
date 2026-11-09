@@ -47,6 +47,7 @@ textarea{width:100%;min-height:62px;resize:vertical;background:#101114;border:1p
 .zoom{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:20;cursor:zoom-out;padding:16px}
 .zoom img{max-height:94vh;max-width:100%;border-radius:8px}
 a{color:var(--am)}
+.gr{grid-column:1/-1;font-size:16px;font-weight:800;margin-top:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}.gr span{color:var(--mut);font-weight:600;font-size:13px}
 @media (max-width:420px){.grid{grid-template-columns:1fr}.bar{width:100px}}
 </style>
 </head>
@@ -56,7 +57,7 @@ a{color:var(--am)}
   <input id="pw" type="password" placeholder="Senha" autocomplete="current-password" required>
   <button class="btn" type="submit">Entrar</button> <span id="lerr" class="salvo"></span></form>
 <div id="app" style="display:none">
-<header><h1>Avaliar capas</h1><select id="lote" aria-label="Lote"></select><span class="sp"></span>
+<header><h1>Avaliar capas</h1><select id="lote" aria-label="Lote"></select><select id="tipo" aria-label="Tipo de capa"></select><select id="filtro" aria-label="Avaliadas"><option value="">Todas</option><option value="falta">Só as que faltam</option><option value="feitas">Só as avaliadas</option></select><span class="sp"></span>
   <span class="prog" id="prog">0 de 0</span><span class="bar"><i id="barra"></i></span><a href="./">← Fábrica</a></header>
 <p class="intro">Dê uma nota de 0 a 10 para cada capa e marque o que funcionou e o que não funcionou. Se quiser, explique no campo de comentário. Tudo é salvo sozinho, e a fábrica lê essas notas antes de criar as próximas capas.</p>
 <div class="grid" id="grid"></div>
@@ -66,39 +67,48 @@ a{color:var(--am)}
 const sb=supabase.createClient("https://kfvugtrjuqdakbpzvsxq.supabase.co","sb_publishable_hMCt4kaGtY75gMEb3aRi-g_Xh3OkPhx");
 const BOM=["Gancho forte","Texto curto e claro","Foto realista","Foto conta a história","Layout / molde","Emoção","Cara da marca","Letra legível"];
 const RUIM=["Gancho fraco","Texto longo","Foto artificial","Foto não combina","Layout feio","Sem emoção","Clichê","Letra difícil de ler","Parece anúncio"];
-const ROT={capa_f1:"Foto + manchete no preto",capa_f1b:"Portal (caixa alta)",capa_perfil:"Portal com o nosso perfil",capa_comparacao:"Comparação cortada ao meio",capa_tweet:"Print de tweet + foto",capa_f3a:"Foto cheia · frase no centro",capa_f3b:"Foto cheia · legenda embaixo"};
-const EST={foto_real:"foto real",famoso:"famoso",ilustracao:"ilustração",produto:"produto"};
+const ROT={capa_f1:"Foto + manchete no preto",capa_f1b:"Portal (caixa alta)",capa_perfil:"Portal com o nosso perfil",capa_comparacao:"Comparação cortada ao meio",capa_tweet:"Print de tweet + foto",capa_f3a:"Foto cheia · frase no centro",capa_f3b:"Foto cheia · legenda embaixo",capa_circulos:"Foto + rosto em círculo",capa_marcatexto:"Marca-texto amarelo",capa_revista:"Revista (cor + objeto)",capa_numero:"Número gigante",capa_caderno:"Caderno / planner",capa:"Capa (montagem antiga)",original:"Capa original do post"};
+const EST={foto_real:"foto real",famoso:"famoso",famoso_composicao:"famoso + marcas (composição)",ilustracao:"ilustração",produto:"produto"};
+const LOTE={lote1:"Lote 1",lote2:"Lote 2",lote3:"Lote 3","posts-de-teste":"Posts de teste","posts-montados":"Posts montados","opcoes-de-capa":"Opções de capa"};
+let TODAS=[],URLS={};
 let T=[],A={};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 async function iniciar(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){document.getElementById("login").style.display="block";return}
   document.getElementById("login").style.display="none";document.getElementById("app").style.display="block";
-  const {data:lotes}=await sb.from("thumbs_teste").select("lote").order("criada_em",{ascending:false});
-  const L=[...new Set((lotes||[]).map(x=>x.lote))];
-  const sel=document.getElementById("lote");sel.innerHTML=L.map(l=>`<option>${esc(l)}</option>`).join("");
-  sel.onchange=()=>carregar(sel.value);if(L.length)carregar(L[0]);else document.getElementById("grid").innerHTML='<p class="intro">Nenhuma capa ainda.</p>';
+  // carrega TODAS as capas de uma vez; os filtros só escondem
+  const {data}=await sb.from("thumbs_teste").select("*, avaliacoes_thumb(*)").order("criada_em").order("ordem");
+  TODAS=(data||[]).filter(t=>t.imagem);A={};
+  TODAS.forEach(t=>{const a=(t.avaliacoes_thumb||[])[0];A[t.id]=a?{nota:a.nota,gostei:a.gostei||[],nao_gostei:a.nao_gostei||[],comentario:a.comentario||""}:{nota:null,gostei:[],nao_gostei:[],comentario:""}});
+  for(let i=0;i<TODAS.length;i+=100){const {data:urls}=await sb.storage.from("montagens").createSignedUrls(TODAS.slice(i,i+100).map(t=>t.imagem),3600);(urls||[]).forEach(u=>URLS[u.path]=u.signedUrl)}
+  const lotes=[...new Set(TODAS.map(t=>t.lote))],tipos=[...new Set(TODAS.map(t=>t.molde))];
+  const cont=(f)=>TODAS.filter(f).length;
+  document.getElementById("lote").innerHTML=`<option value="">Todos os lotes (${TODAS.length})</option>`+lotes.map(l=>`<option value="${esc(l)}">${esc(LOTE[l]||l)} (${cont(t=>t.lote===l)})</option>`).join("");
+  document.getElementById("tipo").innerHTML=`<option value="">Todos os tipos (${tipos.length})</option>`+tipos.map(m=>`<option value="${esc(m)}">${esc(ROT[m]||m)} (${cont(t=>t.molde===m)})</option>`).join("");
+  ["lote","tipo","filtro"].forEach(id=>document.getElementById(id).onchange=carregar);
+  carregar();
 }
-async function carregar(lote){
-  const {data}=await sb.from("thumbs_teste").select("*, avaliacoes_thumb(*)").eq("lote",lote).order("ordem");
-  T=(data||[]).filter(t=>t.imagem);A={};
-  T.forEach(t=>{const a=(t.avaliacoes_thumb||[])[0];A[t.id]=a?{nota:a.nota,gostei:a.gostei||[],nao_gostei:a.nao_gostei||[],comentario:a.comentario||""}:{nota:null,gostei:[],nao_gostei:[],comentario:""}});
-  const {data:urls}=await sb.storage.from("montagens").createSignedUrls(T.map(t=>t.imagem),3600);
-  const U={};(urls||[]).forEach(u=>U[u.path]=u.signedUrl);
-  document.getElementById("grid").innerHTML=T.map(t=>card(t,U[t.imagem])).join("");progresso();
+function carregar(){
+  const l=document.getElementById("lote").value,m=document.getElementById("tipo").value,f=document.getElementById("filtro").value;
+  T=TODAS.filter(t=>(!l||t.lote===l)&&(!m||t.molde===m)&&(!f||(f==="feitas")===(A[t.id].nota!=null)));
+  // agrupado por tipo de capa
+  const grupos={};T.forEach(t=>(grupos[t.molde]=grupos[t.molde]||[]).push(t));
+  document.getElementById("grid").innerHTML=Object.entries(grupos).map(([mol,ts])=>`<h2 class="gr">${esc(ROT[mol]||mol)} <span>${ts.length}</span></h2>`+ts.map(t=>card(t,URLS[t.imagem])).join("")).join("")||'<p class="intro">Nenhuma capa com esse filtro.</p>';
+  progresso();
 }
 function card(t,url){const a=A[t.id];
   return `<article class="card ${a.nota!=null?"feito":""}" id="c${t.id}">
-   <div class="img" data-zoom="${esc(url)}"><img src="${esc(url)}" alt="Capa ${t.ordem}" loading="lazy"><span class="num">${t.ordem}</span><span class="selo">${a.nota??""}</span></div>
-   <div class="corpo"><div class="meta">${esc(ROT[t.molde]||t.molde)}${t.extra&&t.extra.estilo?" · "+esc(EST[t.extra.estilo]||t.extra.estilo):""} · ${esc(t.tipo)} · ${esc(t.persona)} · ${esc(t.assunto)}${t.extra&&t.extra.marca?" · marca: "+esc(t.extra.marca):""}</div>
+   <div class="img" data-zoom="${esc(url)}"><img src="${esc(url)}" alt="Capa ${t.ordem}" loading="lazy"><span class="num">${esc(LOTE[t.lote]||t.lote)} · ${t.ordem}</span><span class="selo">${a.nota??""}</span></div>
+   <div class="corpo"><div class="meta">${[ROT[t.molde]||t.molde,t.extra&&t.extra.estilo?EST[t.extra.estilo]||t.extra.estilo:"",t.tipo,t.persona,t.assunto,t.extra&&t.extra.marca?"marca: "+t.extra.marca:""].filter(Boolean).map(esc).join(" · ")}</div>
     ${t.extra&&t.extra.famoso?`<div class="pq"><b>Famoso:</b> ${esc(t.extra.famoso)}. <b>Fato usado:</b> ${esc(t.extra.fato)}</div>`:""}
-    <div class="pq"><b>Por que deve parar o dedo:</b> ${esc(t.por_que)}</div>
+    ${t.por_que?`<div class="pq"><b>Por que deve parar o dedo:</b> ${esc(t.por_que)}</div>`:""}
     <div class="lab">Nota</div><div class="notas">${[...Array(11).keys()].map(n=>`<button type="button" data-nota="${t.id}:${n}" class="${a.nota===n?"on":""}">${n}</button>`).join("")}</div>
     <div class="lab">O que funcionou</div><div class="chips bom">${BOM.map(x=>`<button type="button" data-chip="${t.id}|gostei|${esc(x)}" class="${a.gostei.includes(x)?"on":""}">${esc(x)}</button>`).join("")}</div>
     <div class="lab">O que não funcionou</div><div class="chips ruim">${RUIM.map(x=>`<button type="button" data-chip="${t.id}|nao_gostei|${esc(x)}" class="${a.nao_gostei.includes(x)?"on":""}">${esc(x)}</button>`).join("")}</div>
     <textarea data-com="${t.id}" placeholder="Comentário (opcional): o que você mudaria?">${esc(a.comentario)}</textarea>
     <div class="salvo" id="s${t.id}"></div></div></article>`}
-function progresso(){const n=T.filter(t=>A[t.id].nota!=null).length;document.getElementById("prog").textContent=`${n} de ${T.length} avaliadas`;document.getElementById("barra").style.width=(T.length?100*n/T.length:0)+"%"}
+function progresso(){const n=TODAS.filter(t=>A[t.id].nota!=null).length;document.getElementById("prog").textContent=`${n} de ${TODAS.length} avaliadas`;document.getElementById("barra").style.width=(TODAS.length?100*n/TODAS.length:0)+"%"}
 const timers={};
 function salvar(id){clearTimeout(timers[id]);document.getElementById("s"+id).textContent="salvando…";
   timers[id]=setTimeout(async()=>{const a=A[id];

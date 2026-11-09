@@ -10,6 +10,8 @@ from render import renderizar
 
 VERTICAIS = {"meia_tela", "foto_sticker", "fecho_foto"}
 COM_FOTO = {"f1_corrido", "meia_tela", "foto_sticker", "fecho_foto", "esc_checklist", "esc_titulo_moldura", "lista_linhas"}
+FOTO_OPCIONAL = {"noticia"}  # funciona com ou sem foto
+DA = ("por_que", "foto_fonte", "busca_real", "pessoa_real")  # campos do Diretor de Arte (não vão para o desenho)
 CADERNO = "assets/caderno_planner.png"
 
 
@@ -40,6 +42,21 @@ def _caderno(pasta: Path):
     return loc
 
 
+def _real(s, destino: Path, ev):
+    """Foto REAL com licença livre (Wikimedia Commons) para pessoa pública ou evento oficial."""
+    import fotos_reais
+    quem = s.get("pessoa_real") or ""; busca = s.get("busca_real") or quem
+    if not busca:
+        return None
+    ev("fotografo", f"Buscando foto real com licença livre: {busca}.")
+    r = fotos_reais.buscar(busca, quem, destino, log=lambda *_: None)
+    if r:
+        ev("fotografo", f"Achei foto real ({r['credito'][:90]}). Vai com o crédito no slide.", "pronto")
+    else:
+        ev("fotografo", f"Não achei foto real livre de {busca}. Não vou inventar rosto por IA.", "pronto")
+    return r
+
+
 def palavras(s):
     s = re.sub(r"\*\*|\[\[|\]\]", "", s or "").lower()
     import unicodedata
@@ -53,7 +70,7 @@ def textos(o):
     if isinstance(o, list):
         return [t for x in o for t in textos(x)]
     if isinstance(o, dict):
-        return [t for k, v in o.items() if k not in ("foto_prompt", "foto_prompt2", "molde", "estilo", "personagem", "cor", "lado", "fato", "marca", "famoso") for t in textos(v)]
+        return [t for k, v in o.items() if k not in ("foto_prompt", "foto_prompt2", "molde", "estilo", "personagem", "cor", "lado", "fato", "marca", "famoso") + DA for t in textos(v)]
     return []
 
 
@@ -75,8 +92,11 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     ev = ev or (lambda *a, **k: None)
     pasta.mkdir(parents=True, exist_ok=True)
     capa = post["capa"]; pers = post.get("personagem", ""); famosa = capa["estilo"].startswith("famoso")
-    cam_capa = None
-    if capa["molde"] == "capa_caderno":
+    cam_capa = None; cred_capa = None
+    real_capa = _real(capa, pasta / "capa_real.jpg", ev) if capa.get("foto_fonte") == "real" else None
+    if real_capa:
+        (pasta / "capa.png").write_bytes(real_capa["arquivo"].read_bytes()); cred_capa = real_capa["credito"]
+    elif capa["molde"] == "capa_caderno":
         ev("fotografo", "Capa de caderno: usando a foto fixa do planner aberto.")
         (pasta / "capa.png").write_bytes(_caderno(pasta).read_bytes())
     elif capa["molde"] == "capa_revista":
@@ -95,8 +115,17 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
         if (gerar(capa["foto_prompt2"], dest) if famosa or not cam_capa else variar(cam_capa, dest, pers, capa["foto_prompt2"])):
             circulo = pasta / "circulo.png"; robo.baixar(dest, circulo)
 
-    tarefas = []
+    tarefas = []; reais = {}
     for i, s in enumerate(post["slides"], 2):
+        fonte = s.get("foto_fonte") or "ia"
+        if fonte == "real" and s["molde"] in COM_FOTO | FOTO_OPCIONAL:
+            r = _real(s, pasta / f"s{i:02d}_real.jpg", ev)
+            if r:
+                reais[i] = r; continue
+            if s.get("pessoa_real"):  # nunca rosto de pessoa pública por IA: vira cartão de notícia sem foto
+                s["molde"] = "noticia"; s.setdefault("chapeu", ""); continue
+        if fonte == "nenhuma" and s["molde"] in FOTO_OPCIONAL:
+            continue
         if s.get("foto_prompt") and s["molde"] in COM_FOTO | {"antes_hoje"}:
             tarefas.append((i, s, "foto_prompt", ""))
         if s["molde"] == "antes_hoje" and s.get("foto_prompt2"):
@@ -118,14 +147,18 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
 
     c = {k: v for k, v in capa.items() if v not in ("", [], None)}
     c["foto"] = (pasta / "capa.png").as_uri()
+    if cred_capa:
+        c["credito"] = cred_capa
     if circulo:
         c["fotos_circulo"] = [circulo.as_uri()]
     slides = [c]; reserva = c["foto"]
     for i, s in enumerate(post["slides"], 2):
-        d = {k: v for k, v in s.items() if v not in ("", [], None) and k not in ("foto_prompt", "foto_prompt2")}
+        d = {k: v for k, v in s.items() if v not in ("", [], None) and k not in ("foto_prompt", "foto_prompt2") + DA}
         f1 = fotos.get((i, "")); f2 = fotos.get((i, "b"))
         if s["molde"] == "antes_hoje":
             d["fotos"] = [(f1.as_uri() if f1 else reserva), (f2.as_uri() if f2 else reserva)]
+        elif i in reais:
+            d["foto"] = reais[i]["arquivo"].as_uri(); d["credito"] = reais[i]["credito"]
         elif s["molde"] in COM_FOTO:
             d["foto"] = f1.as_uri() if f1 else reserva
         slides.append(d)
