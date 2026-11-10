@@ -116,6 +116,29 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 .cover.img{padding:0;overflow:hidden;background:#111}
 .cover.img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .cover.img .n{z-index:1}
+.acct.mais{padding:4px 12px;font-size:1.1rem;font-weight:800}.amb-st{margin-left:4px;font-size:.72rem;font-weight:700;color:var(--muted,#888);border:1px solid var(--line);border-radius:99px;padding:1px 6px}
+.estudo{max-width:980px;margin:0 auto;padding:22px 16px 60px;display:grid;gap:14px}
+.est-cab{display:flex;gap:12px;align-items:center}.est-cab h2{margin:0}.est-cab .av{width:44px;height:44px;font-size:1rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}
+.est-agentes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.est-ag{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-weight:600;font-size:.9rem}
+.est-ag i{width:10px;height:10px;border-radius:50%;background:#e0a800;animation:pisca 1.2s infinite}.est-ag.pronto i{background:#16a34a;animation:none}.est-ag.erro i{background:#dc2626;animation:none}
+@keyframes pisca{50%{opacity:.3}}@media (prefers-reduced-motion:reduce){.est-ag i{animation:none}}
+.est-log{border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:.88rem;display:grid;gap:4px;max-height:320px;overflow:auto}.est-log p{margin:0}
+.est-texto{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:inherit;resize:vertical}
+.estudo .doc{background:#f6f5f0;color:#16181c;border-radius:16px;padding:22px}
+.estudo .doc h2{margin:0;font-size:1.8rem}.estudo .dsub{color:#5d636b;font-size:.9rem;margin:4px 0 0}
+.estudo .resumo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+.estudo .rbox,.estudo .item{background:#fff;border:1px solid #e1dfd8;border-radius:10px;padding:12px}
+.estudo .rbox small,.estudo .lab{display:block;font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#7a7f87;margin-bottom:4px}
+.estudo .rbox p,.estudo .item p,.estudo .item li{font-size:.9rem;line-height:1.45;margin:0}
+.estudo .secao{margin-top:18px}.estudo .secao h4{margin:0 0 8px;font-size:1.05rem;text-transform:uppercase}
+.estudo .item{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:10px}.estudo .item ul{margin:0;padding-left:18px}
+.estudo .rod{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px dashed #e1dfd8;padding-top:8px;font-size:.8rem;color:#5d636b}
+.estudo .cert{font-weight:700;font-size:.7rem;text-transform:uppercase;padding:3px 7px;border-radius:5px}.c-alta{background:#dcfce7;color:#166534}.c-media{background:#fef3c7;color:#92400e}.c-baixa{background:#fee2e2;color:#991b1b}
+.estudo .final{margin-top:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:#16181c;color:#f6f5f0;border-radius:12px;padding:14px 16px}
+.avisos{border:2px solid var(--accent,#FFD21F);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:grid;gap:10px}
+.aviso{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}.aviso p{margin:2px 0;font-size:.9rem}.aviso small{opacity:.75}.av-bt{display:flex;gap:6px}
+@media (max-width:760px){.est-agentes{grid-template-columns:1fr 1fr}.estudo .resumo{grid-template-columns:1fr 1fr}.estudo .item,.aviso{grid-template-columns:1fr}}
 .retoque{margin:12px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;display:grid;gap:10px}
 .rt-cab{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
 .rt-linha{display:grid;grid-template-columns:auto 90px minmax(0,1fr) auto;gap:8px;align-items:center}
@@ -332,7 +355,7 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
   <div class="top">
     <span class="brand">Fábrica de Posts</span>
     <div class="accts" id="accts" role="group" aria-label="Escolher a conta"></div>
-    <a class="avaliar" href="avaliar.html" target="_blank" rel="noopener">★ Avaliar thumbs</a><a class="avaliar" href="padroes.html" target="_blank" rel="noopener">◆ Padrões</a><a class="avaliar" href="estudo-modelo.html" target="_blank" rel="noopener">▣ Estudo de marca</a><nav class="tabs" id="tabs" aria-label="Abas"></nav>
+    <a class="avaliar" href="avaliar.html" target="_blank" rel="noopener">★ Avaliar thumbs</a><a class="avaliar" href="padroes.html" target="_blank" rel="noopener">◆ Padrões</a><nav class="tabs" id="tabs" aria-label="Abas"></nav>
     <span class="proto" id="quem"></span>
   </div>
   <main class="view" id="view"></main>
@@ -352,7 +375,55 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 <script src="escritorio.js?v=4"></script>
 <script>
 const sb=supabase.createClient("https://kfvugtrjuqdakbpzvsxq.supabase.co","sb_publishable_hMCt4kaGtY75gMEb3aRi-g_Xh3OkPhx");
-const ACC={a1:{nome:"Do outro lado da Porta",at:"@ahistoriaquemuda",av:"DP",cls:"c1",avc:"av1"}};
+const ACC={a1:{nome:"Do outro lado da Porta",at:"@ahistoriaquemuda",av:"DP",cls:"c1",avc:"av1",amb:1}};
+// AMBIENTES: cada empresa é um ambiente com a própria fábrica (o 1 é a Do outro lado da Porta)
+let AMBS=[],novoAmb=null;const AVISOS={};
+async function carregarAmbientes(){
+  const {data}=await sb.from("ambientes").select("id,nome,handle,sigla,status,estudo,estudo_log,entrada,marca").order("id");
+  AMBS=data||[];
+  const {data:ps}=await sb.from("personas").select("id,nome,ambiente_id").neq("ambiente_id",1);
+  for(const A of AMBS){const k="a"+A.id;
+    ACC[k]=Object.assign(ACC[k]||{},{nome:A.nome,at:A.handle||(ACC[k]&&ACC[k].at)||"",av:A.sigla||A.nome.slice(0,2).toUpperCase(),cls:"c1",avc:A.id===1?"av1":"av2",amb:A.id,A});
+    if(A.id!==1){const meu=(ps||[]).filter(x=>x.ambiente_id===A.id);ACC[k].pers=meu.length?meu.map(x=>[x.id,x.nome]):null;meu.forEach(x=>ROT[x.id]=x.nome)}
+    if(!AGENDA[k])AGENDA[k]=AGENDA.a1;if(!PROPS[k])PROPS[k]=[];if(!ANALISES[k])ANALISES[k]=[];
+    if(!CHAT[k]||!CHAT[k].length)CHAT[k]=[{w:"ag",f:"Fábrica",t:`Oi! Aqui é o ambiente ${A.nome}. Pode pedir posts, ajustes ou análises só desta empresa.`}];}
+  const {data:av}=await sb.from("avisos_ambiente").select("*").eq("status","novo").order("id",{ascending:false});
+  for(const k in AVISOS)delete AVISOS[k];(av||[]).forEach(x=>{(AVISOS["a"+x.ambiente_id]=AVISOS["a"+x.ambiente_id]||[]).push(x)});
+  clearTimeout(window._tAmb);if(AMBS.some(A=>A.status==="estudando"))window._tAmb=setTimeout(async()=>{await carregarAmbientes();render()},15000);
+}
+const ambAtual=()=>(ACC[acc]&&ACC[acc].A)||{id:1,status:"ativo"};
+const AGENTES_ESTUDO=["Pesquisador da empresa","Leitor das redes","Pesquisador de mercado","Analista de público","Estrategista de marca","Guardião das regras","Diretor de Arte","Roteirista","Editor-chefe"];
+function renderEstudo(A){
+  const linhas=String(A.estudo_log||"").split("\n").filter(l=>l&&!/^(em andamento|na fila|estudo pronto)$/.test(l.trim()));
+  if(A.status==="estudando"){
+    const st=n=>linhas.some(l=>l.includes("✓ "+n))?"pronto":linhas.some(l=>l.includes("✗ "+n))?"erro":"trabalhando";
+    return `<div class="estudo"><div class="est-cab"><span class="av ${ACC[acc].avc}">${esc(ACC[acc].av)}</span><div><h2>O time está estudando ${esc(A.nome)}</h2><p class="sub">Leva uns 20 minutos. Pode fechar a tela: o estudo continua no robô e aparece aqui sozinho.</p></div></div>
+      <div class="est-agentes">${AGENTES_ESTUDO.map(n=>`<div class="est-ag ${st(n)}"><i></i>${esc(n)}</div>`).join("")}</div>
+      <div class="est-log">${linhas.length?linhas.slice(-14).map(l=>`<p>${esc(l)}</p>`).join(""):`<p>Na fila. O robô começa em instantes.</p>`}</div></div>`;
+  }
+  if(A.status==="erro") return `<div class="estudo"><div class="est-cab"><span class="av ${ACC[acc].avc}">${esc(ACC[acc].av)}</span><div><h2>O estudo de ${esc(A.nome)} parou</h2><p class="sub">${esc(A.estudo_log||"Deu erro.")}</p></div></div>
+      <label class="fieldlab" for="amb-entrada">O que você colou (pode completar antes de estudar de novo)</label><textarea id="amb-entrada" class="est-texto" rows="10">${esc(A.entrada||"")}</textarea>
+      <div class="prow" style="justify-content:flex-end"><button class="btn primary" data-reestudar="${A.id}">Estudar de novo</button></div></div>`;
+  const E=A.estudo||{},D=E.documento||{},F=E.fabrica||{},Rs=D.resumo||{};
+  const cert={alta:["certeza alta","c-alta"],media:["certeza média","c-media"],baixa:["certeza baixa","c-baixa"]};
+  return `<div class="estudo"><div class="doc">
+    <h2>${esc(A.nome)}</h2><p class="dsub">Estudo feito em ${E.minutos||"~20"} min por 9 agentes${(E.falhas||[]).length?` · ${E.falhas.length} agente(s) não conseguiram e o editor completou`:""}</p>
+    <div class="resumo">${[["Posicionamento",Rs.posicionamento],["Público principal",Rs.publico],["Tom de voz",Rs.tom],["Pedido do fim",Rs.pedido_fim]].map(([t,v])=>`<div class="rbox"><small>${t}</small><p>${esc(v||"")}</p></div>`).join("")}</div>
+    ${(D.secoes||[]).map(sec=>`<div class="secao"><h4>${esc(sec.bloco?sec.bloco+". ":"")}${esc(sec.titulo)}</h4>${(sec.itens||[]).map(it=>`<div class="item"><div><div class="lab">${esc(it.titulo)}</div>${(it.encontramos||[]).length?`<ul>${it.encontramos.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div><div><div class="lab">Proposta</div><p>${esc(it.proposta)}</p></div><div class="rod"><span class="cert ${(cert[it.certeza]||cert.media)[1]}">${(cert[it.certeza]||cert.media)[0]}</span>${(it.fontes||[]).length?`<span>fontes: ${it.fontes.slice(0,4).map(esc).join(" · ")}</span>`:""}</div></div>`).join("")}</div>`).join("")}
+    <div class="secao"><h4>O que a fábrica deste cliente vai usar</h4><div class="item"><div><div class="lab">Personas</div><ul>${(F.personas||[]).map(p=>`<li><b>${esc(p.nome)}</b> (${esc(p.faixa)}): ${esc(p.descricao)}</li>`).join("")}</ul></div><div><div class="lab">Pedido do fim</div><p>${esc((F.marca||{}).pedido_fim||"")}</p><div class="lab" style="margin-top:8px">Nunca fazer</div><p>${esc((F.marca||{}).regras_curtas||"")}</p></div></div></div>
+    ${(D.perguntas_cliente||[]).length?`<div class="secao"><h4>Perguntas para o cliente</h4><div class="item"><div><ul>${D.perguntas_cliente.map(q=>`<li>${esc(q)}</li>`).join("")}</ul></div><div><p>Quando ele responder, cole as respostas no chat deste ambiente.</p></div></div></div>`:""}
+    <div class="final"><span>Depois de aprovar, a fábrica de ${esc(A.nome)} fica pronta e você já pode gerar posts.</span><button class="btn primary" data-aprovaramb="${A.id}">Aprovar e ligar a fábrica</button></div>
+  </div></div>`;
+}
+function avisosHTML(){const L=AVISOS[acc]||[];if(!L.length)return "";
+  return `<div class="avisos"><b>O vigia viu ${L.length} novidade${L.length>1?"s":""}</b>${L.map(v=>`<div class="aviso"><div><b>${esc(v.titulo)}</b><p>${esc(v.texto||"")}</p>${v.proposta&&v.proposta.regra_nova?`<small>Se aprovar, a fábrica passa a seguir: ${esc(v.proposta.regra_nova)}</small>`:""}</div><div class="av-bt"><button class="btn primary" data-aviso="${v.id}" data-dec="aprovar">Aprovar</button><button class="btn" data-aviso="${v.id}" data-dec="ignorar">Ignorar</button></div></div>`).join("")}</div>`}
+function drawNovoAmb(){
+  document.getElementById("layer").innerHTML=`<div class="shade" data-mclose></div><div class="modal" role="dialog" aria-modal="true" aria-label="Novo ambiente" style="width:min(680px,calc(100% - 32px))">
+   <h3>Novo ambiente</h3><p class="sub" style="margin:0">Cada empresa ganha uma fábrica própria, sem misturar com as outras. Cole tudo o que você sabe dela. O time de agentes estuda por uns 20 minutos e volta com o documento para você aprovar.</p>
+   <label class="gl">Nome da empresa<input id="na-nome" value="${esc(novoAmb.nome||"")}" placeholder="ex.: Rede de Clínicas do pai do Davi"></label>
+   <label class="gl">Tudo sobre a empresa<textarea id="na-texto" class="est-texto" rows="12" placeholder="Cole aqui: @ do Instagram, TikTok, site, o que ela vende, cidades e unidades, o que o cliente pediu, o que ele não quer, concorrentes que você conhece, anotações...">${esc(novoAmb.texto||"")}</textarea></label>
+   <div class="prow" style="justify-content:flex-end"><button class="btn" data-mclose>Cancelar</button><button class="btn primary" data-ncriar>Estudar</button></div></div>`;
+}
 // status provisórios: ainda vamos decidir quais ficam
 const ST={prop:["Proposta","st-prop"],gen:["Gerando","st-draft"],draft:["Rascunho","st-draft"],wait:["Para revisar","st-wait"],sched:["Agendado","st-sched"],ok:["Publicado","st-ok"],fail:["Falhou","st-rej"]};
 const AGENDA={a1:["09:00","12:35","17:50","02:00"]};
@@ -382,7 +453,7 @@ function composer(where,ph){
   </form></div>`;
 }
 function renderTop(){
-  document.getElementById("accts").innerHTML=Object.entries(ACC).map(([k,A])=>`<button class="acct" data-acc="${k}" aria-pressed="${k===acc}"><span class="av ${A.avc}">${A.av}</span>${A.nome}</button>`).join("");
+  document.getElementById("accts").innerHTML=Object.entries(ACC).map(([k,A])=>`<button class="acct" data-acc="${k}" aria-pressed="${k===acc}"><span class="av ${A.avc}">${A.av}</span>${A.nome}${A.A&&A.A.status!=="ativo"?`<small class="amb-st">${A.A.status==="estudando"?"estudando":A.A.status==="aguardando"?"para aprovar":"parou"}</small>`:""}</button>`).join("")+`<button class="acct mais" data-novoamb title="Novo ambiente" aria-label="Criar um novo ambiente">+</button>`;
   document.getElementById("tabs").innerHTML=[["posts","Posts e capas"],["chat","Chat"]].map(([k,l])=>`<button class="tab" data-tab="${k}" ${tab===k?'aria-current="page"':""}>${l}</button>`).join("");
 }
 // selos do cartão: status do post + andamento da montagem e das capas (para acompanhar sem abrir)
@@ -399,7 +470,7 @@ function selos(p){
 }
 function renderPosts(){
   const L=POSTS.filter(p=>p.a===acc&&(filtro==="todos"||p.s===filtro)).sort((x,y)=>(y.t||new Date(2100,0))-(x.t||new Date(2100,0)));
-  return `<div class="listaesc"><div class="lcol"><div class="listhead"><div><h2>Posts e capas · ${ACC[acc].nome}</h2><p class="sub">Os agentes à direita mostram o que está sendo feito agora.</p></div><button class="btn primary" data-genopen>+ Gerar conteúdo</button></div>
+  return `<div class="listaesc"><div class="lcol">${avisosHTML()}<div class="listhead"><div><h2>Posts e capas · ${ACC[acc].nome}</h2><p class="sub">Os agentes à direita mostram o que está sendo feito agora.</p></div><button class="btn primary" data-genopen>+ Gerar conteúdo</button></div>
   <div class="filters" role="group" aria-label="Filtrar por status">${[["todos","Todos"],...Object.entries(ST).map(([k,v])=>[k,v[0]])].map(([k,l])=>`<button class="f" data-f="${k}" aria-pressed="${filtro===k}">${l}</button>`).join("")}</div>
   <div class="grid">${L.map(p=>`<button class="card ${p.s==="gen"?"gen":""}" data-post="${p.id}" ${p.s==="gen"?"disabled":""}>${cover(p)}<div class="meta"><span class="when">${fdt(p.t)}<small>${p.s==="ok"?"publicado":p.s==="sched"?"agendado":p.s==="prop"?esc(p.rot||"proposta"):"ainda sem data"}</small></span>${selos(p)}</div></button>`).join("")||'<p class="sub">Nenhum post com esse status.</p>'}</div></div><aside class="escgeral" id="escgeral" aria-label="Agentes trabalhando"></aside></div>`;
 }
@@ -505,7 +576,10 @@ function renderDrawer(){
    <div class="acts">${x.st==="nova"?`<button class="btn primary" data-approve="${x.id}">Aprovar</button>`:`<span class="st st-ok">${esc(x.st)}</span>`}<button class="btn" data-detail="${x.id}">Detalhar no chat</button></div></div>`).join("")}</div></aside>`;
 }
 function render(){
+  if(!ACC[acc])acc="a1";
   renderTop();
+  const AA=ambAtual();
+  if(AA.status!=="ativo"){const v0=document.getElementById("view");v0.innerHTML=renderEstudo(AA);v0.style.overflow="auto";fecharEscritorio();document.getElementById("layer").innerHTML="";if(novoAmb)drawNovoAmb();return}
   const v=document.getElementById("view");
   v.innerHTML=tab==="posts"?(aberto?renderPost():renderPosts()):renderChat();
   v.style.overflow=(tab==="chat"||aberto)?"hidden":"auto";
@@ -513,7 +587,7 @@ function render(){
   if(tab==="posts"&&!aberto)anexarGeral();
   if(tab==="posts"&&aberto){const p=POSTS.find(x=>x.id===aberto);if(p&&!(p.imgs&&p.imgs.length)&&!p.plano&&!p.planejando&&!p.planoErro&&p.mont!=="pendente"&&p.mont!=="montando")setTimeout(()=>planejarVisual(p),300)}
   document.getElementById("layer").innerHTML=renderDrawer();
-  if(gen)drawGen();else if(capas)drawCapas();else if(modal)drawCal();
+  if(novoAmb)drawNovoAmb();else if(gen)drawGen();else if(capas)drawCapas();else if(modal)drawCal();
   const ms=document.getElementById("msgs");if(ms)ms.scrollTop=ms.scrollHeight;
 }
 function toast(t){const e=document.createElement("div");e.className="toast";e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2600)}
@@ -556,7 +630,8 @@ async function startPipe(o){
   const a=acc;const lote=new Date().toISOString();const por=o.qtd/9;
   const P=PIPE[a]={etapa:0,done:false,n:0,qtd:o.qtd,info:[[],[],[]]};
   const rr=rrTudo;
-  const combos=TIPOS.flatMap(([t])=>PERSONAS.map(([p])=>({tipo:t,persona_id:p})));
+  const persA=(a!=="a1"&&ACC[a].pers)||PERSONAS;const amb=ACC[a].amb||1;
+  const combos=TIPOS.flatMap(([t])=>persA.map(([p])=>({tipo:t,persona_id:p})));
   ["escritor","conferente","plateia"].forEach(x=>equipe(x,"livre","Esperando a Planejadora terminar."));
   equipe("planejadora","trabalhando",`Estou lendo os posts que já venceram e escolhendo um molde para cada uma das 9 combinações (3 tipos × 3 personas). 0 de 9.`);
   conta("Você","pediu "+o.qtd+" variações"+(o.assunto?` sobre "${o.assunto}"`:"")+".");
@@ -564,11 +639,11 @@ async function startPipe(o){
     let np=0;rr();
     if(o.assunto){
       equipe("planejadora","trabalhando",`Pesquisando na imprensa o que está acontecendo AGORA sobre "${o.assunto}" (fatos com data e fonte). Leva uns 50 segundos.`);
-      try{const d=await chamar({acao:"pesquisar",lote,assunto:o.assunto});
+      try{const d=await chamar({acao:"pesquisar",lote,assunto:o.assunto,ambiente_id:amb});
         if(d.dossie){equipe("planejadora","trabalhando",`Pesquisa pronta: ${(d.dossie.fatos||[]).length} fatos com fonte. ${String(d.dossie.resumo_do_momento||"").slice(0,160)}`);conta("Planejadora",`pesquisou "${o.assunto}": ${String(d.dossie.resumo_do_momento||"").slice(0,200)}`)}}
       catch(e){equipe("planejadora","trabalhando",`A pesquisa falhou (${e.message}). Vou seguir sem afirmar fato nenhum sobre o assunto.`)}
     }
-    const planos=await emFila(combos,5,(c,i)=>chamar({acao:"planejar",lote,...c,giro:i,quantidade:por,assunto:o.assunto,dia:new Date().toISOString().slice(0,10)}).then(r=>{np++;
+    const planos=await emFila(combos,5,(c,i)=>chamar({acao:"planejar",lote,...c,ambiente_id:amb,giro:i,quantidade:por,assunto:o.assunto,dia:new Date().toISOString().slice(0,10)}).then(r=>{np++;
       equipe("planejadora","trabalhando",`Já planejei ${np} de 9 combinações. Acabei de fazer ${ROT[c.tipo]} para ${ROT[c.persona_id]}.`);
       conta("Planejadora",`planejou ${ROT[c.tipo]} · ${ROT[c.persona_id]}: "${r.candidatos[0]?.gancho_capa||""}"`);rr();return r}));
     const ok=planos.filter(x=>x.ok).map(x=>x.v);
@@ -694,8 +769,10 @@ async function anexarEscritorio(p){
 function fecharEscritorio(){if(!ESC)return;try{ESC.canal&&sb.removeChannel(ESC.canal)}catch(e){}ESC.inst.destruir();ESC=null}
 const msgDoBanco=m=>({w:m.papel==="dono"?"me":"ag",f:m.papel==="fabrica"?"Fábrica":null,t:m.texto,atts:(m.anexos||[]).map(a=>({kind:a.tipo,name:a.tipo==="audio"&&a.transcricao?`áudio: "${a.transcricao.slice(0,60)}${a.transcricao.length>60?"…":""}"`:a.nome}))});
 async function carregarChat(){
-  const {data,error}=await sb.from("chat").select("papel,texto,anexos").is("variacao_id",null).order("id",{ascending:true}).limit(300);
+  const {data:tudo,error}=await sb.from("chat").select("papel,texto,anexos,ambiente_id").is("variacao_id",null).order("id",{ascending:true}).limit(600);
   if(error){toast("Não consegui ler o chat: "+error.message);return}
+  for(const A of AMBS){if(A.id===1)continue;const m=(tudo||[]).filter(x=>x.ambiente_id===A.id);if(m.length)CHAT["a"+A.id]=m.map(msgDoBanco)}
+  const data=(tudo||[]).filter(x=>(x.ambiente_id||1)===1);
   CHAT.a1=data.length?data.map(msgDoBanco):[{w:"ag",f:"Fábrica",t:"Oi! Pode perguntar sobre as variações, pedir análises, mandar áudio ou foto, ou pedir posts novos (ex.: \"gera 18 variações sobre Black Friday\")."}];
   if(tab==="chat")render();
 }
@@ -729,7 +806,7 @@ async function enviarMensagem(w,texto){
   render();
   try{
     const anexos=await prepararAnexos(lista);
-    const r=await chamar({acao:"conversar",texto,anexos,variacao_id:p?p.id:null});
+    const r=await chamar({acao:"conversar",texto,anexos,variacao_id:p?p.id:null,ambiente_id:ACC[acc].amb||1});
     Object.assign(pensando,{w:"ag",t:r.resposta});
     if(r.transcricao)meu.t=(texto?texto+"\n":"")+`(áudio) ${r.transcricao}`;
     if(p&&r.nova_versao){const n=r.nova_versao;Object.assign(p,{capa:esc(n.capa),sl:n.slides,leg:n.legenda,hs:n.hashtags});if(p.pr)p.pr.capa=n.thumb_descricao;conta("Assistente","editou o post.");toast("Post atualizado")}
@@ -740,11 +817,11 @@ async function enviarMensagem(w,texto){
   render();
 }
 async function carregar(){
-  const {data,error}=await sb.from("variacoes").select("id,status,pecas,plano_visual,variaveis,remodelagem,por_que_para,forca,risco,painel,eixo,ordem,pautas(dia,tipo,persona_id,assunto,lote),posts(id,status,agendado_para,montagem_status,imagens,montagem_log,capas_status)").in("status",["mostrada","escolhida"]).order("forca",{ascending:false,nullsFirst:false}).order("id",{ascending:false}).limit(500);
+  const {data,error}=await sb.from("variacoes").select("id,status,pecas,plano_visual,variaveis,remodelagem,por_que_para,forca,risco,painel,eixo,ordem,pautas(dia,tipo,persona_id,assunto,lote,ambiente_id),posts(id,status,agendado_para,montagem_status,imagens,montagem_log,capas_status)").in("status",["mostrada","escolhida"]).order("forca",{ascending:false,nullsFirst:false}).order("id",{ascending:false}).limit(500);
   if(error){toast("Não consegui ler o banco: "+error.message);return}
   POSTS=data.map(v=>{const pc=v.pecas||{},va=v.variaveis||{},rm=v.remodelagem||{},pa=v.pautas||{},pn=v.painel||{},R=pn.risco;
     const po=(v.posts||[])[0];const ag=po&&po.agendado_para?new Date(po.agendado_para):null;
-    return {id:v.id,a:"a1",s:ag?"sched":v.status==="mostrada"?"prop":"draft",t:ag,rot:`${ROT[pa.tipo]||pa.tipo||""} · ${ROT[pa.persona_id]||pa.persona_id||""} · força ${v.forca??"-"}`,capa:esc(pc.capa||""),sl:pc.slides||[],plano:v.plano_visual||null,leg:pc.legenda||"",hs:pc.hashtags||[],
+    return {id:v.id,a:"a"+(pa.ambiente_id||1),s:ag?"sched":v.status==="mostrada"?"prop":"draft",t:ag,rot:`${ROT[pa.tipo]||pa.tipo||""} · ${ROT[pa.persona_id]||pa.persona_id||""} · força ${v.forca??"-"}`,capa:esc(pc.capa||""),sl:pc.slides||[],plano:v.plano_visual||null,leg:pc.legenda||"",hs:pc.hashtags||[],
       postId:po?po.id:null,mont:po?po.montagem_status:null,capasSt:po?po.capas_status:null,mlog:po?po.montagem_log:"",paths:po&&Array.isArray(po.imagens)?po.imagens:[],
       log:v.status==="escolhida"?[{w:"ag",f:"Equipe",t:"Você escolheu esta variação. O robô monta os slides e eles aparecem acima."}]:[],
       esb:ESB("a1",(v.ordem||1)-1),
@@ -903,7 +980,18 @@ document.addEventListener("click",e=>{
     const t2=proximoLivre(o.a,o.id,alvo);if(!t2){toast("Não achei horário livre para o outro post.");return}o.t=t2;o.s="sched";chamar({acao:"agendar",variacao_id:o.id,quando:t2.toISOString()}).catch(e=>toast("Erro: "+e.message));drawCal();toast(`O outro post foi para ${fdt(t2)}`);return}
   if("mconfirm" in ds){const p=POSTS.find(x=>x.id===modal.id);const [h,mi]=modal.hora.split(":").map(Number);const t=new Date(modal.dia.getFullYear(),modal.dia.getMonth(),modal.dia.getDate(),h,mi);b.disabled=true;
     chamar({acao:"agendar",variacao_id:p.id,quando:t.toISOString()}).then(()=>{p.t=t;p.s="sched";modal=null;render();toast(`Agendado: ${fdt(t)} (a publicação automática no Instagram ainda não está ligada)`)}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
-  if("mclose" in ds){modal=null;gen=null;capas=null;render();return}
+  if("mclose" in ds){modal=null;gen=null;capas=null;novoAmb=null;render();return}
+  if("novoamb" in ds){novoAmb={nome:"",texto:""};render();return}
+  if("ncriar" in ds){const nome=document.getElementById("na-nome").value.trim(),texto=document.getElementById("na-texto").value.trim();novoAmb={nome,texto};
+    if(!nome){toast("Dê um nome para o ambiente");return}if(texto.length<20){toast("Cole no campo o que você sabe da empresa");return}
+    b.disabled=true;b.textContent="Enviando…";
+    sb.functions.invoke("ambientes",{body:{acao:"criar",nome,entrada:texto}}).then(async({data,error})=>{if(error||data?.erro)throw new Error(data?.erro||error.message);novoAmb=null;await carregarAmbientes();acc="a"+data.ambiente.id;aberto=null;tab="posts";render();toast("O time começou a estudar "+nome)}).catch(e=>{toast("Erro: "+e.message);b.disabled=false;b.textContent="Estudar"});return}
+  if(ds.aprovaramb){b.disabled=true;b.textContent="Ligando a fábrica…";
+    sb.functions.invoke("ambientes",{body:{acao:"aprovar",ambiente_id:+ds.aprovaramb}}).then(async({data,error})=>{if(error||data?.erro)throw new Error(data?.erro||error.message);await carregarAmbientes();render();toast("Fábrica ligada! Já pode gerar posts.")}).catch(e=>{toast("Erro: "+e.message);b.disabled=false;b.textContent="Aprovar e ligar a fábrica"});return}
+  if(ds.reestudar){const ent=document.getElementById("amb-entrada");b.disabled=true;
+    sb.functions.invoke("ambientes",{body:{acao:"reestudar",ambiente_id:+ds.reestudar,entrada:ent?ent.value:undefined}}).then(async({data,error})=>{if(error||data?.erro)throw new Error(data?.erro||error.message);await carregarAmbientes();render()}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
+  if(ds.aviso){b.disabled=true;
+    sb.functions.invoke("ambientes",{body:{acao:"aviso",aviso_id:+ds.aviso,decisao:ds.dec}}).then(async({data,error})=>{if(error||data?.erro)throw new Error(data?.erro||error.message);await carregarAmbientes();render();toast(ds.dec==="aprovar"?"A fábrica já segue a novidade":"Aviso ignorado")}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
   if("drawer" in ds){drawer=true;render();return}
   if("close" in ds){drawer=false;render();return}
   if(ds.approve){const x=anById(ds.approve);x.st="aprovada";CHAT[acc].push({w:"me",t:`Aprovei a análise "${x.t}".`});CHAT[acc].push({w:"ag",f:"Pauteiro",t:"Combinado. Já apliquei na receita dos posts da próxima semana."});render();return}
@@ -937,7 +1025,7 @@ document.addEventListener("keydown",e=>{
 async function entrar(){
   const {data:{session}}=await sb.auth.getSession();const L=document.getElementById("login");
   if(!session){L.hidden=false;return}
-  L.hidden=true;document.getElementById("quem").textContent=session.user.email;await carregar();carregarChat();
+  L.hidden=true;document.getElementById("quem").textContent=session.user.email;await carregarAmbientes();await carregar();carregarChat();
 }
 document.getElementById("lform").addEventListener("submit",async e=>{e.preventDefault();e.stopPropagation();const m=document.getElementById("l-msg");m.textContent="Entrando…";
   const {error}=await sb.auth.signInWithPassword({email:document.getElementById("l-email").value.trim(),password:document.getElementById("l-pass").value});

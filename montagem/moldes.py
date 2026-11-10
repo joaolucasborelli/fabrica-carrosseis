@@ -9,6 +9,27 @@ from pathlib import Path
 LOGO = (Path(__file__).resolve().parent / "assets" / "logo-horizontal.svg").as_uri()
 AVATAR = (Path(__file__).resolve().parent / "assets" / "logo-perfil.svg").as_uri()
 HANDLE = "@ahistoriaquemuda"
+NOME = "Do outro lado da Porta"
+_PADRAO = (LOGO, AVATAR, HANDLE, NOME)
+
+
+def usar_marca(marca=None):
+    """Cada ambiente desenha com a própria marca. Sem marca (ou o ambiente 1) volta para a Do outro lado da Porta."""
+    global LOGO, AVATAR, HANDLE, NOME
+    import base64 as _b64, html as _h
+    if not marca or not marca.get("nome") or marca.get("ambiente_id") in (None, 1):
+        LOGO, AVATAR, HANDLE, NOME = _PADRAO
+        return
+    NOME = marca["nome"]
+    HANDLE = marca.get("handle") or ""
+    sigla = (marca.get("sigla") or "".join(w[0] for w in NOME.split()[:2])).upper()[:3]
+    cor = marca.get("cor") or "#FFD21F"
+    av = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="{cor}"/>'
+          f'<text x="50" y="62" font-family="Inter,Arial" font-weight="800" font-size="36" text-anchor="middle" fill="#111">{_h.escape(sigla)}</text></svg>')
+    lg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 80"><text x="0" y="58" font-family="Inter,Arial" font-weight="800" font-size="52" fill="#fff">'
+          f'{_h.escape(NOME)}</text></svg>')
+    AVATAR = "data:image/svg+xml;base64," + _b64.b64encode(av.encode()).decode()
+    LOGO = "data:image/svg+xml;base64," + _b64.b64encode(lg.encode()).decode()
 
 PORTA = ('<svg class="emblema" viewBox="380 280 280 560" aria-hidden="true">'
          '<rect x="470" y="300" width="170" height="512" fill="#FFD21F"/>'
@@ -693,7 +714,7 @@ def slide_html(s: dict) -> str:
     elif m == "capa_perfil":
         foco = html.escape(s.get("foco") or "50% 40%")
         corpo = (f'<div class="slide perfil"><img class="foto" src="{s["foto"]}" style="--foco:{foco}"><div class="grao"></div>'
-                 f'<div class="divisor"><i></i><div class="chip"><img src="{AVATAR}"><div><b>Do outro lado da Porta</b><span>{HANDLE}</span></div></div><i></i></div>'
+                 f'<div class="divisor"><i></i><div class="chip"><img src="{AVATAR}"><div><b>{NOME}</b><span>{HANDLE}</span></div></div><i></i></div>'
                  f'<div class="texto fit"><p>{marcar(s["texto"], cor=True)}</p></div><div class="arraste">Deslize e veja &gt;&gt;&gt;</div></div>')
     elif m == "capa_comparacao":
         foco = html.escape(s.get("foco") or "50% 45%")
@@ -704,12 +725,12 @@ def slide_html(s: dict) -> str:
     elif m == "capa_tweet":
         foco = html.escape(s.get("foco") or "50% 45%")
         ps = [p.strip() for p in re.split(r"\n+", s["texto"]) if p.strip()]
-        corpo = (f'<div class="slide tw"><div class="topo"><img src="{AVATAR}"><div><b>Do outro lado da Porta</b><span>{HANDLE}</span></div></div>'
+        corpo = (f'<div class="slide tw"><div class="topo"><img src="{AVATAR}"><div><b>{NOME}</b><span>{HANDLE}</span></div></div>'
                  f'<div class="texto fit" data-max="66">{paras(ps)}</div><div class="img"><img src="{s["foto"]}" style="--foco:{foco}"></div></div>')
     elif m == "capa_tweet2":
         ps = [p.strip() for p in re.split(r"\n+", s["texto"]) if p.strip()]
         f1, f2 = (s.get("fotos") or [s.get("foto"), s.get("foto")])[:2]
-        corpo = (f'<div class="slide tw tw2"><div class="topo"><img src="{AVATAR}"><div><b>Do outro lado da Porta</b><span>{HANDLE}</span></div></div>'
+        corpo = (f'<div class="slide tw tw2"><div class="topo"><img src="{AVATAR}"><div><b>{NOME}</b><span>{HANDLE}</span></div></div>'
                  f'<div class="texto fit" data-max="64" style="height:380px">{paras(ps)}</div><div class="duas"><img src="{f1}"><img src="{f2}"></div></div>')
     elif m in ("esc_titulo_moldura", "esc_cards", "esc_checklist", "esc_rede"):
         rod = f'<div class="rod"><i></i>{HANDLE}<i></i></div>'

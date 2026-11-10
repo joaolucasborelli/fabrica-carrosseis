@@ -42,7 +42,7 @@ def chamar(corpo, timeout=200, url=None):
                 return json.loads(r.read())
         except urllib.error.HTTPError as e:
             res = {"ok": False, "status": e.code, "erro": e.read().decode(errors="replace")[:600]}
-            if e.code < 500 or corpo.get("acao") in ("diagramar", "fila"):
+            if e.code < 500 or corpo.get("acao") in ("diagramar", "fila") or "créditos" in res["erro"] or "credits" in res["erro"].lower():
                 return res
             # foto: tenta de novo em erro passageiro da OpenAI (página de erro, 5xx), mas não quando foi barrada por segurança
             if corpo.get("acao") == "imagem" and (tentativa >= 2 or any(k in res["erro"].lower() for k in ("safety", "moderation", "policy"))):
@@ -117,6 +117,7 @@ def montar(post_id: int):
                       f"Conferi: {cob:.0%} das palavras aprovadas estão lá.", "pronto")
     passos.append(f"kit · {post['receita'][:30]} · cobertura {cob:.0%}")
     pasta = SAIDA / f"post_{post_id}"
+    import moldes; moldes.usar_marca(post.get("marca"))
     arquivos = kit.montar(post, pasta, f"post_{post_id}/kit", ev=ev, log=passos.append)
     return entregar(post_id, arquivos, passos, t0, ev)
 
@@ -177,6 +178,7 @@ def capas_alternativas(p):
     from render import renderizar
     from concurrent.futures import ThreadPoolExecutor
     post_id = p["id"]; ficha = p.get("ficha") or {}
+    import moldes; moldes.usar_marca(ficha.get("marca"))
     ev = lambda agente, fala, estado="trabalhando", **k: evento(post_id, agente, fala, estado, **k)
     capa = (ficha.get("capa") if ficha.get("kit") else None) or {}
     texto = capa.get("texto") or ((p.get("variacoes") or {}).get("pecas") or {}).get("capa", "")
@@ -218,6 +220,7 @@ def retocar(p):
     from render import renderizar
     post_id = p["id"]; ficha = p.get("ficha") or {}; imgs = list(p.get("imagens") or [])
     fotos = p.get("fotos_retocadas") or {}
+    import moldes; moldes.usar_marca(ficha.get("marca"))
     ev = lambda agente, fala, estado="trabalhando", **k: evento(post_id, agente, fala, estado, **k)
     pasta = SAIDA / f"post_{post_id}" / "retoques"; pasta.mkdir(parents=True, exist_ok=True)
     feitos = []
