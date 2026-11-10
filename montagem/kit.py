@@ -116,6 +116,9 @@ def _norm(t):
 def ajustar(s):
     """Moldes que não mostram "paragrafos": a frase vai para o subtítulo ou o slide vira texto corrido (nada se perde).
     Cards cujo texto só repete o nome ficam só com o nome."""
+    if len(s.get("chapeu") or "") > 40:
+        s["paragrafos"] = [s["chapeu"]] + [x for x in (s.get("paragrafos") or []) if x]
+        s["chapeu"] = ""
     for c in s.get("cards") or []:
         if c.get("texto") and (_norm(c["texto"]) == _norm(c.get("nome")) or _norm(c["texto"]) in _norm(c.get("nome"))):
             c["texto"] = ""
@@ -146,6 +149,9 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     SEM_PACOTE = (" IMPORTANT: do not show any product packaging, pouch, sachet, box, bottle, jar or brand label anywhere in the image"
                   " (the real product is added later).") if produtos else ""
     VAGA = " Leave a clean empty area on the table or surface in the lower-right third of the frame." if produtos else ""
+    PACOTE = re.compile(r"[^.]*(pouch|sachets?|sach[eê]s?|packag\w*|packets?|labels?|wrappers?|bags? of|box(?:es)? of|carton|jar|tub)[^.]*\.?", re.I)
+    def limpo(txt):
+        return PACOTE.sub("", txt or "") if produtos else (txt or "")
     nomes = [_norm(p.get("nome", "")).split(" ")[0] for p in produtos] + [_norm((post.get("marca") or {}).get("nome", "")).split(" ")[0]]
     nomes = [n for n in nomes if len(n) >= 3]
     def fala_do_produto(s):
@@ -156,11 +162,14 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
         for i, s in enumerate(post["slides"], 2):
             if len(com_produto) < 3 and s["molde"] in COM_FOTO and fala_do_produto(s):
                 com_produto.add(i)
-    def colar(loc, k):
+    def colar(loc, k, capa=False):
         try:
             import marca_kit
             p = produtos[k % len(produtos)]
-            marca_kit.colar_produto(loc, p["arquivo"], loc, altura=0.38)
+            if capa:  # na capa o texto ocupa a parte de baixo: o produto vai no meio, à direita
+                marca_kit.colar_produto(loc, p["arquivo"], loc, altura=0.34, base=0.6)
+            else:
+                marca_kit.colar_produto(loc, p["arquivo"], loc, altura=0.38)
             ev("fotografo", f"Colei a embalagem real de {p.get('nome', 'produto')} na foto (o rótulo é o de verdade, pixel por pixel).")
         except Exception as e:
             ev("fotografo", f"Não consegui colar o produto: {str(e)[:80]}", "erro")
@@ -178,11 +187,11 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
         robo.baixar(cam_capa, pasta / "capa.png")
     else:
         txt = capa.get("texto") or capa.get("titulo") or capa.get("numero")
-        ideia = capa["foto_prompt"] + (f" Main character: {pers}." if pers and not famosa else "") + (f" Famous person: {capa['famoso']} (fact: {capa['fato']})." if capa.get("famoso") else "") + SEM_PACOTE + VAGA
+        ideia = limpo(capa["foto_prompt"]) + (f" Main character: {pers}." if pers and not famosa else "") + (f" Famous person: {capa['famoso']} (fact: {capa['fato']})." if capa.get("famoso") else "") + SEM_PACOTE + (" Leave a clean empty area on the right side of the frame, at mid height, on a table or shelf." if produtos else "")
         ff = foto_fiel(txt, capa["molde"], ideia, f"{base}/capa", vertical=capa["molde"] in ("capa_f3a", "capa_f3b", "capa_circulos", "capa_marcatexto", "capa_numero"), log=lambda *_: None, ev=ev)
         cam_capa = ff["melhor"]; robo.baixar(cam_capa, pasta / "capa.png"); log(f"capa nota {ff['nota']}")
         if produtos:
-            colar(pasta / "capa.png", 0)
+            colar(pasta / "capa.png", 0, capa=True)
     circulo = None
     if capa["molde"] == "capa_circulos" and capa.get("foto_prompt2"):
         dest = f"{base}/circulo.png"
@@ -210,7 +219,7 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     def foto(a):
         i, s, campo, suf = a
         dest = f"{base}/s{i:02d}{suf}.png"; vert = s["molde"] in VERTICAIS
-        prompt = s[campo] + SEM_PACOTE + (VAGA if i in com_produto else "")
+        prompt = limpo(s[campo]) + SEM_PACOTE + (VAGA if i in com_produto else "")
         ok = variar(cam_capa, dest, pers, prompt, vert) if (s.get("mesma_pessoa") and pers and cam_capa and not famosa) else gerar(prompt, dest, vert)
         if not ok:
             return (i, suf), None

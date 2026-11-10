@@ -149,7 +149,7 @@ def _png(im):
     buf = io.BytesIO(); im.save(buf, "PNG"); return buf.getvalue()
 
 
-def colar_produto(foto, produto_png, destino, lado="dir", altura=0.42):
+def colar_produto(foto, produto_png, destino, lado="dir", altura=0.42, base=0.97):
     """Cola o produto real na cena (canto de baixo), com sombra suave. O rótulo fica pixel por pixel igual."""
     from PIL import Image, ImageFilter
     bg = Image.open(foto).convert("RGBA")
@@ -160,7 +160,7 @@ def colar_produto(foto, produto_png, destino, lado="dir", altura=0.42):
     pr = pr.resize((w, h), Image.LANCZOS)
     m = round(bg.width * 0.04)
     x = bg.width - w - m if lado == "dir" else m
-    y = bg.height - h - round(bg.height * 0.03)
+    y = round(bg.height * base) - h  # base = onde fica o pé do produto (0.97 = embaixo; na capa, mais alto, longe do texto)
     sombra = Image.new("RGBA", bg.size, (0, 0, 0, 0))
     alfa = pr.getchannel("A").point(lambda v: int(v * 0.45))
     preta = Image.new("RGBA", pr.size, (0, 0, 0, 255)); preta.putalpha(alfa)
