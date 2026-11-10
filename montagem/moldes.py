@@ -99,12 +99,13 @@ def _tematizar(doc):
 
 def usar_marca(marca=None):
     """Cada ambiente desenha com a própria marca. Sem marca (ou o ambiente 1) volta para a Do outro lado da Porta."""
-    global LOGO, AVATAR, HANDLE, NOME, TEMA
+    global LOGO, AVATAR, HANDLE, NOME, TEMA, PERFIL
     import base64 as _b64, html as _h
     if not marca or not marca.get("nome") or marca.get("ambiente_id") in (None, 1):
         LOGO, AVATAR, HANDLE, NOME = _PADRAO
-        TEMA = None
+        TEMA = None; PERFIL = None
         return
+    PERFIL = marca.get("perfil") or None
     TEMA = tema_seguro(marca.get("tema"))
     NOME = marca["nome"]
     HANDLE = marca.get("handle") or ""
@@ -822,7 +823,13 @@ def _normalizar(s: dict) -> dict:
     return s
 
 
+PERFIL = None  # perfil visual aprovado do ambiente (layouts de marca mk_*)
+
+
 def slide_html(s: dict) -> str:
+    if str(s.get("molde", "")).startswith("mk_"):
+        import moldes_marca
+        return moldes_marca.html_slide(s, {**(PERFIL or {}), "handle": HANDLE or (PERFIL or {}).get("handle", "")})
     s = _normalizar(s)
     m = s["molde"]
     if m == "capa_f1":

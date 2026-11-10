@@ -4,6 +4,7 @@ Uso: python render.py ficha.json pasta_saida
 import json, sys, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+from moldes_marca import FIT_MK
 from moldes import slide_html, FIT_JS
 
 
@@ -45,7 +46,7 @@ def renderizar(slides, saida: Path):
             pg.goto(tmp.as_uri(), wait_until="networkidle")
             pg.evaluate("document.fonts.ready")
             pg.wait_for_timeout(150)
-            pg.evaluate(FIT_JS)
+            pg.evaluate(FIT_MK if str(s.get("molde", "")).startswith("mk_") else FIT_JS)
             encolheu = pg.evaluate("[...document.querySelectorAll('.fit')].map(b=>+b.dataset.encolheu)")
             arq = saida / f"{i:02d}.png"
             pg.screenshot(path=str(arq), clip={"x": 0, "y": 0, "width": 1080, "height": 1350})

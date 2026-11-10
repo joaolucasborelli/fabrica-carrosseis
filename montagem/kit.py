@@ -282,6 +282,10 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
         elif s["molde"] in COM_FOTO:
             d["foto"] = f1.as_uri() if f1 else reserva
         slides.append(d)
+    if post.get("_perfil"):  # ambiente com perfil visual aprovado: layouts da marca (não os da Do outro lado da Porta pintados)
+        import moldes_marca
+        slides = moldes_marca.adaptar(slides[0], slides[1:], post["_perfil"])
+        ev("diretor_arte", f"Usando os layouts da marca (estilo {post['_perfil'].get('estilo', 'creme')}, alternando com {post['_perfil'].get('alternar', 'ameixa')}).")
     ev("montador", f"Desenhando os {len(slides)} slides com os moldes do kit (receita {post.get('receita','')[:30]}).")
     feitos = renderizar(slides, pasta / "slides")
     ev("montador", f"{len(feitos)} slides desenhados.", "pronto")
