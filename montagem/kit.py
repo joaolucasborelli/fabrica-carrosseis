@@ -53,7 +53,7 @@ def _real(s, destino: Path, ev):
     def aceitar(arq, cand):
         # o Conferente olha a foto: é a pessoa certa, num contexto que combina com o slide, sem nada constrangedor?
         import base64
-        cam = f"reais/{arq.stem}_{abs(hash(cand['titulo'])) % 10**8}.jpg"
+        cam = f"reais/{destino.parent.name}_{arq.stem}_{abs(hash(cand['titulo'])) % 10**8}.jpg"  # o nome leva o post (medidor de custo)
         if not robo.chamar({"acao": "salvar", "caminho": cam, "base64": base64.b64encode(arq.read_bytes()).decode()}).get("ok"):
             return False
         cf = _ch(CAPAS, {"acao": "conferir", "caminho": cam, "texto": texto, "cena": {

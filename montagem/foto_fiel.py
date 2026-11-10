@@ -16,7 +16,7 @@ def foto_fiel(texto, molde, ideia, caminho_base, vertical=False, nota_minima=8, 
     ev = ev or (lambda *a, **k: None)
     size = "1024x1536" if vertical else "1536x1024"
     ev("diretor", "Lendo a capa para decidir o instante exato da foto e o que tem que aparecer nela.")
-    c = _chamar(CAPAS, {"acao": "cena", "texto": texto, "molde": molde, "ideia": ideia})
+    c = _chamar(CAPAS, {"acao": "cena", "texto": texto, "molde": molde, "ideia": ideia, "caminho": caminho_base})
     if not c.get("ok"):
         ev("diretor", "Não consegui montar a cena.", "erro")
         raise RuntimeError(f"cena: {c}")
@@ -32,7 +32,7 @@ def foto_fiel(texto, molde, ideia, caminho_base, vertical=False, nota_minima=8, 
     if not g.get("ok") and "safety" in str(g.get("erro", "")).lower():
         # o gerador recusou (ex.: criança doente): o diretor refaz a cena de um jeito seguro, sem perder a história
         ev("fotografo", "O gerador recusou a foto por segurança. Vou pedir ao Diretor uma cena mais segura, com a mesma história.")
-        c2 = _chamar(CAPAS, {"acao": "cena", "texto": texto, "molde": molde, "ideia": ideia + (
+        c2 = _chamar(CAPAS, {"acao": "cena", "texto": texto, "molde": molde, "caminho": caminho_base, "ideia": ideia + (
             " SAFETY REWRITE: the previous prompt was rejected by the image safety system. Keep the story and the key objects, but show ONLY adults in focus;"
             " any child appears calm, asleep, seen from behind or out of frame; no illness, fever, medicine close-ups, injuries or distress on children;"
             " imply the situation through objects and the adult's restrained expression.")})
