@@ -13,23 +13,121 @@ NOME = "Do outro lado da Porta"
 _PADRAO = (LOGO, AVATAR, HANDLE, NOME)
 
 
+TEMA = None  # cores e fontes do ambiente (None = as da Do outro lado da Porta)
+
+
+def _rgb(h):
+    h = h.lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _hex(rgb):
+    return "#%02x%02x%02x" % tuple(max(0, min(255, round(v))) for v in rgb)
+
+
+def _mistura(a, b, t):
+    ra, rb = _rgb(a), _rgb(b)
+    return _hex(tuple(ra[i] + (rb[i] - ra[i]) * t for i in range(3)))
+
+
+def _lum(h):
+    def c(v):
+        v /= 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = _rgb(h)
+    return 0.2126 * c(r) + 0.7152 * c(g) + 0.0722 * c(b)
+
+
+def contraste(a, b):
+    la, lb = sorted((_lum(a), _lum(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+def tema_seguro(t):
+    """Garante leitura: fundo escuro, destaque que aparece no fundo, papel claro. Ajusta as cores da marca só o necessário."""
+    if not t:
+        return None
+    try:
+        f = t.get("fundo") or "#111111"
+        d = t.get("destaque") or "#FFD21F"
+        c = t.get("claro") or "#F5F5F0"
+        k = 0
+        while _lum(f) > 0.03 and k < 20:  # fundo precisa ser bem escuro (o texto branco vai em cima)
+            f = _mistura(f, "#000000", 0.15); k += 1
+        k = 0
+        while contraste(d, f) < 4.5 and k < 20:  # destaque tem que aparecer no fundo
+            d = _mistura(d, "#ffffff", 0.12); k += 1
+        k = 0
+        while _lum(c) < 0.75 and k < 20:  # papel claro (texto escuro em cima)
+            c = _mistura(c, "#ffffff", 0.15); k += 1
+        tx = f if contraste(f, d) >= 4.5 else "#111111"  # texto em cima do destaque
+        return {**t, "fundo": f, "destaque": d, "claro": c, "texto_destaque": tx}
+    except Exception:
+        return None
+
+
+def _tematizar(doc):
+    """Troca as cores e fontes da Do outro lado da Porta pelas do ambiente, por papel."""
+    t = TEMA
+    if not t:
+        return doc
+    import re as _re
+    d, f, c, tx = t["destaque"], t["fundo"], t["claro"], t["texto_destaque"]
+    rd = ",".join(str(v) for v in _rgb(d)); rf = ",".join(str(v) for v in _rgb(f))
+    for a, b in (("#FFD21F", d), ("#ffd21f", d), ("255,210,31", rd), ("11,11,11", rf),
+                 ("#F5F5F0", c), ("#F3EEDC", c), ("#f7f4ec", c), ("#f2f2ef", c),
+                 ("#0b0b0b", f), ("#0c0c0d", f), ("#0b0b0c", f), ("#141416", _mistura(f, "#ffffff", 0.05)),
+                 ("#1b1b1b", _mistura(f, "#ffffff", 0.08))):
+        doc = doc.replace(a, b)
+    doc = _re.sub(r"#111(?![0-9A-Fa-f])", tx, doc)
+    doc = _re.sub(r"#000(?![0-9A-Fa-f])", f, doc)
+    ft, fx = t.get("fonte_titulo"), t.get("fonte_texto")
+    extra = ""
+    if ft:
+        for a in ("'Archivo Black'", "'Bebas Neue'", "'Barlow Condensed'", "'Archivo'"):
+            doc = doc.replace(a, f"'{ft}'")
+        extra += "&family=" + ft.replace(" ", "+") + ":wght@400;600;700;800;900"
+    if fx:
+        doc = doc.replace("'Inter'", f"'{fx}'")
+        extra += "&family=" + fx.replace(" ", "+") + ":wght@400;500;600;700;800"
+    if extra:
+        doc = doc.replace("&display=block", extra + "&display=block", 1)
+    return doc
+
+
 def usar_marca(marca=None):
     """Cada ambiente desenha com a própria marca. Sem marca (ou o ambiente 1) volta para a Do outro lado da Porta."""
-    global LOGO, AVATAR, HANDLE, NOME
+    global LOGO, AVATAR, HANDLE, NOME, TEMA
     import base64 as _b64, html as _h
     if not marca or not marca.get("nome") or marca.get("ambiente_id") in (None, 1):
         LOGO, AVATAR, HANDLE, NOME = _PADRAO
+        TEMA = None
         return
+    TEMA = tema_seguro(marca.get("tema"))
     NOME = marca["nome"]
     HANDLE = marca.get("handle") or ""
     sigla = (marca.get("sigla") or "".join(w[0] for w in NOME.split()[:2])).upper()[:3]
-    cor = marca.get("cor") or "#FFD21F"
+    cor = (TEMA or {}).get("destaque") or marca.get("cor") or "#FFD21F"
     av = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="{cor}"/>'
           f'<text x="50" y="62" font-family="Inter,Arial" font-weight="800" font-size="36" text-anchor="middle" fill="#111">{_h.escape(sigla)}</text></svg>')
     lg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 80"><text x="0" y="58" font-family="Inter,Arial" font-weight="800" font-size="52" fill="#fff">'
           f'{_h.escape(NOME)}</text></svg>')
     AVATAR = "data:image/svg+xml;base64," + _b64.b64encode(av.encode()).decode()
     LOGO = "data:image/svg+xml;base64," + _b64.b64encode(lg.encode()).decode()
+    # logo de verdade da marca (baixado do site pelo coletor): vira o avatar redondo
+    if marca.get("logo_arquivo"):
+        try:
+            from pathlib import Path as _P
+            from PIL import Image as _I
+            import io as _io
+            im = _I.open(marca["logo_arquivo"]).convert("RGBA"); im.thumbnail((180, 180))
+            fundo = _I.new("RGBA", (220, 220), (255, 255, 255, 255)); fundo.paste(im, ((220 - im.width) // 2, (220 - im.height) // 2), im)
+            buf = _io.BytesIO(); fundo.save(buf, "PNG")
+            AVATAR = "data:image/png;base64," + _b64.b64encode(buf.getvalue()).decode()
+        except Exception:
+            pass
 
 PORTA = ('<svg class="emblema" viewBox="380 280 280 560" aria-hidden="true">'
          '<rect x="470" y="300" width="170" height="512" fill="#FFD21F"/>'
@@ -791,5 +889,5 @@ def slide_html(s: dict) -> str:
     if s.get("credito") and m != "noticia" and corpo.endswith("</div>"):
         corpo = corpo[:-6] + f'<div class="credito">{html.escape(s["credito"])}</div></div>'
     css = CSS.replace("__PAPEL__", PAPEL)
-    return (f'<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="{FONTES}">'
-            f"<style>{css}</style></head><body>{SVG_FILTROS}{corpo}</body></html>")
+    return _tematizar(f'<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="{FONTES}">'
+                      f"<style>{css}</style></head><body>{SVG_FILTROS}{corpo}</body></html>")

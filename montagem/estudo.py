@@ -3,9 +3,10 @@
 Roda no GitHub (estudo.yml). Cada agente é uma chamada à função "ambientes" (que fala com a OpenAI e busca na web);
 aqui só se organiza o time: 7 agentes de pesquisa em paralelo → roteirista e editor → documento visual → configuração da fábrica.
 """
-import sys, time
+import base64, sys, time
 from concurrent.futures import ThreadPoolExecutor
 from robo import chamar
+import marca_kit
 
 AMB = "https://kfvugtrjuqdakbpzvsxq.supabase.co/functions/v1/ambientes"
 PESQUISA = [("empresa", "Pesquisador da empresa"), ("leitor_redes", "Leitor das redes"), ("mercado", "Pesquisador de mercado"),
@@ -24,6 +25,54 @@ def _agente(aid, papel, contexto=None, tentativas=2):
     raise RuntimeError(f"{papel}: {str(ultimo)[:200]}")
 
 
+def montar_kit(aid, entrada, coleta=None, log=print):
+    """KIT DA MARCA (barato): o robô coleta o site sem IA; 2 agentes curtos escolhem o tema e as fotos do produto;
+    o robô recorta a embalagem e guarda. Vira as cores dos slides e o produto colado de verdade nas fotos."""
+    coleta = coleta or marca_kit.coletar(entrada, log=log)
+    kit = {"coleta": {k: coleta.get(k) for k in ("site", "plataforma", "cores", "fontes", "avisos")}}
+    try:
+        idn = _agente(aid, "identidade", {k: coleta.get(k) for k in ("cores", "fontes", "logos", "site")})
+        kit["tema"] = idn.get("tema")
+        if idn.get("logo_url"):
+            try:
+                dado = marca_kit._get(idn["logo_url"], binario=True)
+                cam = f"marcas/amb_{aid}/logo" + (".svg" if idn["logo_url"].split("?")[0].endswith(".svg") else ".png")
+                if cam.endswith(".png"):
+                    from PIL import Image
+                    import io
+                    buf = io.BytesIO(); Image.open(io.BytesIO(dado)).convert("RGBA").save(buf, "PNG"); dado = buf.getvalue()
+                    chamar({"acao": "salvar", "caminho": cam, "base64": base64.b64encode(dado).decode()})
+                    kit["logo"] = cam
+            except Exception as e:
+                log(f"logo não baixou: {str(e)[:80]}")
+    except Exception as e:
+        log(f"identidade visual não saiu: {str(e)[:100]}")
+    try:
+        pr = _agente(aid, "produto", {k: coleta.get(k) for k in ("produtos", "imagens_produto", "plataforma")})
+        produtos = []
+        if pr.get("tem_produto_fisico"):
+            for i, p in enumerate(pr.get("produtos", [])[:4]):
+                recortes = []
+                for j, u in enumerate(p.get("imagens", [])[:3]):
+                    try:
+                        png = marca_kit.recortar(marca_kit._get(u, binario=True))
+                    except Exception:
+                        png = None
+                    if png:
+                        cam = f"marcas/amb_{aid}/produto_{i + 1}_{j + 1}.png"
+                        chamar({"acao": "salvar", "caminho": cam, "base64": base64.b64encode(png).decode()})
+                        recortes.append(cam)
+                if recortes:
+                    produtos.append({"nome": p.get("nome", ""), "descricao": p.get("descricao", ""), "recortes": recortes})
+        kit["produtos"] = produtos
+        kit["regra_foto"] = pr.get("regra_foto", "")
+        log(f"produto real: {sum(len(p['recortes']) for p in produtos)} fotos recortadas de {len(produtos)} produtos")
+    except Exception as e:
+        log(f"produto não saiu: {str(e)[:100]}")
+    chamar({"acao": "salvar_kit", "id": aid, "kit": kit}, url=AMB)
+    return kit
+
+
 def estudar(a):
     aid, t0 = a["id"], time.time()
     linhas = []
@@ -32,7 +81,16 @@ def estudar(a):
         linhas.append(f"{time.strftime('%H:%M')} {txt}")
         chamar({"acao": "progresso", "id": aid, "log": "em andamento\n" + "\n".join(linhas[-30:])}, url=AMB)
 
-    log(f"O time começou a estudar {a['nome']}: 7 agentes pesquisando ao mesmo tempo.")
+    coleta = marca_kit.coletar(a.get("entrada", ""), log=lambda *_: None)
+    log(f"O robô leu o site ({len(coleta['cores'])} cores, {len(coleta['fontes'])} fontes, {len(coleta['produtos']) or len(coleta['imagens_produto'])} fotos de produto).")
+    extras = []
+    try:
+        arq = _agente(aid, "arquiteto", {k: coleta.get(k) for k in ("site", "plataforma", "texto", "produtos")})
+        extras = arq.get("especialistas", [])[:3]
+        log(f"Arquiteto do time: {arq.get('tipo_empresa', '')[:60]}. Chamou {len(extras)} especialista(s): {', '.join(e['nome'] for e in extras) or 'nenhum'}.")
+    except Exception as e:
+        log(f"O arquiteto não respondeu ({str(e)[:60]}); seguimos com o time fixo.")
+    log(f"O time começou a estudar {a['nome']}: {7 + len(extras)} agentes pesquisando ao mesmo tempo.")
     achados, falhas = {}, []
 
     def um(par):
@@ -46,8 +104,22 @@ def estudar(a):
             falhas.append(str(e))
             return papel, None
 
+    def extra(e):
+        try:
+            r = chamar({"acao": "agente", "id": aid, "papel": "especialista", "def": e, "contexto": {"texto": coleta.get("texto", "")[:4000]}}, timeout=200, url=AMB)
+            if not r.get("ok"):
+                raise RuntimeError(str(r.get("erro"))[:120])
+            log(f"✓ {e['nome']} terminou.")
+            return "extra_" + e.get("id", "x"), r["resultado"]
+        except Exception as x:
+            log(f"✗ {e['nome']} não conseguiu: {str(x)[:100]}")
+            return None, None
+
     with ThreadPoolExecutor(4) as ex:
         for papel, r in ex.map(um, PESQUISA):
+            if r:
+                achados[papel] = r
+        for papel, r in ex.map(extra, extras):
             if r:
                 achados[papel] = r
     if not achados:
@@ -62,6 +134,9 @@ def estudar(a):
         achados["editor"] = fe.result()
         log("✓ Editor-chefe apontou brechas e perguntas para o cliente.")
 
+    log("Montando o kit da marca: cores, fontes, logo e fotos reais do produto.")
+    kit = montar_kit(aid, a.get("entrada", ""), coleta, log=log)
+    achados["kit_da_marca"] = {"tema": kit.get("tema"), "produtos": [p["nome"] for p in kit.get("produtos", [])], "regra_foto": kit.get("regra_foto", "")}
     log("Montando o documento visual.")
     doc = _agente(aid, "documento", achados)
     log("Transformando o estudo nas regras, presets e personas da fábrica.")
@@ -83,7 +158,19 @@ def vigiar():
             print(a["id"], "vigia ERRO", e)
 
 
+def kits_faltando():
+    """Ambientes aprovados antes do kit da marca existir (ex.: a Rucá): monta só o kit, sem refazer o estudo."""
+    f = chamar({"acao": "kit_fila"}, url=AMB)
+    for a in f.get("ambientes", []) if f.get("ok") else []:
+        try:
+            k = montar_kit(a["id"], a.get("entrada", ""))
+            print(a["id"], "kit:", (k.get("tema") or {}).get("destaque"), len(k.get("produtos", [])), "produtos")
+        except Exception as e:
+            print(a["id"], "kit ERRO", e)
+
+
 def main():
+    kits_faltando()
     fila = chamar({"acao": "fila_estudo"}, url=AMB)
     print("estudos na fila:", [a["id"] for a in fila.get("ambientes", [])] if fila.get("ok") else fila)
     for a in fila.get("ambientes", []) if fila.get("ok") else []:

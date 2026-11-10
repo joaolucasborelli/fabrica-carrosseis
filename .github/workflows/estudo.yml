@@ -25,5 +25,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Pillow (recortar a foto do produto)
+        run: pip install -q pillow
       - name: Estudo (fila) e vigia (de manhã)
         run: python montagem/estudo.py ${{ github.event_name == 'schedule' && '--vigia' || '' }}

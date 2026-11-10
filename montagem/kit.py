@@ -108,8 +108,17 @@ def cobertura(pecas, post):
 SEM_PARAGRAFO = {"esc_cards", "esc_checklist", "lista_linhas", "conta_visual", "antes_hoje", "citacao"}
 
 
+def _norm(t):
+    import unicodedata
+    return re.sub(r"[^a-z0-9]+", " ", unicodedata.normalize("NFD", str(t or "")).encode("ascii", "ignore").decode().lower()).strip()
+
+
 def ajustar(s):
-    """Moldes que não mostram "paragrafos": a frase vai para o subtítulo ou o slide vira texto corrido (nada se perde)."""
+    """Moldes que não mostram "paragrafos": a frase vai para o subtítulo ou o slide vira texto corrido (nada se perde).
+    Cards cujo texto só repete o nome ficam só com o nome."""
+    for c in s.get("cards") or []:
+        if c.get("texto") and (_norm(c["texto"]) == _norm(c.get("nome")) or _norm(c["texto"]) in _norm(c.get("nome"))):
+            c["texto"] = ""
     ps = [x for x in (s.get("paragrafos") or []) if x and x.strip()]
     if s["molde"] in SEM_PARAGRAFO and ps:
         txt = " ".join(ps)
@@ -133,6 +142,28 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     ev = ev or (lambda *a, **k: None)
     pasta.mkdir(parents=True, exist_ok=True)
     capa = post["capa"]; pers = post.get("personagem", ""); famosa = capa["estilo"].startswith("famoso")
+    produtos = post.get("_produtos") or []
+    SEM_PACOTE = (" IMPORTANT: do not show any product packaging, pouch, sachet, box, bottle, jar or brand label anywhere in the image"
+                  " (the real product is added later).") if produtos else ""
+    VAGA = " Leave a clean empty area on the table or surface in the lower-right third of the frame." if produtos else ""
+    nomes = [_norm(p.get("nome", "")).split(" ")[0] for p in produtos] + [_norm((post.get("marca") or {}).get("nome", "")).split(" ")[0]]
+    nomes = [n for n in nomes if len(n) >= 3]
+    def fala_do_produto(s):
+        t = _norm(" ".join(textos(s)))
+        return any(n in t for n in nomes)
+    com_produto = set()
+    if produtos:
+        for i, s in enumerate(post["slides"], 2):
+            if len(com_produto) < 3 and s["molde"] in COM_FOTO and fala_do_produto(s):
+                com_produto.add(i)
+    def colar(loc, k):
+        try:
+            import marca_kit
+            p = produtos[k % len(produtos)]
+            marca_kit.colar_produto(loc, p["arquivo"], loc, altura=0.38)
+            ev("fotografo", f"Colei a embalagem real de {p.get('nome', 'produto')} na foto (o rótulo é o de verdade, pixel por pixel).")
+        except Exception as e:
+            ev("fotografo", f"Não consegui colar o produto: {str(e)[:80]}", "erro")
     cam_capa = None; cred_capa = None
     real_capa = _real(capa, pasta / "capa_real.jpg", ev) if capa.get("foto_fonte") == "real" else None
     if real_capa:
@@ -147,9 +178,11 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
         robo.baixar(cam_capa, pasta / "capa.png")
     else:
         txt = capa.get("texto") or capa.get("titulo") or capa.get("numero")
-        ideia = capa["foto_prompt"] + (f" Main character: {pers}." if pers and not famosa else "") + (f" Famous person: {capa['famoso']} (fact: {capa['fato']})." if capa.get("famoso") else "")
+        ideia = capa["foto_prompt"] + (f" Main character: {pers}." if pers and not famosa else "") + (f" Famous person: {capa['famoso']} (fact: {capa['fato']})." if capa.get("famoso") else "") + SEM_PACOTE + VAGA
         ff = foto_fiel(txt, capa["molde"], ideia, f"{base}/capa", vertical=capa["molde"] in ("capa_f3a", "capa_f3b", "capa_circulos", "capa_marcatexto", "capa_numero"), log=lambda *_: None, ev=ev)
         cam_capa = ff["melhor"]; robo.baixar(cam_capa, pasta / "capa.png"); log(f"capa nota {ff['nota']}")
+        if produtos:
+            colar(pasta / "capa.png", 0)
     circulo = None
     if capa["molde"] == "capa_circulos" and capa.get("foto_prompt2"):
         dest = f"{base}/circulo.png"
@@ -177,10 +210,14 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     def foto(a):
         i, s, campo, suf = a
         dest = f"{base}/s{i:02d}{suf}.png"; vert = s["molde"] in VERTICAIS
-        ok = variar(cam_capa, dest, pers, s[campo], vert) if (s.get("mesma_pessoa") and pers and cam_capa and not famosa) else gerar(s[campo], dest, vert)
+        prompt = s[campo] + SEM_PACOTE + (VAGA if i in com_produto else "")
+        ok = variar(cam_capa, dest, pers, prompt, vert) if (s.get("mesma_pessoa") and pers and cam_capa and not famosa) else gerar(prompt, dest, vert)
         if not ok:
             return (i, suf), None
-        loc = pasta / f"s{i:02d}{suf}.png"; robo.baixar(dest, loc); return (i, suf), loc
+        loc = pasta / f"s{i:02d}{suf}.png"; robo.baixar(dest, loc)
+        if i in com_produto and not suf:
+            colar(loc, i)
+        return (i, suf), loc
     with ThreadPoolExecutor(3) as ex:
         fotos = {k: v for k, v in ex.map(foto, tarefas) if v}
     if tarefas:

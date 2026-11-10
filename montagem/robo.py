@@ -91,6 +91,32 @@ def entregar(post_id, arquivos, passos, t0, ev):
     return passos
 
 
+AMB = "https://kfvugtrjuqdakbpzvsxq.supabase.co/functions/v1/ambientes"
+
+
+def marca_completa(marca, pasta: Path):
+    """Ambientes que não são a Do outro lado da Porta: busca o kit da marca (tema, logo e produto real) e baixa os arquivos."""
+    if not marca or marca.get("ambiente_id") in (None, 1):
+        return marca, []
+    m = chamar({"acao": "marca_kit", "id": marca["ambiente_id"]}, url=AMB)
+    k = ((m.get("marca") or {}).get("marca") or {}) if m.get("ok") else {}
+    full = {**marca, "tema": k.get("tema")}
+    pasta.mkdir(parents=True, exist_ok=True)
+    if k.get("logo"):
+        try:
+            baixar(k["logo"], pasta / "logo.png"); full["logo_arquivo"] = str(pasta / "logo.png")
+        except Exception:
+            pass
+    produtos = []
+    for i, p in enumerate(k.get("produtos") or []):
+        for j, cam in enumerate(p.get("recortes", [])[:1]):
+            try:
+                loc = pasta / f"produto_{i}_{j}.png"; baixar(cam, loc); produtos.append({"nome": p.get("nome", ""), "arquivo": str(loc)})
+            except Exception:
+                pass
+    return full, produtos
+
+
 def montar(post_id: int):
     """Caminho novo (kit 2 + receitas). Se a diagramação perder frases do texto aprovado, cai no caminho antigo."""
     import kit
@@ -117,7 +143,11 @@ def montar(post_id: int):
                       f"Conferi: {cob:.0%} das palavras aprovadas estão lá.", "pronto")
     passos.append(f"kit · {post['receita'][:30]} · cobertura {cob:.0%}")
     pasta = SAIDA / f"post_{post_id}"
-    import moldes; moldes.usar_marca(post.get("marca"))
+    import moldes
+    marca, produtos = marca_completa(post.get("marca"), pasta / "marca")
+    moldes.usar_marca(marca); post["_produtos"] = produtos
+    if produtos:
+        passos.append(f"produto real colado ({len(produtos)} foto(s))")
     arquivos = kit.montar(post, pasta, f"post_{post_id}/kit", ev=ev, log=passos.append)
     return entregar(post_id, arquivos, passos, t0, ev)
 
@@ -178,7 +208,7 @@ def capas_alternativas(p):
     from render import renderizar
     from concurrent.futures import ThreadPoolExecutor
     post_id = p["id"]; ficha = p.get("ficha") or {}
-    import moldes; moldes.usar_marca(ficha.get("marca"))
+    import moldes; moldes.usar_marca(marca_completa(ficha.get("marca"), SAIDA / f"post_{post_id}" / "marca")[0])
     ev = lambda agente, fala, estado="trabalhando", **k: evento(post_id, agente, fala, estado, **k)
     capa = (ficha.get("capa") if ficha.get("kit") else None) or {}
     texto = capa.get("texto") or ((p.get("variacoes") or {}).get("pecas") or {}).get("capa", "")
@@ -220,7 +250,7 @@ def retocar(p):
     from render import renderizar
     post_id = p["id"]; ficha = p.get("ficha") or {}; imgs = list(p.get("imagens") or [])
     fotos = p.get("fotos_retocadas") or {}
-    import moldes; moldes.usar_marca(ficha.get("marca"))
+    import moldes; moldes.usar_marca(marca_completa(ficha.get("marca"), SAIDA / f"post_{post_id}" / "marca")[0])
     ev = lambda agente, fala, estado="trabalhando", **k: evento(post_id, agente, fala, estado, **k)
     pasta = SAIDA / f"post_{post_id}" / "retoques"; pasta.mkdir(parents=True, exist_ok=True)
     feitos = []
