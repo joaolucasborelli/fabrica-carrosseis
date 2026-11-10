@@ -59,6 +59,7 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 .da-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.da-h .small{flex:1;min-width:200px}
 .da-lista{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px}
 .da-it{flex:none;width:190px;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:.78rem;background:var(--bg,#fff)}
+.da-ex{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:6px;margin:6px 0 2px;background:var(--line)}
 .da-top{display:flex;gap:6px;align-items:center}.da-top .n{font-weight:800;min-width:18px}.da-top select{flex:1;min-width:0;font:600 .74rem Inter,sans-serif;padding:4px;border-radius:6px;border:1px solid var(--line);background:transparent;color:inherit}
 .da-it .fonte{display:inline-block;margin:6px 0 4px;font-weight:700;font-size:.72rem}.da-it .fonte.real{color:#b45309}.da-it p{margin:0;line-height:1.35;color:var(--muted,#666)}
 .selos{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
@@ -384,7 +385,7 @@ async function carregarAmbientes(){
   AMBS=data||[];
   const {data:ps}=await sb.from("personas").select("id,nome,ambiente_id").neq("ambiente_id",1);
   for(const A of AMBS){const k="a"+A.id;
-    ACC[k]=Object.assign(ACC[k]||{},{nome:A.nome,at:A.handle||(ACC[k]&&ACC[k].at)||"",av:A.sigla||A.nome.slice(0,2).toUpperCase(),cls:"c1",avc:A.id===1?"av1":"av2",amb:A.id,A});
+    ACC[k]=Object.assign(ACC[k]||{},{nome:A.nome,at:A.handle||(ACC[k]&&ACC[k].at)||"",av:A.sigla||A.nome.slice(0,2).toUpperCase(),cls:"c1",avc:A.id===1?"av1":"av2",amb:A.id,A,mk:!!(A.marca&&A.marca.perfil)});
     if(A.id!==1){const meu=(ps||[]).filter(x=>x.ambiente_id===A.id);ACC[k].pers=meu.length?meu.map(x=>[x.id,x.nome]):null;meu.forEach(x=>ROT[x.id]=x.nome)}
     if(!AGENDA[k])AGENDA[k]=AGENDA.a1;if(!PROPS[k])PROPS[k]=[];if(!ANALISES[k])ANALISES[k]=[];
     if(!CHAT[k]||!CHAT[k].length)CHAT[k]=[{w:"ag",f:"Fábrica",t:`Oi! Aqui é o ambiente ${A.nome}. Pode pedir posts, ajustes ou análises só desta empresa.`}];}
@@ -513,8 +514,13 @@ function esbSlide(p,t,i){const f=formatoDe(p,i+2);return `<div class="cover esb"
 const NOME_MOLDE={capa_f1:"Capa: foto + manchete",capa_f1b:"Capa portal",capa_perfil:"Capa portal com perfil",capa_comparacao:"Capa comparação",capa_tweet:"Capa print",capa_f3a:"Capa foto cheia + frase",capa_f3b:"Capa foto cheia + legenda",capa_circulos:"Capa com círculo",capa_marcatexto:"Capa marca-texto",capa_revista:"Capa revista",capa_numero:"Capa número gigante",capa_caderno:"Capa caderno",
   f1_corrido:"Foto + texto",meia_tela:"Meia tela (texto + foto)",papel_f2:"Papel com texto",faixa_amarela:"Faixa amarela (virada)",foto_sticker:"Foto + adesivo",antes_hoje:"Antes e hoje",lista_linhas:"Lista numerada",esc_checklist:"Checklist + foto",esc_cards:"Cards",esc_titulo_moldura:"Título + foto emoldurada",conta_visual:"Conta em caixas",citacao:"Citação",preto_f5:"Lição",cta_f6:"Pedido do comentário",fecho_foto:"Fecho com foto",noticia:"Cartão de notícia",cupom:"Cupom que cresce"};
 // presets escolhidos pelo dono em 10/11 (página Padrões): os recusados não aparecem
-const MIOLOS_DA=["f1_corrido","noticia","faixa_amarela","esc_checklist","lista_linhas","antes_hoje","esc_titulo_moldura","citacao","papel_f2","preto_f5","cta_f6","fecho_foto","meia_tela","cupom","esc_cards","foto_sticker"];
-const CAPAS_DA=["capa_f1","capa_f1b","capa_perfil","capa_tweet","capa_circulos","capa_numero","capa_f3a","capa_comparacao","capa_revista"];
+let PROIBIDOS=new Set();
+const MIOLOS_TODOS=["f1_corrido","noticia","faixa_amarela","esc_checklist","lista_linhas","antes_hoje","esc_titulo_moldura","citacao","papel_f2","preto_f5","cta_f6","fecho_foto","meia_tela","cupom","esc_cards","foto_sticker","conta_visual"];
+const CAPAS_TODAS=["capa_f1","capa_f1b","capa_perfil","capa_tweet","capa_circulos","capa_numero","capa_f3a","capa_f3b","capa_comparacao","capa_revista","capa_marcatexto","capa_caderno"];
+const MIOLOS_DA_=()=>MIOLOS_TODOS.filter(m=>!PROIBIDOS.has(m)),CAPAS_DA_=()=>CAPAS_TODAS.filter(m=>!PROIBIDOS.has(m));
+// nos ambientes com perfil visual, a montagem desenha cada formato no layout da marca equivalente
+const MK_DE=m=>m.startsWith("capa_")?"mk_capa":["lista_linhas","esc_checklist","esc_cards"].includes(m)?"mk_lista":["conta_visual","cupom"].includes(m)?"mk_numeros":["cta_f6","fecho_foto"].includes(m)?"mk_fecho":["faixa_amarela","papel_f2","citacao","preto_f5","noticia"].includes(m)?"mk_frase":"mk_historia";
+function exemploDe(p,m){return ACC[p.a]&&ACC[p.a].mk?`exemplos/mk/${MK_DE(m)}.jpg`:`exemplos/${m}.jpg`}
 const FONTE_IC={ia:"📷 foto IA",real:"📰 foto real",nenhuma:"▦ sem foto"};
 function slideDoPlano(p,n){const pl=p.plano&&p.plano.post;if(!pl)return null;return n===1?pl.capa:pl.slides[n-2]||null}
 function formatoDe(p,n){const s=slideDoPlano(p,n);if(!s)return p.planejando?`<span class="fmt carregando">Diretor de Arte…</span>`:"";return `<span class="fmt">${esc(NOME_MOLDE[s.molde]||s.molde)}<i>${FONTE_IC[s.foto_fonte]||""}</i></span>`}
@@ -527,10 +533,16 @@ function painelDA(p){
   if(p.imgs&&p.imgs.length)return "";
   if(!p.plano)return `<div class="da"><div class="da-h"><b>🎨 Diretor de Arte</b><span class="small">${p.planejando?"lendo o post e escolhendo o formato de cada slide (uns 30 segundos)…":p.planoErro?"não consegui planejar: "+esc(p.planoErro):"vai planejar o formato de cada slide"}</span>${p.planejando?"":`<button class="btn" data-daplanejar>Planejar agora</button>`}</div></div>`;
   const pl=p.plano.post,itens=[pl.capa,...pl.slides];
-  return `<div class="da"><div class="da-h"><b>🎨 Diretor de Arte</b><span class="small">Receita: ${esc(pl.receita||"")}. A montagem segue este plano. Troque o formato de qualquer slide.</span><button class="btn" data-darefazer ${p.planejando?"disabled":""}>${p.planejando?"Refazendo…":"↻ Refazer plano"}</button></div>
-   <div class="da-lista">${itens.map((s,k)=>{const n=k+1,ops=(n===1?CAPAS_DA:MIOLOS_DA);return `<div class="da-it"><div class="da-top"><span class="n">${n}</span><select data-damolde="${n}" aria-label="Formato do slide ${n}" ${p.planejando?"disabled":""}>${ops.map(m=>`<option value="${m}" ${m===s.molde?"selected":""}>${esc(NOME_MOLDE[m]||m)}</option>`).join("")}</select></div><span class="fonte ${s.foto_fonte}">${FONTE_IC[s.foto_fonte]||""}${s.foto_fonte==="real"&&s.pessoa_real?` · ${esc(s.pessoa_real)}`:""}</span><p>${esc(s.por_que||"")}</p></div>`}).join("")}</div></div>`;
+  return `<div class="da"><div class="da-h"><b>🎨 Diretor de Arte</b><span class="small">Receita: ${esc(pl.receita||"")}. A montagem segue este plano.${ACC[p.a]&&ACC[p.a].mk?" Os exemplos mostram o layout da marca.":""} Troque o formato aqui ou peça no chat.</span><button class="btn" data-darefazer ${p.planejando?"disabled":""}>${p.planejando?"Refazendo…":"↻ Refazer plano"}</button></div>
+   <div class="da-lista">${itens.map((s,k)=>{const n=k+1,ops=(n===1?CAPAS_DA_():MIOLOS_DA_());return `<div class="da-it"><img class="da-ex" src="${exemploDe(p,s.molde)}" alt="Exemplo do formato ${esc(NOME_MOLDE[s.molde]||s.molde)}" loading="lazy"><div class="da-top"><span class="n">${n}</span><select data-damolde="${n}" aria-label="Formato do slide ${n}" ${p.planejando?"disabled":""}>${ops.map(m=>`<option value="${m}" ${m===s.molde?"selected":""}>${esc(NOME_MOLDE[m]||m)}</option>`).join("")}</select></div><span class="fonte ${s.foto_fonte}">${FONTE_IC[s.foto_fonte]||""}${s.foto_fonte==="real"&&s.pessoa_real?` · ${esc(s.pessoa_real)}`:""}</span><p>${esc(s.por_que||"")}</p></div>`}).join("")}</div></div>`;
 }
 function falaDA(estado,fala){const ev={agente:"diagramador",estado,fala,criado_em:new Date().toISOString()};try{ESC&&ESC.inst&&ESC.inst.vivo(ev)}catch(_){}try{ESCG&&ESCG.vivo(ev)}catch(_){}}
+const JA_PLANEJOU=new Set();let planejandoN=0;
+function planejarFila(){
+  const fila=POSTS.filter(p=>p.s==="prop"&&!p.plano&&!p.planejando&&!JA_PLANEJOU.has(p.id));
+  while(planejandoN<2&&fila.length){const p=fila.shift();JA_PLANEJOU.add(p.id);planejandoN++;
+    planejarVisual(p).finally(()=>{planejandoN--;planejarFila()});}
+}
 async function planejarVisual(p,extra={}){
   if(p.planejando)return;p.planejando=true;p.planoErro=null;render();
   falaDA("trabalhando",extra.forcar?`Refazendo o plano com o formato que você escolheu para o slide ${Object.keys(extra.forcar).join(", ")}.`:"Lendo o post aprovado e escolhendo o formato de cada slide: notícia, cupom, foto, checklist…");
@@ -852,6 +864,10 @@ async function carregar(){
     const C={};(cs||[]).forEach(c=>{const pr=+c.montagem_e_texto_proprio||0,pl=+c.parte_do_plano||0,ca=+c.capas_alternativas||0;C[c.post_id]={proprio:pr,plano:pl,capas:ca,imagens:c.imagens||0,total:pr+pl+ca}});
     POSTS.forEach(p=>{p.custo=C[p.postId]||null});}
   sb.from("config_fabrica").select("texto").eq("chave","precos").maybeSingle().then(({data})=>{try{DOLAR=JSON.parse(data.texto).dolar_em_reais||DOLAR}catch(e){}});
+  // tipos reprovados pelo dono (página Padrões): somem das opções do Diretor de Arte
+  sb.from("padroes").select("item").like("item","tipo:%").eq("escolha","nao").then(({data})=>{PROIBIDOS=new Set((data||[]).map(r=>String(r.item).slice(5)))});
+  // DIRETOR DE ARTE: deixa o plano pronto junto com o esboço, sem o dono clicar (2 por vez, uma vez por proposta)
+  planejarFila();
   // imagens montadas (bucket privado): links assinados por 1 hora
   const todos=POSTS.flatMap(p=>p.paths);
   if(todos.length){const {data:urls}=await sb.storage.from("montagens").createSignedUrls(todos,3600);
