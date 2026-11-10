@@ -64,7 +64,7 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 .selos{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
 .st-mont{background:#FFD21F;color:#111;display:inline-flex;align-items:center;gap:5px}.st-mont i{width:6px;height:6px;border-radius:50%;background:#111;animation:pisca 1s infinite}
 @keyframes pisca{50%{opacity:.2}}
-.st-custo{background:rgba(255,210,31,.12);color:#e9c84a;border:1px solid rgba(255,210,31,.35)}.custo-det{margin:8px 0 0;color:var(--muted,#9a9ea6)}
+.st-custo{background:rgba(255,210,31,.12);color:#e9c84a;border:1px solid rgba(255,210,31,.35)}.st-custo.semcusto{opacity:.55}.custo-det{margin:8px 0 0;color:var(--muted,#9a9ea6)}
 .avaliar{font:600 .82rem Inter,sans-serif;color:inherit;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-right:6px}.avaliar:hover{border-color:var(--accent);color:var(--accent)}
 .st-wait{background:var(--wait);color:var(--wait-ink)} .st-ok{background:var(--ok);color:var(--ok-ink)} .st-draft{background:var(--draft);color:var(--draft-ink)} .st-sched{background:var(--sched);color:var(--sched-ink)} .st-rej{background:var(--rej);color:var(--rej-ink)} .st-prop{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
 .cover{aspect-ratio:4/5;max-width:100%;padding:12px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;font-family:var(--f-d);font-weight:800;line-height:1.1;font-size:.95rem;position:relative}
@@ -462,6 +462,13 @@ function renderTop(){
   document.getElementById("tabs").innerHTML=[["posts","Posts e capas"],["chat","Chat"]].map(([k,l])=>`<button class="tab" data-tab="${k}" ${tab===k?'aria-current="page"':""}>${l}</button>`).join("");
 }
 // selos do cartão: status do post + andamento da montagem e das capas (para acompanhar sem abrir)
+// quando: data de publicação/agendamento; senão, data e hora em que foi montado ou gerado
+function quando(p){
+  const hm=t=>`${String(t.getDate()).padStart(2,"0")}/${String(t.getMonth()+1).padStart(2,"0")} às ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}`;
+  const feito=p.mont==="pronta"&&p.montEm?`Montado ${hm(p.montEm)}`:p.gerEm?`Gerado ${hm(p.gerEm)}`:"";
+  if(p.s==="ok"||p.s==="sched")return `${fdt(p.t)}<small>${p.s==="ok"?"publicado":"agendado"}${feito?" · "+feito.toLowerCase():""}</small>`;
+  return `${feito||"Sem data"}<small>${p.s==="prop"?esc(p.rot||"proposta"):"ainda sem data de publicação"}</small>`;
+}
 function selos(p){
   const st=`<span class="st ${ST[p.s][1]}">${ST[p.s][0]}</span>`;
   const m=p.mont, c=p.capasSt;
@@ -470,14 +477,15 @@ function selos(p){
   else if(m==="pronta")extra=`<span class="st st-ok">Montado ✓</span>`;
   else if(m==="erro")extra=`<span class="st st-rej">Erro ao montar</span>`;
   if(c==="pendente"||c==="montando")extra+=`<span class="st st-mont"><i></i>Capas</span>`;
-  if(p.custo&&p.custo.total>0)extra+=`<span class="st st-custo" title="Custo medido deste post na OpenAI">${usd(p.custo.total)}</span>`;
+  if(p.custo&&p.custo.total>0)extra+=`<span class="st st-custo" title="Custo medido desta ${m==="pronta"?"montagem":"geração"} na OpenAI">${usd(p.custo.total)}</span>`;
+  else if(p.postId)extra+=`<span class="st st-custo semcusto" title="Feito antes do medidor de custo existir">US$ —</span>`;
   return `<span class="selos">${extra}${st}</span>`;
 }
 function renderPosts(){
   const L=POSTS.filter(p=>p.a===acc&&(filtro==="todos"||p.s===filtro)).sort((x,y)=>(y.t||new Date(2100,0))-(x.t||new Date(2100,0)));
   return `<div class="listaesc"><div class="lcol">${avisosHTML()}<div class="listhead"><div><h2>Posts e capas · ${ACC[acc].nome}</h2><p class="sub">Os agentes à direita mostram o que está sendo feito agora.</p></div><button class="btn primary" data-genopen>+ Gerar conteúdo</button></div>
   <div class="filters" role="group" aria-label="Filtrar por status">${[["todos","Todos"],...Object.entries(ST).map(([k,v])=>[k,v[0]])].map(([k,l])=>`<button class="f" data-f="${k}" aria-pressed="${filtro===k}">${l}</button>`).join("")}</div>
-  <div class="grid">${L.map(p=>`<button class="card ${p.s==="gen"?"gen":""}" data-post="${p.id}" ${p.s==="gen"?"disabled":""}>${cover(p)}<div class="meta"><span class="when">${fdt(p.t)}<small>${p.s==="ok"?"publicado":p.s==="sched"?"agendado":p.s==="prop"?esc(p.rot||"proposta"):"ainda sem data"}</small></span>${selos(p)}</div></button>`).join("")||'<p class="sub">Nenhum post com esse status.</p>'}</div></div><aside class="escgeral" id="escgeral" aria-label="Agentes trabalhando"></aside></div>`;
+  <div class="grid">${L.map(p=>`<button class="card ${p.s==="gen"?"gen":""}" data-post="${p.id}" ${p.s==="gen"?"disabled":""}>${cover(p)}<div class="meta"><span class="when">${quando(p)}</span>${selos(p)}</div></button>`).join("")||'<p class="sub">Nenhum post com esse status.</p>'}</div></div><aside class="escgeral" id="escgeral" aria-label="Agentes trabalhando"></aside></div>`;
 }
 function renderPost(){
   const p=POSTS.find(x=>x.id===aberto);const pode=p.s==="wait"||p.s==="draft"||p.s==="sched";
@@ -819,13 +827,13 @@ async function enviarMensagem(w,texto){
   render();
 }
 async function carregar(){
-  const {data,error}=await sb.from("variacoes").select("id,status,pecas,plano_visual,variaveis,remodelagem,por_que_para,forca,risco,painel,eixo,ordem,pautas(dia,tipo,persona_id,assunto,lote,ambiente_id),posts(id,status,agendado_para,montagem_status,imagens,montagem_log,capas_status)").in("status",["mostrada","escolhida"]).order("forca",{ascending:false,nullsFirst:false}).order("id",{ascending:false}).limit(500);
+  const {data,error}=await sb.from("variacoes").select("id,status,criada_em,pecas,plano_visual,variaveis,remodelagem,por_que_para,forca,risco,painel,eixo,ordem,pautas(dia,tipo,persona_id,assunto,lote,ambiente_id),posts(id,status,agendado_para,montagem_status,montagem_em,imagens,montagem_log,capas_status)").in("status",["mostrada","escolhida"]).order("forca",{ascending:false,nullsFirst:false}).order("id",{ascending:false}).limit(500);
   if(error){toast("Não consegui ler o banco: "+error.message);return}
   const LOGS=new Map(POSTS.map(p=>[p.id,p.log]));
   POSTS=data.map(v=>{const pc=v.pecas||{},va=v.variaveis||{},rm=v.remodelagem||{},pa=v.pautas||{},pn=v.painel||{},R=pn.risco;
     const po=(v.posts||[])[0];const ag=po&&po.agendado_para?new Date(po.agendado_para):null;
     return {id:v.id,a:"a"+(pa.ambiente_id||1),s:ag?"sched":v.status==="mostrada"?"prop":"draft",t:ag,rot:`${ROT[pa.tipo]||pa.tipo||""} · ${ROT[pa.persona_id]||pa.persona_id||""} · força ${v.forca??"-"}`,capa:esc(pc.capa||""),sl:pc.slides||[],plano:v.plano_visual||null,leg:pc.legenda||"",hs:pc.hashtags||[],
-      postId:po?po.id:null,mont:po?po.montagem_status:null,capasSt:po?po.capas_status:null,mlog:po?po.montagem_log:"",paths:po&&Array.isArray(po.imagens)?po.imagens:[],
+      postId:po?po.id:null,mont:po?po.montagem_status:null,montEm:po&&po.montagem_em?new Date(po.montagem_em):null,gerEm:v.criada_em?new Date(v.criada_em):null,capasSt:po?po.capas_status:null,mlog:po?po.montagem_log:"",paths:po&&Array.isArray(po.imagens)?po.imagens:[],
       log:LOGS.get(v.id)||(v.status==="escolhida"?[{w:"ag",f:"Equipe",t:"Você escolheu esta variação. O robô monta os slides e eles aparecem acima. Para corrigir qualquer coisa (texto ou foto de um slide), é só pedir aqui."}]:[]),
       esb:ESB("a1",(v.ordem||1)-1),
       pr:{capa:pc.thumb_descricao||"",
