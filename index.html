@@ -661,7 +661,18 @@ async function startPipe(o){
         if(d.dossie){equipe("planejadora","trabalhando",`Pesquisa pronta: ${(d.dossie.fatos||[]).length} fatos com fonte. ${String(d.dossie.resumo_do_momento||"").slice(0,160)}`);conta("Planejadora",`pesquisou "${o.assunto}": ${String(d.dossie.resumo_do_momento||"").slice(0,200)}`)}}
       catch(e){equipe("planejadora","trabalhando",`A pesquisa falhou (${e.message}). Vou seguir sem afirmar fato nenhum sobre o assunto.`)}
     }
-    const planos=await emFila(combos,5,(c,i)=>chamar({acao:"planejar",lote,...c,ambiente_id:amb,giro:i,quantidade:porC,assunto:o.assunto,dia:new Date().toISOString().slice(0,10)}).then(r=>{np++;
+    // PAUTA DA SEMANA: a planejadora decide o conjunto inteiro (com o motivo de cada post); se falhar, volta ao jeito antigo
+    let planos=null;
+    if(o.qtd<=27){
+      equipe("planejadora","trabalhando",`Montando a pauta da semana: ${o.qtd} posts, cada um com um trabalho (alcance, confiança ou venda) e o motivo de estar aqui.`);
+      try{const r=await chamar({acao:"planejar_semana",lote,ambiente_id:amb,quantidade:o.qtd,assunto:o.assunto,dia:new Date().toISOString().slice(0,10)});
+        planos=(r.planos||[]).map(v=>({ok:true,v}));
+        const TR={alcance:"alcance",confianca:"confiança",venda:"venda"},AP={provado:"provado",variacao:"variação",experimento:"experimento"};
+        conta("Planejadora","pauta da semana: "+(r.pauta_semana||[]).map(x=>`${ROT[x.tipo]||x.tipo} · ${TR[x.trabalho]||x.trabalho} · ${AP[x.aposta]||x.aposta}`).join(" | "));
+        if((r.avisos||[]).length)conta("Planejadora","avisos da conferência da pauta: "+r.avisos.join("; "));
+      }catch(e){equipe("planejadora","trabalhando",`A pauta da semana falhou (${e.message}). Vou pelo jeito antigo.`);planos=null}
+    }
+    if(!planos)planos=await emFila(combos,5,(c,i)=>chamar({acao:"planejar",lote,...c,ambiente_id:amb,giro:i,quantidade:porC,assunto:o.assunto,dia:new Date().toISOString().slice(0,10)}).then(r=>{np++;
       equipe("planejadora","trabalhando",`Já planejei ${np} de ${ncomb} combinações. Acabei de fazer ${ROT[c.tipo]} para ${ROT[c.persona_id]}.`);
       conta("Planejadora",`planejou ${ROT[c.tipo]} · ${ROT[c.persona_id]}: "${r.candidatos[0]?.gancho_capa||""}"`);rr();return r}));
     const ok=planos.filter(x=>x.ok).map(x=>x.v);
