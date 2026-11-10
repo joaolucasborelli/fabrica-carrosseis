@@ -153,7 +153,8 @@ body{{width:1080px;height:1350px;overflow:hidden;-webkit-font-smoothing:antialia
 .fecho .bloco{{position:absolute;left:88px;right:88px;top:130px;height:600px;display:flex;flex-direction:column;justify-content:flex-start;gap:30px}}
 .fecho .perg{{font-family:var(--fd);font-variation-settings:'opsz' 144;font-size:84px;line-height:1.04;letter-spacing:-.015em}}
 .fecho .perg em{{font-style:italic}}
-.fecho .corpo{{font:500 32px/1.45 var(--ft);max-width:820px}}
+.fecho .corpo{{font:500 38px/1.42 var(--ft);max-width:860px}}
+.fecho .corpo p+p{{margin-top:.55em}}
 .fecho .palavra{{display:inline-block;padding:2px 16px;border-radius:999px;font-weight:800;letter-spacing:.06em}}
 .fecho .pacote{{position:absolute;right:70px;bottom:120px;height:520px;filter:drop-shadow(0 30px 40px rgba(76,18,54,.35))}}
 .fecho .brilho{{position:absolute;right:-120px;bottom:-60px;width:820px;height:820px;border-radius:50%;background:radial-gradient(closest-side,rgba(217,34,88,.35),rgba(217,34,88,0))}}
@@ -231,7 +232,10 @@ def html_slide(s, p=None):
         corpo = f'<div class="bloco"><div class="fit" style="display:flex;flex-direction:column;gap:30px">{rot}{miolo}</div></div>' + pe(s.get("n", ""))
     elif m == "mk_fecho":
         pal = s.get("palavra", "")
-        txt = _rico(" ".join(s.get("paragrafos") or []))
+        ps = s.get("paragrafos") or []
+        cta = [x for x in ps if "[[" in x or re.match(r"^\s*(comenta|comente|clica|clique|acesse|salva|salve)", x, re.I)]
+        narr = " ".join(x for x in ps if x not in cta)
+        txt = "".join(f"<p>{_rico(x)}</p>" for x in ([narr] if narr else []) + cta)
         if pal:
             txt = re.sub(r"\[\[(.+?)\]\]", lambda mm: f'<span class="palavra">{mm.group(1)}</span>', txt)
         pac = (f'<div class="brilho"></div><img class="pacote" src="{s["produto"]}">' if s.get("produto") else "")
@@ -277,6 +281,27 @@ def _italico_final(t):
     return t
 
 
+_ASPAS = "\"“”«»'"
+
+
+def _sem_aspas(t):
+    return str(t or "").strip().strip(_ASPAS).strip()
+
+
+def _maiuscula(t):
+    t = str(t or "")
+    return t[:1].upper() + t[1:] if t else t
+
+
+def _com_titulo(s, ps):
+    """O título do passo ("Segundo teste:") não pode sumir: entra como abertura em itálico, se ainda não estiver no texto."""
+    tit = (s.get("titulo") or "").strip()
+    junto = " ".join(ps).lower()
+    if not tit or tit.lower().rstrip(":") in junto:
+        return ps
+    return [f"**{tit}**"] + [_maiuscula(ps[0])] + ps[1:] if ps else [f"**{tit}**"]
+
+
 def adaptar(capa, slides, perfil=None):
     """Recebe a capa e os slides já diagramados e devolve os slides nos layouts da marca.
     Alterna o estilo claro com o escuro nos slides de virada e de números, para dar ritmo sem cor nova."""
@@ -285,6 +310,7 @@ def adaptar(capa, slides, perfil=None):
     out = [{"molde": "mk_capa", "estilo": base, "foto": capa.get("foto"), "foco": capa.get("foco"),
             "chapeu": capa.get("chapeu_marca") or p.get("chapeu_capa", ""), "texto": _italico_final(capa.get("texto") or capa.get("titulo"))}]
     n = len(slides)
+    hist = 0
     for i, s in enumerate(slides, 2):
         m = s.get("molde", ""); ps = [x for x in (s.get("paragrafos") or []) if x]
         ult = (i == n + 1)
@@ -292,9 +318,16 @@ def adaptar(capa, slides, perfil=None):
         itens = s.get("itens") or [c.get("nome") for c in (s.get("cards") or []) if c.get("nome")]
         numeros = [_NUM.match(str(t).replace("**", "")) for t in itens]
         if ult and m in ("cta_f6", "fecho_foto"):
+            if s.get("texto") and s["texto"] not in ps:  # o pedido do fim às vezes vem no "texto" (cta_f6): não pode sumir
+                ps = ps + [s["texto"]]
             junto = " ".join(ps)
             pal = re.search(r"\[\[(.+?)\]\]", junto)
-            out.append({"molde": "mk_fecho", "estilo": base, "pergunta": s.get("pergunta") or "", "paragrafos": ps,
+            perg = s.get("pergunta") or ""
+            if not perg:
+                cands = [x for x in ps if x.rstrip().endswith("?") and "[[" not in x and not x.lstrip().startswith(tuple(_ASPAS))]
+                if cands:
+                    perg = cands[-1]; ps = [x for x in ps if x is not perg]
+            out.append({"molde": "mk_fecho", "estilo": base, "pergunta": perg, "paragrafos": ps,
                         "palavra": pal.group(1) if pal else "", "produto": p.get("produto_arquivo")})
         elif itens and sum(1 for x in numeros if x) >= max(2, len(itens) - 1):
             its = [{"v": x.group(1), "l": x.group(2)} if x else {"v": "", "l": str(t).replace("**", "")} for x, t in zip(numeros, itens)]
@@ -310,14 +343,20 @@ def adaptar(capa, slides, perfil=None):
             out.append({"molde": "mk_frase", "estilo": alt, "n": nn, "antes": " ".join(s.get("antes") or []),
                         "virada": s.get("faixa") or "", "depois": " ".join(s.get("depois") or [])})
         elif m in FOTO and (s.get("foto") or s.get("fotos")):
-            out.append({"molde": "mk_historia", "estilo": base, "n": nn, "foto": s.get("foto") or (s.get("fotos") or [None])[-1], "foco": s.get("foco"),
-                        "texto": " ".join(ps) or s.get("titulo") or s.get("texto") or ""})
+            hist += 1
+            est_h = "blush" if (base == "creme" and hist % 3 == 2) else base
+            out.append({"molde": "mk_historia", "estilo": est_h, "n": nn, "foto": s.get("foto") or (s.get("fotos") or [None])[-1], "foco": s.get("foco"),
+                        "texto": " ".join(_com_titulo(s, ps)) or s.get("titulo") or s.get("texto") or ""})
         else:  # papel, lição, citação, aviso: frase pura
             rot = s.get("rotulo") or ("Atenção" if any(x.lower().startswith("atenção") for x in ps) else "")
             ps2 = [re.sub(r"^\s*Atenção:\s*", "", x) for x in ps] if rot == "Atenção" else ps
             ps2 = [x[:1].upper() + x[1:] if x else x for x in ps2]
-            if m == "citacao":
-                ps2 = [f"“{s.get('texto', '')}”"] + ([f"— {s.get('nome', '')}"] if s.get("nome") and s.get("papel") else [])
+            if m == "citacao" and s.get("texto"):
+                out.append({"molde": "mk_frase", "estilo": base, "n": nn, "antes": " ".join(ps2) or _maiuscula(s.get("sub") or ""),
+                            "virada": f"“{_sem_aspas(s['texto'])}”",
+                            "depois": f"— {s['nome']}" if s.get("nome") and s.get("papel") else ""})
+                continue
+            ps2 = _com_titulo(s, ps2)
             junto = " ".join(ps2 or [s.get("texto", "")]).strip()
             mm = re.match(r"^(.{20,140}?):\s*(.{3,60})$", junto)
             if not rot and m != "citacao" and mm and len(mm.group(2).split()) <= 8:
