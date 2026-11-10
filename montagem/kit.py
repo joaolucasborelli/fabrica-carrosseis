@@ -157,11 +157,28 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     def fala_do_produto(s):
         t = _norm(" ".join(textos(s)))
         return any(n in t for n in nomes)
-    com_produto = set()
+    MAO = re.compile(r"embalag|rotulo|sache|pouch|pacote|sachet|abre o|abrir o|vira o|virar a", re.I)
+    com_produto, na_mao = set(), set()
     if produtos:
         for i, s in enumerate(post["slides"], 2):
-            if len(com_produto) < 3 and s["molde"] in COM_FOTO and fala_do_produto(s):
-                com_produto.add(i)
+            if s["molde"] not in COM_FOTO:
+                continue
+            if len(na_mao) < 2 and MAO.search(_norm(" ".join(textos(s)))):
+                na_mao.add(i)  # a cena precisa da pessoa com o produto na mão: troca o pacote da IA pelo real (por referência)
+            elif len(com_produto) < 3 and fala_do_produto(s):
+                com_produto.add(i)  # cita o produto: cola a embalagem real num canto da cena
+    def trocar_na_mao(dest, loc, vert, k):
+        try:
+            p = produtos[k % len(produtos)]
+            novo = dest.replace(".png", "_real.png")
+            e = _ch(CAPAS, {"acao": "editar", "caminho": dest, "destino": novo, "referencias": [p["caminho"]], "size": "1024x1536" if vert else "1536x1024",
+                            "instrucao": "Replace the package the person is holding (or the package in the scene) with the exact product from the second image: "
+                                         "same shape, colors, logo and printed text, at a natural size for the hand. Keep everything else exactly the same."})
+            if e.get("ok"):
+                robo.baixar(novo, loc)
+                ev("fotografo", f"Troquei o pacote da foto pela embalagem real de {p.get('nome', 'produto')}.")
+        except Exception as x:
+            ev("fotografo", f"Não consegui trocar o pacote: {str(x)[:80]}", "erro")
     def colar(loc, k, capa=False):
         try:
             import marca_kit
@@ -219,12 +236,17 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     def foto(a):
         i, s, campo, suf = a
         dest = f"{base}/s{i:02d}{suf}.png"; vert = s["molde"] in VERTICAIS
-        prompt = limpo(s[campo]) + SEM_PACOTE + (VAGA if i in com_produto else "")
+        if i in na_mao:
+            prompt = s[campo] + " The person holds one plain product package naturally in one hand, front facing the camera."
+        else:
+            prompt = limpo(s[campo]) + SEM_PACOTE + (VAGA if i in com_produto else "")
         ok = variar(cam_capa, dest, pers, prompt, vert) if (s.get("mesma_pessoa") and pers and cam_capa and not famosa) else gerar(prompt, dest, vert)
         if not ok:
             return (i, suf), None
         loc = pasta / f"s{i:02d}{suf}.png"; robo.baixar(dest, loc)
-        if i in com_produto and not suf:
+        if i in na_mao and not suf:
+            trocar_na_mao(dest, loc, vert, i)
+        elif i in com_produto and not suf:
             colar(loc, i)
         return (i, suf), loc
     with ThreadPoolExecutor(3) as ex:

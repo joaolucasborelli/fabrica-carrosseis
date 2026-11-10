@@ -127,7 +127,7 @@ def marca_completa(marca, pasta: Path):
             try:
                 loc = pasta / f"produto_{i}_{j}.png"; baixar(cam, loc)
                 if _solido(loc):  # só embalagem sozinha (sem pedaço de cenário ou arte de respingo)
-                    produtos.append({"nome": p.get("nome", ""), "arquivo": str(loc)})
+                    produtos.append({"nome": p.get("nome", ""), "arquivo": str(loc), "caminho": cam})
             except Exception:
                 pass
     return full, produtos
