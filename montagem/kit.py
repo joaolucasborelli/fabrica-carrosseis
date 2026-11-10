@@ -105,6 +105,29 @@ def cobertura(pecas, post):
     return achou / max(1, len(orig))
 
 
+SEM_PARAGRAFO = {"esc_cards", "esc_checklist", "lista_linhas", "conta_visual", "antes_hoje", "citacao"}
+
+
+def ajustar(s):
+    """Moldes que não mostram "paragrafos": a frase vai para o subtítulo ou o slide vira texto corrido (nada se perde)."""
+    ps = [x for x in (s.get("paragrafos") or []) if x and x.strip()]
+    if s["molde"] in SEM_PARAGRAFO and ps:
+        txt = " ".join(ps)
+        if len(txt.split()) <= 22 and not s.get("sub"):
+            s["sub"] = txt; s["paragrafos"] = []
+        else:
+            itens = [i for i in (s.get("itens") or []) if i] + [f"{c['nome']}: {c['texto']}" for c in (s.get("cards") or []) if c.get("nome")]
+            s["molde"] = "papel_f2"; s["paragrafos"] = ([f"**{s['titulo']}**"] if s.get("titulo") else []) + ps + itens
+    return s
+
+
+def desenho(s, eh_capa=False):
+    """O dicionário que o desenhador recebe (sem os campos de foto e do Diretor de Arte)."""
+    if eh_capa:
+        return {k: v for k, v in s.items() if v not in ("", [], None)}
+    return {k: v for k, v in ajustar(dict(s)).items() if v not in ("", [], None) and k not in ("foto_prompt", "foto_prompt2") + DA}
+
+
 def montar(post, pasta: Path, base: str, ev=None, log=print):
     """Gera as fotos e desenha. Devolve a lista de PNGs locais na ordem dos slides."""
     ev = ev or (lambda *a, **k: None)
@@ -163,17 +186,9 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     if tarefas:
         ev("fotografo", f"{len(fotos)} de {len(tarefas)} fotos do miolo prontas.", "pronto")
 
-    SEM_PARAGRAFO = {"esc_cards", "esc_checklist", "lista_linhas", "conta_visual", "antes_hoje", "citacao"}
     for s in post["slides"]:
-        ps = [x for x in (s.get("paragrafos") or []) if x and x.strip()]
-        if s["molde"] in SEM_PARAGRAFO and ps:
-            txt = " ".join(ps)
-            if len(txt.split()) <= 22 and not s.get("sub"):
-                s["sub"] = txt; s["paragrafos"] = []
-            else:  # muita frase para um card: vira slide de texto, sem perder nada
-                itens = [i for i in (s.get("itens") or []) if i] + [f"{c['nome']}: {c['texto']}" for c in (s.get("cards") or []) if c.get("nome")]
-                s["molde"] = "papel_f2"; s["paragrafos"] = ([f"**{s['titulo']}**"] if s.get("titulo") else []) + ps + itens
-    c = {k: v for k, v in capa.items() if v not in ("", [], None)}
+        ajustar(s)
+    c = desenho(capa, eh_capa=True)
     c["foto"] = (pasta / "capa.png").as_uri()
     if cred_capa:
         c["credito"] = cred_capa
@@ -181,7 +196,7 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
         c["fotos_circulo"] = [circulo.as_uri()]
     slides = [c]; reserva = c["foto"]
     for i, s in enumerate(post["slides"], 2):
-        d = {k: v for k, v in s.items() if v not in ("", [], None) and k not in ("foto_prompt", "foto_prompt2") + DA}
+        d = desenho(s)
         f1 = fotos.get((i, "")); f2 = fotos.get((i, "b"))
         if s["molde"] == "antes_hoje":
             d["fotos"] = [(f1.as_uri() if f1 else reserva), (f2.as_uri() if f2 else reserva)]

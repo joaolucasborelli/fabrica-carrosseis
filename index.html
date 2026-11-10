@@ -116,6 +116,14 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 .cover.img{padding:0;overflow:hidden;background:#111}
 .cover.img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .cover.img .n{z-index:1}
+.retoque{margin:12px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;display:grid;gap:10px}
+.rt-cab{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.rt-linha{display:grid;grid-template-columns:auto 90px minmax(0,1fr) auto;gap:8px;align-items:center}
+.rt-linha textarea{width:100%;resize:vertical;min-height:40px;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:transparent;color:inherit}
+.rt-linha select{font:inherit;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:inherit}
+.rt-hist{list-style:none;display:grid;gap:6px;font-size:.88rem}.rt-hist .btn.mini{padding:3px 8px;font-size:.8rem}
+.rt-erro{display:block;opacity:.75;margin-top:2px}
+@media (max-width:640px){.rt-linha{grid-template-columns:1fr 1fr}.rt-linha textarea,.rt-linha .btn{grid-column:1/-1}}
 .montaviso{margin:10px 0 0;padding:10px 12px;border-radius:8px;background:#fff7d6;color:#5a4500;font-size:.9rem}
 .montaviso.erro{background:#fde2e2;color:#7a1414}
 .strip .cover.c2 .face{width:36%}
@@ -401,6 +409,7 @@ function renderPost(){
     <div class="prow"><button class="back" data-back>← Posts</button><span class="st ${ST[p.s][1]}">${ST[p.s][0]}</span><span class="when">${fdt(p.t)}</span><span class="sp"></span>
       <button class="btn" data-expand="0">⤢ Tela cheia</button>${p.s==="prop"?`<button class="btn danger" data-prej>Rejeitar</button><button class="btn primary" data-papr>Gerar post e thumbnails</button>`:`<button class="btn" data-capas ${p.s==="ok"?"disabled":""}>Gerar capas</button><button class="btn primary" data-sched ${pode?"":"disabled"}>Agendar</button>`}</div>
     <div class="strip" aria-label="Slides do post. Clique num slide para abrir em tela cheia">${slidesHTML(p).map((h,i)=>`<button class="sb" data-expand="${i}" aria-label="Abrir o slide ${i+1} em tela cheia">${h}</button>`).join("")}</div>
+    ${painelRetoque(p)}
     ${painelDA(p)}
     ${p.mont==="pendente"||p.mont==="montando"?`<p class="montaviso">🛠️ O robô está montando este post: diagramação, foto da capa e os slides. Fica pronto em até ~10 minutos e aparece aqui sozinho.</p>`:p.mont==="erro"?`<p class="montaviso erro">A montagem deu erro: ${esc(p.mlog||"")}. Me avise no chat que eu refaço.</p>`:p.mont==="pronta"&&p.mlog?`<p class="small" style="margin:8px 0 0">Montado: ${esc(p.mlog)}</p>`:""}
     ${p.custo&&p.custo.total>0?`<p class="small custo-det">Custo medido: <b>${usd(p.custo.total)}</b> (≈ R$ ${(p.custo.total*DOLAR).toFixed(2).replace(".",",")}) · texto e montagem ${usd(p.custo.proprio)} · parte da pesquisa e do plano ${usd(p.custo.plano)} · ${p.custo.imagens} imagens${p.custo.capas>0?` · capas alternativas ${usd(p.custo.capas)}`:""}</p>`:""}
@@ -426,6 +435,20 @@ const CAPAS_DA=["capa_f1","capa_f1b","capa_perfil","capa_tweet","capa_circulos",
 const FONTE_IC={ia:"📷 foto IA",real:"📰 foto real",nenhuma:"▦ sem foto"};
 function slideDoPlano(p,n){const pl=p.plano&&p.plano.post;if(!pl)return null;return n===1?pl.capa:pl.slides[n-2]||null}
 function formatoDe(p,n){const s=slideDoPlano(p,n);if(!s)return p.planejando?`<span class="fmt carregando">Diretor de Arte…</span>`:"";return `<span class="fmt">${esc(NOME_MOLDE[s.molde]||s.molde)}<i>${FONTE_IC[s.foto_fonte]||""}</i></span>`}
+// RETRABALHO: corrigir a foto de 1 slide sem remontar o post inteiro (o robô edita só a foto e redesenha só o slide)
+function painelRetoque(p){
+  if(p.mont!=="pronta"||!(p.imgs&&p.imgs.length))return "";
+  const n=p.imgs.length, sel=p.rtSlide||1;
+  const ST_R={pendente:["Na fila","st-mont"],fazendo:["Corrigindo","st-mont"],pronto:["Corrigido ✓","st-ok"],erro:["Não deu","st-rej"],desfeito:["Desfeito","st-draft"]};
+  const hist=(p.ret||[]).map(r=>`<li><span class="st ${(ST_R[r.status]||["",""])[1]}">${(ST_R[r.status]||[r.status])[0]}</span> <b>Slide ${r.slide}${r.slide===1?" (capa)":""}:</b> ${esc(r.pedido)}${r.status==="erro"&&r.erro?`<small class="rt-erro">${esc(r.erro)}</small>`:""}${r.status==="pronto"&&r.imagem_antes?` <button class="btn mini" data-desfazer="${r.id}">Desfazer</button>`:""}</li>`).join("");
+  return `<section class="retoque" aria-label="Corrigir um slide">
+    <div class="rt-cab"><b>Corrigir um slide</b><span class="small">Escreva o que está errado na foto. O robô corrige só essa foto e redesenha só esse slide; o texto não muda.</span></div>
+    <div class="rt-linha"><label for="rt-slide">Slide</label><select id="rt-slide" data-rtslide>${Array.from({length:n},(_,i)=>`<option value="${i+1}" ${sel===i+1?"selected":""}>${i+1}${i===0?" · capa":""}</option>`).join("")}</select>
+      <textarea id="rt-pedido" rows="2" placeholder="Ex.: o celular está ao contrário. Vire o celular: a tela tem que ficar virada para o rosto dele e a gente vê a parte de trás."></textarea>
+      <button class="btn primary" data-retocar>Corrigir a foto</button></div>
+    ${hist?`<ul class="rt-hist">${hist}</ul>`:""}
+  </section>`;
+}
 function painelDA(p){
   if(p.imgs&&p.imgs.length)return "";
   if(!p.plano)return `<div class="da"><div class="da-h"><b>🎨 Diretor de Arte</b><span class="small">${p.planejando?"lendo o post e escolhendo o formato de cada slide (uns 30 segundos)…":p.planoErro?"não consegui planejar: "+esc(p.planoErro):"vai planejar o formato de cada slide"}</span>${p.planejando?"":`<button class="btn" data-daplanejar>Planejar agora</button>`}</div></div>`;
@@ -731,6 +754,10 @@ async function carregar(){
         base:`Remodelado do post ${rm.base_code||"-"}. Camada grande trocada: ${rm.camada_grande||"-"}. Camadas pequenas: ${(rm.camadas_pequenas||[]).join(", ")||"-"}. O que manteve: ${rm.o_que_manteve||"-"}.`,
         pl:Object.entries(pn.leitores||{}).map(([k,x])=>`${NOMES[k]||k}: ${x.nota}/10, "${x.frase}"${x.larga_no_slide?`, larga no slide ${x.larga_no_slide}`:""}`).join(" · "),
         pb:(pn.problemas||[]).join(" · ")}}});
+  // retoques pedidos (mais novo primeiro)
+  const idsR=POSTS.map(p=>p.postId).filter(Boolean);
+  if(idsR.length){const {data:rs}=await sb.from("retoques").select("id,post_id,slide,pedido,status,erro,imagem_antes").in("post_id",idsR).order("id",{ascending:false}).limit(300);
+    POSTS.forEach(p=>{p.ret=(rs||[]).filter(r=>r.post_id===p.postId)});}
   // MEDIDOR DE CUSTO: quanto cada post custou de verdade (tabela custos)
   const ids=POSTS.map(p=>p.postId).filter(Boolean);
   if(ids.length){const {data:cs}=await sb.from("custo_por_post").select("*").in("post_id",ids);
@@ -857,6 +884,12 @@ document.addEventListener("click",e=>{
   if("papr" in ds){const p=POSTS.find(x=>x.id===aberto);b.disabled=true;chamar({acao:"escolher",variacao_id:p.id,decisao:"montar"}).then(()=>{toast("Escolhida! O robô monta os slides em até ~10 minutos e eles aparecem aqui.");aberto=null;return carregar()}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
   if("prej" in ds){const p=POSTS.find(x=>x.id===aberto);const motivo=prompt("Por que você recusou? A fábrica usa isso para aprender (pode deixar em branco).");if(motivo===null)return;chamar({acao:"escolher",variacao_id:p.id,decisao:"recusar",motivo:motivo||null}).then(()=>{POSTS=POSTS.filter(x=>x.id!==p.id);aberto=null;render();toast("Recusada. O motivo foi guardado.")}).catch(e=>toast("Erro: "+e.message));return}
   if("capas" in ds){capas={id:aberto};drawCapas();return}
+  if("retocar" in ds){const p=POSTS.find(x=>x.id===aberto);const slide=+document.getElementById("rt-slide").value;const pedido=document.getElementById("rt-pedido").value.trim();
+    if(!pedido){toast("Escreva o que corrigir na foto");return}
+    b.disabled=true;p.rtSlide=slide;
+    sb.functions.invoke("opcoes",{body:{acao:"retocar",post_id:p.postId,slide,pedido}}).then(async({data,error})=>{if(error||data?.erro)throw new Error(data?.erro||error.message);toast(`Pedido enviado: o robô corrige o slide ${slide} em uns 2 minutos`);await carregar()}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
+  if(ds.desfazer){b.disabled=true;
+    sb.functions.invoke("opcoes",{body:{acao:"desfazer_retoque",retoque_id:+ds.desfazer}}).then(async({data,error})=>{if(error||data?.erro)throw new Error(data?.erro||error.message);toast("Voltei a versão anterior do slide");await carregar()}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
   if("daplanejar" in ds){const p=POSTS.find(x=>x.id===aberto);planejarVisual(p);return}
   if("darefazer" in ds){const p=POSTS.find(x=>x.id===aberto);planejarVisual(p,{refazer:true});return}
   if(ds.escolhercapa){const p=POSTS.find(x=>x.id===capas.id);b.disabled=true;

@@ -205,6 +205,71 @@ def capas_alternativas(p):
     ev("entregador", f"{len(opcoes)} capas novas prontas. Abra 'Gerar capas' no post e clique na que quiser.", "pronto")
 
 
+VERT_CAPA = ("capa_f3a", "capa_f3b", "capa_circulos", "capa_marcatexto", "capa_numero")
+
+
+def _existe(caminho):
+    return bool(chamar({"acao": "baixar", "caminho": caminho}).get("ok"))
+
+
+def retocar(p):
+    """O dono pediu para corrigir a foto de um slide: edita só essa foto, redesenha só esse slide e devolve."""
+    import kit
+    from render import renderizar
+    post_id = p["id"]; ficha = p.get("ficha") or {}; imgs = list(p.get("imagens") or [])
+    fotos = p.get("fotos_retocadas") or {}
+    ev = lambda agente, fala, estado="trabalhando", **k: evento(post_id, agente, fala, estado, **k)
+    pasta = SAIDA / f"post_{post_id}" / "retoques"; pasta.mkdir(parents=True, exist_ok=True)
+    feitos = []
+    for r in p["retoques"]:
+        n = int(r["slide"])
+        try:
+            if not ficha.get("kit"):
+                raise RuntimeError("este post foi montado no jeito antigo; peça para remontar o post inteiro")
+            s = ficha["capa"] if n == 1 else (ficha["slides"][n - 2] if n - 2 < len(ficha["slides"]) else None)
+            if not s:
+                raise RuntimeError("não achei esse slide na ficha do post")
+            molde = s["molde"]
+            if molde == "antes_hoje":
+                raise RuntimeError("slide de antes e hoje tem 2 fotos; por enquanto o retoque só corrige slides de 1 foto")
+            # a foto de origem: a última já retocada deste slide, senão a foto original da montagem
+            fonte = fotos.get(str(n))
+            if not fonte:
+                if n == 1:
+                    fonte = next((f"post_{post_id}/kit/capa_v{v}.png" for v in (3, 2, 1, 0) if _existe(f"post_{post_id}/kit/capa_v{v}.png")), None)
+                    fonte = fonte or (f"post_{post_id}/kit/capa.png" if _existe(f"post_{post_id}/kit/capa.png") else None)
+                else:
+                    c = f"post_{post_id}/kit/s{n:02d}.png"
+                    fonte = c if _existe(c) else None
+            if not fonte:
+                raise RuntimeError("este slide não tem foto de IA para corrigir (é slide só de texto ou usa foto real de arquivo)")
+            vert = molde in VERT_CAPA if n == 1 else molde in kit.VERTICAIS
+            ev("retocador", f"Corrigindo a foto do slide {n}: {r['pedido'][:140]}")
+            novo = f"post_{post_id}/kit/retoque_{r['id']}.png"
+            e = kit._ch(kit.CAPAS, {"acao": "editar", "caminho": fonte, "destino": novo, "size": "1024x1536" if vert else "1536x1024",
+                                    "instrucao": "Keep everything else exactly the same: same people, faces, clothes, place, light, colors and framing. "
+                                                 "Change only what the owner asked (in Portuguese): " + r["pedido"]})
+            if not e.get("ok"):
+                raise RuntimeError(f"a edição da foto falhou: {str(e.get('erro', e))[:200]}")
+            loc = pasta / f"foto_{r['id']}.png"; baixar(novo, loc)
+            d = kit.desenho(s, eh_capa=(n == 1))
+            d["foto"] = loc.resolve().as_uri()
+            if n == 1 and molde == "capa_circulos" and _existe(f"post_{post_id}/kit/circulo.png"):
+                cl = pasta / "circulo.png"; baixar(f"post_{post_id}/kit/circulo.png", cl); d["fotos_circulo"] = [cl.resolve().as_uri()]
+            ev("montador", f"Redesenhando só o slide {n} com a foto corrigida.")
+            f = renderizar([d], pasta / f"r{r['id']}")[0]
+            cam = f"post_{post_id}/slide_{n:02d}_r{r['id']}.png"
+            chamar({"acao": "salvar", "caminho": cam, "base64": base64.b64encode(Path(f["arquivo"]).read_bytes()).decode()})
+            feitos.append({"id": r["id"], "slide": n, "imagem": cam, "foto": novo})
+            fotos[str(n)] = novo
+            ev("entregador", f"Slide {n} corrigido. Se não gostar, dá para desfazer no post.", "pronto")
+        except Exception as e:
+            print(post_id, "retoque", r["id"], "ERRO", e)
+            ev("retocador", f"Não consegui corrigir o slide {n}: {str(e)[:160]}", "erro")
+            feitos.append({"id": r["id"], "erro": str(e)[:300]})
+    chamar({"acao": "salvar", "post_id": post_id, "retoques": feitos}, url=OPCOES)
+
+
 def main():
     if "--contar" in sys.argv:  # usado pelo GitHub para não instalar o navegador à toa
         c = chamar({"acao": "contar"})
@@ -229,6 +294,8 @@ def main():
     fc = chamar({"acao": "fila"}, url=OPCOES)
     for p in fc.get("posts", []) if fc.get("ok") else []:
         try:
+            if p.get("retoques"):
+                retocar(p); print(p["id"], "retoques ok"); continue
             capas_alternativas(p); print(p["id"], "capas alternativas ok")
         except Exception as e:
             print(p["id"], "ERRO capas", e)
