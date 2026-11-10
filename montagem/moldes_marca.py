@@ -270,6 +270,33 @@ _NUM = re.compile(r"^\s*([\d.,]+\s*(?:g|kg|mg|ml|l|kcal|%|x)?)\s+(?:de\s+)?(.+)$
 FOTO = {"meia_tela", "f1_corrido", "foto_sticker", "esc_titulo_moldura", "antes_hoje", "esc_checklist", "lista_linhas", "noticia"}
 
 
+def foco_rosto(foto, padrao="50% 30%"):
+    """Acha o rosto maior da foto (OpenCV, grátis) e devolve o object-position que mantém o rosto no quadro.
+    Sem rosto ou sem OpenCV: padrao (um pouco acima do meio, onde costumam estar as cabeças)."""
+    try:
+        import cv2
+        from urllib.parse import urlparse, unquote
+        from urllib.request import url2pathname
+        cam = url2pathname(unquote(urlparse(foto).path)) if str(foto).startswith("file:") else str(foto)
+        im = cv2.imread(cam)
+        if im is None:
+            return padrao
+        h, w = im.shape[:2]; k = 640 / max(h, w)
+        pq = cv2.cvtColor(cv2.resize(im, (int(w * k), int(h * k))), cv2.COLOR_BGR2GRAY)
+        cas = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        rs = cas.detectMultiScale(pq, 1.1, 6, minSize=(28, 28))
+        if len(rs) == 0:
+            cas = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_profileface.xml")
+            rs = cas.detectMultiScale(pq, 1.1, 6, minSize=(28, 28))
+        if len(rs) == 0:
+            return padrao
+        x, y, fw, fh = max(rs, key=lambda r: r[2] * r[3])
+        cx = (x + fw / 2) / pq.shape[1]; cy = (y + fh / 2) / pq.shape[0]
+        return f"{max(0, min(100, round(cx * 100)))}% {max(0, min(100, round(cy * 100 - 12)))}%"
+    except Exception:
+        return padrao
+
+
 def _italico_final(t):
     """Capa: se não houver destaque, a última frase vira itálico (o jeito da marca)."""
     t = str(t or "").replace("\n", " ").strip()
@@ -307,7 +334,7 @@ def adaptar(capa, slides, perfil=None):
     Alterna o estilo claro com o escuro nos slides de virada e de números, para dar ritmo sem cor nova."""
     p = {**PADRAO, **(perfil or {})}
     base, alt = p.get("estilo", "creme"), p.get("alternar", "ameixa")
-    out = [{"molde": "mk_capa", "estilo": base, "foto": capa.get("foto"), "foco": capa.get("foco"),
+    out = [{"molde": "mk_capa", "estilo": base, "foto": capa.get("foto"), "foco": capa.get("foco") or foco_rosto(capa.get("foto"), "50% 30%"),
             "chapeu": capa.get("chapeu_marca") or p.get("chapeu_capa", ""), "texto": _italico_final(capa.get("texto") or capa.get("titulo"))}]
     n = len(slides)
     hist = 0
@@ -345,7 +372,8 @@ def adaptar(capa, slides, perfil=None):
         elif m in FOTO and (s.get("foto") or s.get("fotos")):
             hist += 1
             est_h = "blush" if (base == "creme" and hist % 3 == 2) else base
-            out.append({"molde": "mk_historia", "estilo": est_h, "n": nn, "foto": s.get("foto") or (s.get("fotos") or [None])[-1], "foco": s.get("foco"),
+            fh = s.get("foto") or (s.get("fotos") or [None])[-1]
+            out.append({"molde": "mk_historia", "estilo": est_h, "n": nn, "foto": fh, "foco": s.get("foco") or foco_rosto(fh, "50% 35%"),
                         "texto": " ".join(_com_titulo(s, ps)) or s.get("titulo") or s.get("texto") or ""})
         else:  # papel, lição, citação, aviso: frase pura
             rot = s.get("rotulo") or ("Atenção" if any(x.lower().startswith("atenção") for x in ps) else "")
