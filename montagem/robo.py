@@ -94,6 +94,18 @@ def entregar(post_id, arquivos, passos, t0, ev):
 AMB = "https://kfvugtrjuqdakbpzvsxq.supabase.co/functions/v1/ambientes"
 
 
+def _solido(arq, minimo=0.9):
+    """Recorte bom = a embalagem ocupa quase todo o retângulo dela (pouch, sachê, caixa, garrafa)."""
+    from PIL import Image
+    a = Image.open(arq).convert("RGBA").getchannel("A")
+    bb = a.getbbox()
+    if not bb:
+        return False
+    a = a.crop(bb)
+    cheio = sum(1 for v in a.getdata() if v > 128)
+    return cheio / (a.width * a.height) >= minimo
+
+
 def marca_completa(marca, pasta: Path):
     """Ambientes que não são a Do outro lado da Porta: busca o kit da marca (tema, logo e produto real) e baixa os arquivos."""
     if not marca or marca.get("ambiente_id") in (None, 1):
@@ -109,9 +121,13 @@ def marca_completa(marca, pasta: Path):
             pass
     produtos = []
     for i, p in enumerate(k.get("produtos") or []):
-        for j, cam in enumerate(p.get("recortes", [])[:1]):
+        for j, cam in enumerate(p.get("recortes", [])[:3]):
+            if any(x["nome"] == p.get("nome", "") for x in produtos):
+                break
             try:
-                loc = pasta / f"produto_{i}_{j}.png"; baixar(cam, loc); produtos.append({"nome": p.get("nome", ""), "arquivo": str(loc)})
+                loc = pasta / f"produto_{i}_{j}.png"; baixar(cam, loc)
+                if _solido(loc):  # só embalagem sozinha (sem pedaço de cenário ou arte de respingo)
+                    produtos.append({"nome": p.get("nome", ""), "arquivo": str(loc)})
             except Exception:
                 pass
     return full, produtos
