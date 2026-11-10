@@ -133,6 +133,24 @@ def marca_completa(marca, pasta: Path):
     return full, produtos
 
 
+class TipoReprovado(RuntimeError):
+    """Um tipo de capa/slide que o dono marcou "não usar" apareceu: a montagem para."""
+
+
+def trava(post):
+    """TRAVA (10/11): confere os moldes contra os tipos reprovados (página Padrões + "não" do ambiente)."""
+    amb = (post.get("marca") or {}).get("ambiente_id") or 1
+    r = chamar({"acao": "proibidos", "ambiente_id": amb})
+    if not r.get("ok"):
+        raise TipoReprovado(f"não consegui conferir os tipos reprovados ({r}); parei por segurança")
+    proib = set(r.get("proibidos") or [])
+    usados = [post["capa"]["molde"]] + [s["molde"] for s in post["slides"]]
+    ruins = sorted({m for m in usados if m in proib})
+    if ruins:
+        raise TipoReprovado("tipo reprovado pelo dono no post: " + ", ".join(ruins))
+    return sorted(proib)
+
+
 def montar(post_id: int):
     """Caminho novo (kit 2 + receitas). Se a diagramação perder frases do texto aprovado, cai no caminho antigo."""
     import kit
@@ -154,6 +172,15 @@ def montar(post_id: int):
         ev("diagramador", "A diagramação nova perdeu frases do texto. Vou usar o jeito antigo, que é seguro.", "pronto")
         return montar_antigo(post_id)
     cob, post = melhor
+    try:
+        trava(post)
+    except TipoReprovado as e:  # tenta 1 vez de novo, do zero; se insistir, para e avisa
+        ev("diagramador", f"Trava: {e}. Vou refazer a diagramação sem esse tipo.", "erro")
+        d = chamar({"acao": "diagramar", "post_id": post_id, "refazer": True}, timeout=220, url=ROTEIRO)
+        if not d.get("ok"):
+            raise
+        post = d["post"]; cob = kit.cobertura(d["pecas"], post)
+        trava(post)  # se ainda tiver tipo reprovado, a montagem para aqui com o erro
     nomes = sorted({s["molde"] for s in post["slides"]})
     ev("diagramador", f"Pronto: receita {post['receita'][:40]}, capa {post['capa']['molde']}, {len(post['slides'])+1} slides, {len(nomes)} moldes diferentes. "
                       f"Conferi: {cob:.0%} das palavras aprovadas estão lá.", "pronto")
