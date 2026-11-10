@@ -150,7 +150,7 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     SEM_PACOTE = (" IMPORTANT: do not show any product packaging, pouch, sachet, box, bottle, jar or brand label anywhere in the image"
                   " (the real product is added later).") if produtos else ""
     VAGA = " Leave a clean empty area on the table or surface in the lower-right third of the frame." if produtos else ""
-    PACOTE = re.compile(r"[^.]*(pouch|sachets?|sach[eê]s?|packag\w*|packets?|labels?|wrappers?|bags? of|box(?:es)? of|carton|jar|tub)[^.]*\.?", re.I)
+    PACOTE = re.compile(r"[^.]*\b(pouch|sachets?|sach[eê]s?|packag\w*|packets?|labels?|wrappers?|bags? of|box(?:es)? of|carton|jar|tub)\b[^.]*\.?", re.I)
     def limpo(txt):
         return PACOTE.sub("", txt or "") if produtos else (txt or "")
     nomes = [_norm(p.get("nome", "")).split(" ")[0] for p in produtos] + [_norm((post.get("marca") or {}).get("nome", "")).split(" ")[0]]

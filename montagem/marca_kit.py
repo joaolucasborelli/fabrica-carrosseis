@@ -3,7 +3,7 @@
 Visita poucas páginas (educado com o site) e, se o site bloquear, segue com o que já pegou.
 Também recorta a foto do produto (tira o fundo branco/liso) para colar nas cenas sem mudar nenhum pixel do rótulo.
 """
-import io, json, re, urllib.request, urllib.parse
+import io, json, re, time, urllib.request, urllib.parse
 from collections import Counter
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}
@@ -66,11 +66,19 @@ def coletar(texto_dono, log=print):
     for link in re.findall(r"fonts\.googleapis\.com/css2?\?([^\"'>]+)", h):
         fontes += [urllib.parse.unquote(f.split(":")[0]).replace("+", " ") for f in re.findall(r"family=([^&]+)", link)]
     css_txt = " ".join(re.findall(r"<style[^>]*>(.*?)</style>", h, re.S | re.I))
-    for href in re.findall(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]*href=[\"']([^\"']+)", h)[:2]:
-        try:
-            css_txt += " " + _get(_abs(base, href))[:400000]
-        except Exception:
-            pass
+    # folhas de estilo do próprio site (href pode vir antes ou depois do rel; as do Google Fonts ficam de fora)
+    folhas = [re.search(r"href=[\"']([^\"']+)", l).group(1) for l in re.findall(r"<link\b[^>]*>", h, re.S)
+              if re.search(r"rel=[\"']stylesheet", l) and re.search(r"href=[\"']", l) and "fonts.googleapis" not in l]
+    for href in folhas[:4]:
+        for tent in range(2):  # a loja pode responder 429 (muitas visitas): espera e tenta 1 vez mais
+            try:
+                css_txt += " " + _get(_abs(base, href))[:400000]
+                break
+            except Exception as e:
+                if tent:
+                    out["avisos"].append(f"a folha de estilo não abriu ({str(e)[:40]})")
+                else:
+                    time.sleep(8)
     fontes += [f.strip().strip("'\"") for f in re.findall(r"font-family\s*:\s*([^;,}]+)", css_txt)]
     vist = []
     for f in fontes:
@@ -86,10 +94,10 @@ def coletar(texto_dono, log=print):
         if not _cinza(hx):
             cores[hx] += 1
     # os tokens de cor do site (--pink: #d92258) são a identidade de verdade: valem muito mais que cor solta no CSS
-    for nome, hx in re.findall(r"--([\w-]+)\s*:\s*(#[0-9a-fA-F]{6})", css_txt + h):
+    for nome, hx in re.findall(r"--([\w-]+)\s*:\s*(#[0-9a-fA-F]{6})\b", css_txt + h):
         if not _cinza(hx.lower()):
             cores[hx.lower()] += 50
-    out["tokens"] = dict(re.findall(r"--((?:[\w-]*(?:color|cor|pink|plum|rose|blush|cream|brand|primary|accent|ink)[\w-]*))\s*:\s*(#[0-9a-fA-F]{6})", css_txt + h))
+    out["tokens"] = dict(re.findall(r"--((?:[\w-]*(?:color|cor|pink|plum|rose|blush|cream|brand|primary|accent|ink)[\w-]*))\s*:\s*(#[0-9a-fA-F]{6})\b", css_txt + h))
     out["cores"] = [{"hex": c, "vezes": n} for c, n in cores.most_common(10)]
     # logo
     logos = []
