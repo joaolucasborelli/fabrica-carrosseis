@@ -65,8 +65,8 @@ def candidatos(termos, pessoa="", limite=40):
     return saida
 
 
-def buscar(termos, pessoa, destino: Path, log=print):
-    """Baixa a melhor foto livre. Devolve {"arquivo", "credito", "pagina"} ou None."""
+def buscar(termos, pessoa, destino: Path, log=print, aceitar=None, max_conferir=6):
+    """Baixa a melhor foto livre que passar na conferência (aceitar). Devolve {"arquivo", "credito", "pagina"} ou None."""
     for tentativa in (termos, pessoa):
         if not tentativa:
             continue
@@ -75,14 +75,17 @@ def buscar(termos, pessoa, destino: Path, log=print):
         except Exception as e:  # rede, API fora
             log(f"  foto real: busca falhou ({e})")
             return None
-        for c in cs[:4]:
+        for c in cs[:max_conferir]:
             try:
                 with urllib.request.urlopen(urllib.request.Request(c["url"], headers=UA), timeout=60) as r:
                     destino.parent.mkdir(parents=True, exist_ok=True); destino.write_bytes(r.read())
-                log(f"  foto real: {c['titulo']} ({c['licenca']}, {c['ano'] or 's/ano'})")
-                return {"arquivo": destino, "credito": c["credito"], "pagina": c["pagina"]}
             except Exception:
                 continue
+            if aceitar and not aceitar(destino, c):
+                log(f"  foto real recusada: {c['titulo']}")
+                continue
+            log(f"  foto real: {c['titulo']} ({c['licenca']}, {c['ano'] or 's/ano'})")
+            return {"arquivo": destino, "credito": c["credito"], "pagina": c["pagina"]}
     return None
 
 

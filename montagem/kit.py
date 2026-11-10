@@ -49,7 +49,25 @@ def _real(s, destino: Path, ev):
     if not busca:
         return None
     ev("fotografo", f"Buscando foto real com licença livre: {busca}.")
-    r = fotos_reais.buscar(busca, quem, destino, log=lambda *_: None)
+    texto = " ".join(s.get("paragrafos") or []) or s.get("texto") or ""
+    def aceitar(arq, cand):
+        # o Conferente olha a foto: é a pessoa certa, num contexto que combina com o slide, sem nada constrangedor?
+        import base64
+        cam = f"reais/{arq.stem}_{abs(hash(cand['titulo'])) % 10**8}.jpg"
+        if not robo.chamar({"acao": "salvar", "caminho": cam, "base64": base64.b64encode(arq.read_bytes()).decode()}).get("ok"):
+            return False
+        cf = _ch(CAPAS, {"acao": "conferir", "caminho": cam, "texto": texto, "cena": {
+            "momento": f"Foto REAL de arquivo de {quem or busca} para ilustrar este slide de notícia. Serve só retrato digno e neutro ou discurso/pronunciamento/evento oficial que combine com o texto.",
+            "detalhes_do_texto": [f"{quem or busca} aparece claramente como o foco da foto", "contexto compatível com o texto do slide"],
+            "pessoas": [], "regra": "Aprove (nota 7+) quando a pessoa é o foco principal, com o rosto nítido e bem visível (retrato, discurso, pronunciamento na mesa com bandeira, entrevista), mesmo em plano médio. Reprove (nota 0 a 5) mesa/almoço/reunião com várias pessoas, a pessoa pequena ou de costas, beijo, abraço, festa, piada, careta, momento constrangedor, outra pessoa em destaque, ou contexto que contradiz o texto. Ignore expressão contida e lógica de cena de IA: é foto real."}})
+        k = cf.get("conferencia") or {}
+        ev("conferente", f"Foto real: nota {k.get('nota', '?')}/10. {(k.get('defeitos') or [''])[0][:90]}")
+        return (k.get("nota") or 0) >= 7
+    r = None
+    for termo in [f"{quem} pronunciamento à nação", f"{quem} retrato oficial", f"{quem} discurso", busca] if quem else [busca]:
+        r = fotos_reais.buscar(termo, quem, destino, log=lambda *_: None, aceitar=aceitar, max_conferir=3)
+        if r:
+            break
     if r:
         ev("fotografo", f"Achei foto real ({r['credito'][:90]}). Vai com o crédito no slide.", "pronto")
     else:
@@ -145,6 +163,16 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     if tarefas:
         ev("fotografo", f"{len(fotos)} de {len(tarefas)} fotos do miolo prontas.", "pronto")
 
+    SEM_PARAGRAFO = {"esc_cards", "esc_checklist", "lista_linhas", "conta_visual", "antes_hoje", "citacao"}
+    for s in post["slides"]:
+        ps = [x for x in (s.get("paragrafos") or []) if x and x.strip()]
+        if s["molde"] in SEM_PARAGRAFO and ps:
+            txt = " ".join(ps)
+            if len(txt.split()) <= 22 and not s.get("sub"):
+                s["sub"] = txt; s["paragrafos"] = []
+            else:  # muita frase para um card: vira slide de texto, sem perder nada
+                itens = [i for i in (s.get("itens") or []) if i] + [f"{c['nome']}: {c['texto']}" for c in (s.get("cards") or []) if c.get("nome")]
+                s["molde"] = "papel_f2"; s["paragrafos"] = ([f"**{s['titulo']}**"] if s.get("titulo") else []) + ps + itens
     c = {k: v for k, v in capa.items() if v not in ("", [], None)}
     c["foto"] = (pasta / "capa.png").as_uri()
     if cred_capa:
