@@ -166,7 +166,8 @@ def montar_antigo(post_id: int):
 
 
 OPCOES = "https://kfvugtrjuqdakbpzvsxq.supabase.co/functions/v1/opcoes"
-ALTERNATIVAS = ["capa_f1", "capa_f3b", "capa_marcatexto", "capa_f1b", "capa_f3a"]
+# só capas aprovadas como preset pelo dono (10/11) que funcionam com 1 foto + o texto aprovado
+ALTERNATIVAS = ["capa_f1", "capa_f1b", "capa_f3a", "capa_perfil"]
 
 
 def capas_alternativas(p):

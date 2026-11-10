@@ -416,8 +416,9 @@ function esbSlide(p,t,i){const f=formatoDe(p,i+2);return `<div class="cover esb"
 // ---------- Diretor de Arte: formato de cada slide antes de montar ----------
 const NOME_MOLDE={capa_f1:"Capa: foto + manchete",capa_f1b:"Capa portal",capa_perfil:"Capa portal com perfil",capa_comparacao:"Capa comparação",capa_tweet:"Capa print",capa_f3a:"Capa foto cheia + frase",capa_f3b:"Capa foto cheia + legenda",capa_circulos:"Capa com círculo",capa_marcatexto:"Capa marca-texto",capa_revista:"Capa revista",capa_numero:"Capa número gigante",capa_caderno:"Capa caderno",
   f1_corrido:"Foto + texto",meia_tela:"Meia tela (texto + foto)",papel_f2:"Papel com texto",faixa_amarela:"Faixa amarela (virada)",foto_sticker:"Foto + adesivo",antes_hoje:"Antes e hoje",lista_linhas:"Lista numerada",esc_checklist:"Checklist + foto",esc_cards:"Cards",esc_titulo_moldura:"Título + foto emoldurada",conta_visual:"Conta em caixas",citacao:"Citação",preto_f5:"Lição",cta_f6:"Pedido do comentário",fecho_foto:"Fecho com foto",noticia:"Cartão de notícia",cupom:"Cupom que cresce"};
-const MIOLOS_DA=["meia_tela","f1_corrido","noticia","cupom","faixa_amarela","esc_checklist","lista_linhas","esc_cards","conta_visual","foto_sticker","antes_hoje","esc_titulo_moldura","citacao","papel_f2","preto_f5","cta_f6","fecho_foto"];
-const CAPAS_DA=["capa_f1","capa_marcatexto","capa_f1b","capa_perfil","capa_f3b","capa_f3a","capa_comparacao","capa_numero","capa_circulos","capa_revista","capa_caderno","capa_tweet"];
+// presets escolhidos pelo dono em 10/11 (página Padrões): os recusados não aparecem
+const MIOLOS_DA=["f1_corrido","noticia","faixa_amarela","esc_checklist","lista_linhas","antes_hoje","esc_titulo_moldura","citacao","papel_f2","preto_f5","cta_f6","fecho_foto","meia_tela","cupom","esc_cards","foto_sticker"];
+const CAPAS_DA=["capa_f1","capa_f1b","capa_perfil","capa_tweet","capa_circulos","capa_numero","capa_f3a","capa_comparacao","capa_revista"];
 const FONTE_IC={ia:"📷 foto IA",real:"📰 foto real",nenhuma:"▦ sem foto"};
 function slideDoPlano(p,n){const pl=p.plano&&p.plano.post;if(!pl)return null;return n===1?pl.capa:pl.slides[n-2]||null}
 function formatoDe(p,n){const s=slideDoPlano(p,n);if(!s)return p.planejando?`<span class="fmt carregando">Diretor de Arte…</span>`:"";return `<span class="fmt">${esc(NOME_MOLDE[s.molde]||s.molde)}<i>${FONTE_IC[s.foto_fonte]||""}</i></span>`}
