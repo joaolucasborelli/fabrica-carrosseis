@@ -116,6 +116,7 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 .cover.img{padding:0;overflow:hidden;background:#111}
 .cover.img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .cover.img .n{z-index:1}
+.acct.lixo{padding:4px 10px;color:#c0392b}.acct.lixo:hover{border-color:#c0392b}
 .acct.mais{padding:4px 12px;font-size:1.1rem;font-weight:800}.amb-st{margin-left:4px;font-size:.72rem;font-weight:700;color:var(--muted,#888);border:1px solid var(--line);border-radius:99px;padding:1px 6px}
 .estudo{max-width:980px;margin:0 auto;padding:22px 16px 60px;display:grid;gap:14px}
 .est-cab{display:flex;gap:12px;align-items:center}.est-cab h2{margin:0}.est-cab .av{width:44px;height:44px;font-size:1rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}
@@ -355,7 +356,7 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
   <div class="top">
     <span class="brand">Fábrica de Posts</span>
     <div class="accts" id="accts" role="group" aria-label="Escolher a conta"></div>
-    <a class="avaliar" href="avaliar.html" target="_blank" rel="noopener">★ Avaliar thumbs</a><a class="avaliar" href="padroes.html" target="_blank" rel="noopener">◆ Padrões</a><nav class="tabs" id="tabs" aria-label="Abas"></nav>
+    <a class="avaliar" href="padroes.html" target="_blank" rel="noopener">◆ Padrões</a><nav class="tabs" id="tabs" aria-label="Abas"></nav>
     <span class="proto" id="quem"></span>
   </div>
   <main class="view" id="view"></main>
@@ -377,7 +378,7 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 const sb=supabase.createClient("https://kfvugtrjuqdakbpzvsxq.supabase.co","sb_publishable_hMCt4kaGtY75gMEb3aRi-g_Xh3OkPhx");
 const ACC={a1:{nome:"Do outro lado da Porta",at:"@ahistoriaquemuda",av:"DP",cls:"c1",avc:"av1",amb:1}};
 // AMBIENTES: cada empresa é um ambiente com a própria fábrica (o 1 é a Do outro lado da Porta)
-let AMBS=[],novoAmb=null;const AVISOS={};
+let AMBS=[],novoAmb=null,excluirAmb=null;const AVISOS={};
 async function carregarAmbientes(){
   const {data}=await sb.from("ambientes").select("id,nome,handle,sigla,status,estudo,estudo_log,entrada,marca").order("id");
   AMBS=data||[];
@@ -417,6 +418,10 @@ function renderEstudo(A){
 }
 function avisosHTML(){const L=AVISOS[acc]||[];if(!L.length)return "";
   return `<div class="avisos"><b>O vigia viu ${L.length} novidade${L.length>1?"s":""}</b>${L.map(v=>`<div class="aviso"><div><b>${esc(v.titulo)}</b><p>${esc(v.texto||"")}</p>${v.proposta&&v.proposta.regra_nova?`<small>Se aprovar, a fábrica passa a seguir: ${esc(v.proposta.regra_nova)}</small>`:""}</div><div class="av-bt"><button class="btn primary" data-aviso="${v.id}" data-dec="aprovar">Aprovar</button><button class="btn" data-aviso="${v.id}" data-dec="ignorar">Ignorar</button></div></div>`).join("")}</div>`}
+function drawExcluirAmb(){const A=AMBS.find(x=>x.id===excluirAmb)||{nome:""};
+  document.getElementById("layer").innerHTML=`<div class="shade" data-mclose></div><div class="modal" role="dialog" aria-modal="true" aria-label="Excluir ambiente" style="width:min(460px,calc(100% - 32px))">
+   <h3>Excluir ${esc(A.nome)}?</h3><p class="sub" style="margin:0">Apaga o estudo, as regras, as personas, as propostas, os posts e o chat deste ambiente. Não dá para desfazer. A Do outro lado da Porta não é afetada.</p>
+   <div class="prow" style="justify-content:flex-end"><button class="btn" data-mclose>Cancelar</button><button class="btn danger" data-confexcluir="${excluirAmb}">Excluir de vez</button></div></div>`}
 function drawNovoAmb(){
   document.getElementById("layer").innerHTML=`<div class="shade" data-mclose></div><div class="modal" role="dialog" aria-modal="true" aria-label="Novo ambiente" style="width:min(680px,calc(100% - 32px))">
    <h3>Novo ambiente</h3><p class="sub" style="margin:0">Cada empresa ganha uma fábrica própria, sem misturar com as outras. Cole tudo o que você sabe dela. O time de agentes estuda por uns 20 minutos e volta com o documento para você aprovar.</p>
@@ -453,7 +458,7 @@ function composer(where,ph){
   </form></div>`;
 }
 function renderTop(){
-  document.getElementById("accts").innerHTML=Object.entries(ACC).map(([k,A])=>`<button class="acct" data-acc="${k}" aria-pressed="${k===acc}"><span class="av ${A.avc}">${A.av}</span>${A.nome}${A.A&&A.A.status!=="ativo"?`<small class="amb-st">${A.A.status==="estudando"?"estudando":A.A.status==="aguardando"?"para aprovar":"parou"}</small>`:""}</button>`).join("")+`<button class="acct mais" data-novoamb title="Novo ambiente" aria-label="Criar um novo ambiente">+</button>`;
+  document.getElementById("accts").innerHTML=Object.entries(ACC).map(([k,A])=>`<button class="acct" data-acc="${k}" aria-pressed="${k===acc}"><span class="av ${A.avc}">${A.av}</span>${A.nome}${A.A&&A.A.status!=="ativo"?`<small class="amb-st">${A.A.status==="estudando"?"estudando":A.A.status==="aguardando"?"para aprovar":"parou"}</small>`:""}</button>`).join("")+(ACC[acc]&&ACC[acc].amb&&ACC[acc].amb!==1?`<button class="acct lixo" data-excluiramb="${ACC[acc].amb}" title="Excluir este ambiente" aria-label="Excluir o ambiente ${esc(ACC[acc].nome)}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></button>`:"")+`<button class="acct mais" data-novoamb title="Novo ambiente" aria-label="Criar um novo ambiente">+</button>`;
   document.getElementById("tabs").innerHTML=[["posts","Posts e capas"],["chat","Chat"]].map(([k,l])=>`<button class="tab" data-tab="${k}" ${tab===k?'aria-current="page"':""}>${l}</button>`).join("");
 }
 // selos do cartão: status do post + andamento da montagem e das capas (para acompanhar sem abrir)
@@ -579,7 +584,7 @@ function render(){
   if(!ACC[acc])acc="a1";
   renderTop();
   const AA=ambAtual();
-  if(AA.status!=="ativo"){const v0=document.getElementById("view");v0.innerHTML=renderEstudo(AA);v0.style.overflow="auto";fecharEscritorio();document.getElementById("layer").innerHTML="";if(novoAmb)drawNovoAmb();return}
+  if(AA.status!=="ativo"){const v0=document.getElementById("view");v0.innerHTML=renderEstudo(AA);v0.style.overflow="auto";fecharEscritorio();document.getElementById("layer").innerHTML="";if(excluirAmb)drawExcluirAmb();else if(novoAmb)drawNovoAmb();return}
   const v=document.getElementById("view");
   v.innerHTML=tab==="posts"?(aberto?renderPost():renderPosts()):renderChat();
   v.style.overflow=(tab==="chat"||aberto)?"hidden":"auto";
@@ -587,7 +592,7 @@ function render(){
   if(tab==="posts"&&!aberto)anexarGeral();
   if(tab==="posts"&&aberto){const p=POSTS.find(x=>x.id===aberto);if(p&&!(p.imgs&&p.imgs.length)&&!p.plano&&!p.planejando&&!p.planoErro&&p.mont!=="pendente"&&p.mont!=="montando")setTimeout(()=>planejarVisual(p),300)}
   document.getElementById("layer").innerHTML=renderDrawer();
-  if(novoAmb)drawNovoAmb();else if(gen)drawGen();else if(capas)drawCapas();else if(modal)drawCal();
+  if(excluirAmb)drawExcluirAmb();else if(novoAmb)drawNovoAmb();else if(gen)drawGen();else if(capas)drawCapas();else if(modal)drawCal();
   const ms=document.getElementById("msgs");if(ms)ms.scrollTop=ms.scrollHeight;
 }
 function toast(t){const e=document.createElement("div");e.className="toast";e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2600)}
@@ -610,13 +615,13 @@ async function emFila(itens,lim,fn){const res=new Array(itens.length);let i=0;
 let gen=null,nextId=100,nextProp=1;
 const PIPE={},PROPS={a1:[],a2:[]};
 function drawGen(){
-  const por=gen.qtd/9;
+  const por=gen.qtd/9, pouco=gen.qtd<9;
   document.getElementById("layer").innerHTML=`<div class="shade" data-mclose></div><div class="modal" role="dialog" aria-modal="true" aria-label="Gerar variações" style="width:min(420px,calc(100% - 32px))">
    <h3>Gerar variações · ${ACC[acc].nome}</h3>
    <p class="sub" style="margin:0">A fábrica divide igual entre os 3 tipos (História, Momento, Curiosidade) e as 3 personas (jovem, homem, mulher). O conferente e a plateia dão nota a todas. O horário você escolhe depois, dentro do post.</p>
    <div class="fieldlab" style="margin:0">Quantas variações</div>
-   <div class="qty" style="justify-content:center;font-size:1rem"><button data-gq="-9" aria-label="Menos 9">−</button><output style="font-family:var(--f-d);font-size:1.6rem">${gen.qtd}</output><button data-gq="9" aria-label="Mais 9">+</button></div>
-   <p class="sub" style="margin:0;text-align:center">${gen.qtd/3} de cada tipo · ${por} de cada combinação de tipo e persona</p>
+   <div class="qty" style="justify-content:center;font-size:1rem"><button data-gq="-1" aria-label="Menos">−</button><output style="font-family:var(--f-d);font-size:1.6rem">${gen.qtd}</output><button data-gq="1" aria-label="Mais">+</button></div>
+   <p class="sub" style="margin:0;text-align:center">${pouco?`Teste rápido: ${gen.qtd} proposta${gen.qtd>1?"s":""}, cada uma num tipo e numa persona diferente`:`${gen.qtd/3} de cada tipo · ${por} de cada combinação de tipo e persona`}</p>
    <label class="gl">Assunto do momento (opcional)<input id="g-ass" value="${esc(gen.assunto)}" placeholder="ex.: GTA 6"></label>
    <div class="prow" style="justify-content:flex-end"><button class="btn" data-mclose>Cancelar</button><button class="btn primary" data-gdo>Gerar ${gen.qtd}</button></div></div>`;
 }
@@ -631,9 +636,12 @@ async function startPipe(o){
   const P=PIPE[a]={etapa:0,done:false,n:0,qtd:o.qtd,info:[[],[],[]]};
   const rr=rrTudo;
   const persA=(a!=="a1"&&ACC[a].pers)||PERSONAS;const amb=ACC[a].amb||1;
-  const combos=TIPOS.flatMap(([t])=>persA.map(([p])=>({tipo:t,persona_id:p})));
+  let combos=TIPOS.flatMap(([t])=>persA.map(([p])=>({tipo:t,persona_id:p})));
+  // menos de 9: pega combinações que variam tipo e persona ao mesmo tempo (1 proposta em cada)
+  if(o.qtd<9){const n=persA.length,ordem=[];for(let k=0;k<combos.length;k++){const t=k%3,pi=(k+Math.floor(k/3))%n;ordem.push(combos[t*n+pi])}combos=ordem.slice(0,o.qtd)}
+  const ncomb=combos.length,porC=Math.max(1,Math.round(por));
   ["escritor","conferente","plateia"].forEach(x=>equipe(x,"livre","Esperando a Planejadora terminar."));
-  equipe("planejadora","trabalhando",`Estou lendo os posts que já venceram e escolhendo um molde para cada uma das 9 combinações (3 tipos × 3 personas). 0 de 9.`);
+  equipe("planejadora","trabalhando",`Estou lendo os posts que já venceram e escolhendo um molde para cada uma das ${ncomb} combinações. 0 de ${ncomb}.`);
   conta("Você","pediu "+o.qtd+" variações"+(o.assunto?` sobre "${o.assunto}"`:"")+".");
   try{
     let np=0;rr();
@@ -643,12 +651,12 @@ async function startPipe(o){
         if(d.dossie){equipe("planejadora","trabalhando",`Pesquisa pronta: ${(d.dossie.fatos||[]).length} fatos com fonte. ${String(d.dossie.resumo_do_momento||"").slice(0,160)}`);conta("Planejadora",`pesquisou "${o.assunto}": ${String(d.dossie.resumo_do_momento||"").slice(0,200)}`)}}
       catch(e){equipe("planejadora","trabalhando",`A pesquisa falhou (${e.message}). Vou seguir sem afirmar fato nenhum sobre o assunto.`)}
     }
-    const planos=await emFila(combos,5,(c,i)=>chamar({acao:"planejar",lote,...c,ambiente_id:amb,giro:i,quantidade:por,assunto:o.assunto,dia:new Date().toISOString().slice(0,10)}).then(r=>{np++;
-      equipe("planejadora","trabalhando",`Já planejei ${np} de 9 combinações. Acabei de fazer ${ROT[c.tipo]} para ${ROT[c.persona_id]}.`);
+    const planos=await emFila(combos,5,(c,i)=>chamar({acao:"planejar",lote,...c,ambiente_id:amb,giro:i,quantidade:porC,assunto:o.assunto,dia:new Date().toISOString().slice(0,10)}).then(r=>{np++;
+      equipe("planejadora","trabalhando",`Já planejei ${np} de ${ncomb} combinações. Acabei de fazer ${ROT[c.tipo]} para ${ROT[c.persona_id]}.`);
       conta("Planejadora",`planejou ${ROT[c.tipo]} · ${ROT[c.persona_id]}: "${r.candidatos[0]?.gancho_capa||""}"`);rr();return r}));
     const ok=planos.filter(x=>x.ok).map(x=>x.v);
     if(!ok.length)throw new Error(planos[0].e.message);
-    equipe("planejadora","pronto",`Terminei: ${ok.length} de 9 combinações planejadas.`+(ok.length<9?` ${9-ok.length} deram erro.`:""));
+    equipe("planejadora","pronto",`Terminei: ${ok.length} de ${ncomb} combinações planejadas.`+(ok.length<ncomb?` ${ncomb-ok.length} deram erro.`:""));
     equipe("conferente","livre","Esperando o Escritor terminar.");equipe("plateia","livre","Esperando o Escritor terminar.");
     const tarefas=ok.flatMap(pl=>pl.candidatos.map((_,i)=>({pauta_id:pl.pauta.id,indice:i,rot:`${ROT[pl.pauta.tipo]} · ${ROT[pl.pauta.persona_id]}`})));
     P.etapa=1;let ne=0;
@@ -950,7 +958,8 @@ document.addEventListener("click",e=>{
   if("leg" in ds){legAberta=!legAberta;render();return}
   if("sched" in ds){openSched(POSTS.find(x=>x.id===aberto));return}
   if("genopen" in ds){if(PIPE[acc]&&!PIPE[acc].done&&!PIPE[acc].erro){toast("A fábrica ainda está gerando o lote anterior.");return}gen={qtd:9,assunto:""};drawGen();return}
-  if(ds.gq){gen.assunto=document.getElementById("g-ass")?.value||"";gen.qtd=Math.max(9,Math.min(81,gen.qtd+ +ds.gq));drawGen();return}
+  if(ds.gq){gen.assunto=document.getElementById("g-ass")?.value||"";const up=+ds.gq>0;
+    gen.qtd=gen.qtd<9||(gen.qtd===9&&!up)?Math.max(1,Math.min(9,gen.qtd+(up?1:-1))):Math.max(9,Math.min(81,gen.qtd+(up?9:-9)));drawGen();return}
     if("gdo" in ds){const o={qtd:gen.qtd,assunto:document.getElementById("g-ass").value.trim()};gen=null;filtro="todos";startPipe(o);render();return}
   if("pipehide" in ds){if(PIPE[acc])PIPE[acc].oculto=true;render();return}
   if(ds.agente){agenteAberto=agenteAberto===ds.agente?null:ds.agente;render();return}
@@ -980,7 +989,10 @@ document.addEventListener("click",e=>{
     const t2=proximoLivre(o.a,o.id,alvo);if(!t2){toast("Não achei horário livre para o outro post.");return}o.t=t2;o.s="sched";chamar({acao:"agendar",variacao_id:o.id,quando:t2.toISOString()}).catch(e=>toast("Erro: "+e.message));drawCal();toast(`O outro post foi para ${fdt(t2)}`);return}
   if("mconfirm" in ds){const p=POSTS.find(x=>x.id===modal.id);const [h,mi]=modal.hora.split(":").map(Number);const t=new Date(modal.dia.getFullYear(),modal.dia.getMonth(),modal.dia.getDate(),h,mi);b.disabled=true;
     chamar({acao:"agendar",variacao_id:p.id,quando:t.toISOString()}).then(()=>{p.t=t;p.s="sched";modal=null;render();toast(`Agendado: ${fdt(t)} (a publicação automática no Instagram ainda não está ligada)`)}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
-  if("mclose" in ds){modal=null;gen=null;capas=null;novoAmb=null;render();return}
+  if("mclose" in ds){modal=null;gen=null;capas=null;novoAmb=null;excluirAmb=null;render();return}
+  if(ds.excluiramb){excluirAmb=+ds.excluiramb;render();return}
+  if(ds.confexcluir){const id=+ds.confexcluir;b.disabled=true;b.textContent="Excluindo…";
+    sb.functions.invoke("ambientes",{body:{acao:"excluir",ambiente_id:id}}).then(async({data,error})=>{if(error||data?.erro)throw new Error(data?.erro||error.message);excluirAmb=null;delete ACC["a"+id];acc="a1";aberto=null;await carregarAmbientes();await carregar();toast("Ambiente excluído")}).catch(e=>{toast("Erro: "+e.message);b.disabled=false;b.textContent="Excluir de vez"});return}
   if("novoamb" in ds){novoAmb={nome:"",texto:""};render();return}
   if("ncriar" in ds){const nome=document.getElementById("na-nome").value.trim(),texto=document.getElementById("na-texto").value.trim();novoAmb={nome,texto};
     if(!nome){toast("Dê um nome para o ambiente");return}if(texto.length<20){toast("Cole no campo o que você sabe da empresa");return}
