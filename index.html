@@ -486,7 +486,7 @@ function renderPost(){
       <button class="btn" data-expand="0">⤢ Tela cheia</button>${p.s==="prop"?`<button class="btn danger" data-prej>Rejeitar</button><button class="btn primary" data-papr>Gerar post e thumbnails</button>`:`<button class="btn primary" data-sched ${pode?"":"disabled"}>Agendar</button>`}</div>
     <div class="strip" aria-label="Slides do post. Clique num slide para abrir em tela cheia">${slidesHTML(p).map((h,i)=>`<button class="sb" data-expand="${i}" aria-label="Abrir o slide ${i+1} em tela cheia">${h}</button>`).join("")}</div>
     ${painelDA(p)}
-    ${p.mont==="pendente"||p.mont==="montando"?`<p class="montaviso">🛠️ O robô está montando este post: diagramação, foto da capa e os slides. Fica pronto em até ~10 minutos e aparece aqui sozinho.</p>`:p.mont==="erro"?`<p class="montaviso erro">A montagem deu erro: ${esc(p.mlog||"")}. Me avise no chat que eu refaço.</p>`:p.mont==="pronta"&&p.mlog?`<p class="small" style="margin:8px 0 0">Montado: ${esc(p.mlog)}</p>`:""}
+    ${p.mont==="pendente"||p.mont==="montando"?`<p class="montaviso">🛠️ O robô está montando este post: diagramação, foto da capa e os slides. Fica pronto em até ~10 minutos e aparece aqui sozinho.</p>`:p.mont==="erro"?`<p class="montaviso erro">A montagem deu erro: ${esc(p.mlog||"")}. Me avise no chat que eu refaço.</p>`:""}
     ${p.custo&&p.custo.total>0?`<p class="small custo-det">Custo medido: <b>${usd(p.custo.total)}</b> (≈ R$ ${(p.custo.total*DOLAR).toFixed(2).replace(".",",")}) · texto e montagem ${usd(p.custo.proprio)} · parte da pesquisa e do plano ${usd(p.custo.plano)} · ${p.custo.imagens} imagens${p.custo.capas>0?` · capas alternativas ${usd(p.custo.capas)}`:""}</p>`:""}
     ${legendaIG(p)}
   </div>
