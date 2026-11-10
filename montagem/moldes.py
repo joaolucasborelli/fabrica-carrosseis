@@ -382,11 +382,14 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .ll{background:#0b0b0b}
 .ll .foto{position:absolute;inset:0;width:1080px;height:1350px;object-fit:cover;filter:brightness(.6)}
 .ll .veu{position:absolute;inset:0;background:rgba(10,10,10,.82)}
-.ll .chapeu{position:absolute;left:84px;top:150px;display:flex;align-items:center;gap:16px;font:800 28px/1 'Archivo',sans-serif;letter-spacing:.22em;color:#FFD21F;text-transform:uppercase}
-.ll .chapeu::before{content:"";width:40px;height:4px;background:#FFD21F}
-.ll .tit{position:absolute;left:84px;right:84px;top:205px;font:400 116px/.95 'Bebas Neue',sans-serif;color:#fff;text-transform:uppercase}
+.ll .corpo{position:absolute;left:84px;right:84px;top:140px;bottom:150px;display:flex;flex-direction:column;gap:20px}
+.ll .chapeu{display:flex;align-items:center;gap:16px;font:800 28px/1.2 'Archivo',sans-serif;letter-spacing:.22em;color:#FFD21F;text-transform:uppercase}
+.ll .chapeu::before{content:"";flex:none;width:40px;height:4px;background:#FFD21F}
+.ll .tit{font:400 116px/1.02 'Bebas Neue',sans-serif;color:#fff;text-transform:uppercase}
 .ll .tit .am{color:#FFD21F}
-.ll .linhas{position:absolute;left:70px;right:70px;top:var(--ly,385px);bottom:150px;display:flex;flex-direction:column;justify-content:center;gap:22px}
+.ll .sub{font:500 36px/1.3 'Inter',sans-serif;color:#e8e8e4}
+.ll .sub mark{background:#FFD21F;color:#111;padding:0 .12em}
+.ll .linhas{flex:1;min-height:0;margin:8px -14px 0;display:flex;flex-direction:column;justify-content:center;gap:22px}
 .ll .lin{position:relative;flex:0 1 168px;min-height:112px;display:flex;align-items:center;gap:30px;padding:20px 36px 20px 26px;
   background:linear-gradient(180deg,rgba(28,29,34,.86),rgba(16,16,19,.86));border:1.5px solid rgba(255,255,255,.13);border-radius:26px;box-shadow:0 16px 34px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06)}
 .ll .lin+.lin::before{content:"";position:absolute;left:62px;top:-24px;width:4px;height:24px;background:linear-gradient(#FFD21F,rgba(255,210,31,.35))}
@@ -533,6 +536,27 @@ FIT_JS = """
       for (const el of cx.querySelectorAll('b, span')) { el.style.fontSize = parseFloat(getComputedStyle(el).fontSize) * 0.96 + 'px'; }
     }
   }
+  // caixa centralizada que cresce para os DOIS lados esconde o estouro de cima (o robô não via): centraliza só se couber
+  for (const box of document.querySelectorAll('.fit, .cp .zona')) {
+    const st = getComputedStyle(box);
+    if (st.justifyContent === 'center') box.style.justifyContent = 'safe center';
+    if (st.alignItems === 'center' && st.flexDirection === 'row') box.style.alignItems = 'safe center';
+  }
+  // cupom: o papel nunca passa da área dele (encolhe inteiro, mantendo o desenho)
+  for (const z of document.querySelectorAll('.cp .zona')) {
+    const pp = z.querySelector('.papel'); if (!pp) continue;
+    const k = Math.min(1, (z.clientHeight - 10) / pp.offsetHeight);
+    if (k < 1) { pp.style.transform = `rotate(-1.6deg) scale(${k.toFixed(3)})`; pp.style.transformOrigin = 'center center'; pp.style.margin = `${-(pp.offsetHeight*(1-k))/2}px 0`; }
+  }
+  // lista: se o bloco empilhado não couber, encolhe título, frase e itens até caber (nada fica por cima de nada)
+  for (const c of document.querySelectorAll('.ll .corpo')) {
+    const fim = () => { const k = c.lastElementChild; const ls = k.querySelectorAll('.lin'); const u = ls.length ? ls[ls.length-1] : k; return u.getBoundingClientRect().bottom; };
+    let g = 0;
+    while (fim() > c.getBoundingClientRect().bottom + 1 && g++ < 40) {
+      for (const el of c.querySelectorAll('.tit, .sub, .chapeu, .lin span, .lin b')) el.style.fontSize = parseFloat(getComputedStyle(el).fontSize) * 0.95 + 'px';
+      for (const el of c.querySelectorAll('.lin')) { el.style.minHeight = Math.max(70, parseFloat(getComputedStyle(el).minHeight) * 0.93) + 'px'; el.style.paddingTop = el.style.paddingBottom = '12px'; }
+    }
+  }
   for (const box of document.querySelectorAll('.fit')) {
     const ps = box.querySelectorAll('p');
     // texto curto: cresce até o teto do molde (data-max), sem passar da caixa
@@ -658,8 +682,11 @@ def _k_lista(s):
     lins = "".join(f'<div class="lin"><b>{i}</b><span>{marcar(_semnum(t))}</span></div>' for i, t in enumerate(s.get("itens") or [], 1))
     fundo = f'<img class="foto" src="{s["foto"]}">' if s.get("foto") else ""
     prog = s.get("progresso") or 0
-    return (f'<div class="slide ll">{fundo}<div class="veu"></div><div class="chapeu">{html.escape(s.get("chapeu",""))}</div>'
-            f'<div class="tit">{marcar(s.get("titulo",""), cor=True)}</div><div class="linhas">{lins}</div>'
+    # tudo empilhado num bloco só: chapéu, título, frase e lista nunca ficam um em cima do outro
+    chapeu = f'<div class="chapeu">{html.escape(s["chapeu"])}</div>' if s.get("chapeu") else ""
+    sub = f'<div class="sub">{marcar(s["sub"])}</div>' if s.get("sub") else ""
+    return (f'<div class="slide ll">{fundo}<div class="veu"></div><div class="corpo">{chapeu}'
+            f'<div class="tit">{marcar(s.get("titulo",""), cor=True)}</div>{sub}<div class="linhas">{lins}</div></div>'
             f'<div class="barra" style="width:{max(0,min(1,prog))*100:.0f}%"></div><div class="handle">{HANDLE}</div></div>')
 
 
