@@ -59,6 +59,16 @@ details{margin-top:10px}summary{cursor:pointer;color:var(--am);font-size:13.5px;
 .gr span{color:var(--mut);font-weight:600;font-size:13px}
 .gr small{display:block;color:var(--mut);font-weight:500;font-size:13px;margin-top:2px}
 .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.ab{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:900px;margin:0 auto}
+.ab figure{margin:0;display:flex;flex-direction:column;gap:8px}
+.ab img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:12px;border:3px solid transparent;background:#000;cursor:pointer}
+.ab img:hover{border-color:var(--yel,#FFD21F)}
+.ab button{padding:10px;border-radius:10px;font-weight:700;cursor:pointer}
+.abbar{max-width:900px;margin:14px auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.abbar .chip{padding:6px 12px;border-radius:999px;border:1px solid var(--line,#333);background:transparent;color:inherit;cursor:pointer;font-size:13px}
+.abbar .chip.on{background:var(--yel,#FFD21F);color:#111;border-color:transparent}
+.regras{max-width:900px;margin:22px auto;border:1px solid var(--line,#333);border-radius:12px;padding:14px 16px;white-space:pre-wrap;font-size:14px;line-height:1.5}
+@media (max-width:700px){.ab{grid-template-columns:1fr 1fr;gap:8px}}
 .tile{position:relative}
 .tile .im{aspect-ratio:4/5;background:#000;border-radius:9px;overflow:hidden;cursor:zoom-in;border:2px solid transparent}
 .tile .de{font-size:11.5px;color:var(--mut);margin-top:5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
@@ -91,6 +101,7 @@ details{margin-top:10px}summary{cursor:pointer;color:var(--am);font-size:13.5px;
     <button data-aba="slides">Tipos de slide</button>
     <button data-aba="escolhidos">✓ Presets escolhidos</button>
     <button data-aba="posts">Posts inteiros (consulta)</button>
+    <button data-aba="treinar">🏋 Treinar: qual é melhor?</button>
   </nav>
   <span class="sp"></span><span class="prog" id="prog"></span><a href="./">← Fábrica</a></header>
 <p class="intro" id="intro"></p>
@@ -113,6 +124,19 @@ const LOTE={lote1:"Lote 1",lote2:"Lote 2",lote3:"Lote 3","posts-de-teste":"Posts
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const limpa=s=>String(s??"").replace(/\*\*|\[\[|\]\]|_/g,"");
 let POSTS=[],CAPAS=[],URLS={},P={},ABA="capas",LISTA=[],IDX=0;
+let ESC=[],REGRAS_AB="",PAR=null,MOTIVOS=new Set();
+const MOT=["Mais bonito","Mais legível","Mais a cara da marca","Foto melhor","Texto melhor","Menos poluído","Gancho mais forte"];
+// sorteia 2 exemplos do MESMO tipo que você ainda não comparou (tipos reprovados ficam de fora)
+function novoPar(){
+  const pool=[...todasCapas(),...POSTS.flatMap(p=>slidesDe(p).filter((s,i)=>i>0))].filter(s=>s.imagem&&URLS[s.imagem]&&s.molde&&s.molde!=="_sem"&&(P["tipo:"+s.molde]||{}).escolha!=="nao");
+  const g={};pool.forEach(s=>(g[s.molde]=g[s.molde]||[]).push(s));
+  const feito=new Set(ESC.map(e=>[e.a,e.b].sort().join("|")));
+  const tipos=Object.keys(g).filter(m=>g[m].length>1);
+  for(let t=0;t<200;t++){const m=tipos[Math.floor(Math.random()*tipos.length)];const L=g[m];
+    const a=L[Math.floor(Math.random()*L.length)],b=L[Math.floor(Math.random()*L.length)];
+    if(a.imagem!==b.imagem&&!feito.has([a.imagem,b.imagem].sort().join("|")))return {tipo:m,a,b}}
+  return null;
+}
 
 function texto(d){if(!d)return"";const L=[];
   ["chapeu","rotulo","numero","faixa_topo","titulo","texto","sub","pergunta"].forEach(k=>d[k]&&typeof d[k]==="string"&&L.push(d[k]));
@@ -135,6 +159,9 @@ async function iniciar(){
     sb.from("thumbs_teste").select("*, avaliacoes_thumb(nota,gostei,nao_gostei,comentario)").order("criada_em").order("ordem"),
     sb.from("padroes").select("*")]);
   (pd.data||[]).forEach(r=>P[r.item]=r);
+  // treino: escolhas A/B já feitas e as regras que a fábrica já tirou delas
+  sb.from("escolhas_ab").select("tipo,a,b,vencedor").then(({data})=>{ESC=data||[]});
+  sb.from("config_fabrica").select("texto").eq("ambiente_id",1).eq("chave","regras_escolhas").maybeSingle().then(({data})=>{REGRAS_AB=data?data.texto:""});
   // posts do banco (montados pela fábrica)
   const dbp=(db.data||[]).filter(p=>(p.imagens||[]).length).map(p=>{const f=p.ficha||{};const ds=[f.capa||{}].concat(f.slides||[]);
     return {id:"db_"+p.id,origem:"Fábrica · post "+p.id,receita:REC_DB[p.id]||"Outro",titulo:limpa((f.capa||{}).texto||"Post "+p.id),
@@ -160,6 +187,15 @@ function desenhar(){
       <div class="tira">${ss.map((s,i)=>tileSlide(s,i,"sl")).join("")}</div>
       ${p.origem==="Slides avulsos"?"":`<div class="pf"><span class="esc">${["padrao","talvez","nao"].map(v=>`<button data-post="${esc(p.id)}" data-v="${v}" class="${e===v?"on":""}">${{padrao:"★ Padrão",talvez:"Talvez",nao:"Não"}[v]}</button>`).join(" ")}</span>
       <input data-com="post:${esc(p.id)}" data-tipo="${esc(p.receita)}" placeholder="Por quê? (opcional)" value="${esc((P["post:"+p.id]||{}).comentario||"")}"><span class="salvo" id="s_post_${esc(p.id)}"></span></div>`}</section>`}).join("");
+  } else if(ABA==="treinar"){
+    if(!PAR)PAR=novoPar();
+    I.innerHTML=`<b>Treino rápido:</b> toque na imagem melhor (ou em "Empate"). Se quiser, marque o motivo antes. Cada escolha ensina a fábrica. Você já fez <b>${ESC.length}</b> escolha${ESC.length===1?"":"s"}.`;
+    M.innerHTML=(PAR?`<p class="intro" style="text-align:center;padding:0 0 10px"><b>${esc(NOME[PAR.tipo]||PAR.tipo)}</b></p>
+      <div class="ab"><figure><img src="${URLS[PAR.a.imagem]}" data-ab="a" alt="Opção A"><button data-ab="a">A é melhor</button></figure>
+      <figure><img src="${URLS[PAR.b.imagem]}" data-ab="b" alt="Opção B"><button data-ab="b">B é melhor</button></figure></div>
+      <div class="abbar">${MOT.map(m=>`<button class="chip ${MOTIVOS.has(m)?"on":""}" data-mot="${esc(m)}">${esc(m)}</button>`).join("")}<button class="chip" data-ab="empate">Empate</button><button class="chip" data-ab="pular">Pular</button></div>`
+      :`<p class="vazio">Você já comparou todos os pares disponíveis. Novos posts montados trazem novos pares.</p>`)
+      +`<div class="regras"><b>O que a fábrica aprendeu com as suas escolhas</b>\n${REGRAS_AB?esc(REGRAS_AB):"Ainda nada. Depois de 10 escolhas, toque no botão abaixo."}\n\n<button class="chip" data-regras ${ESC.length<10?"disabled":""}>Tirar regras das minhas escolhas (${ESC.length}/10)</button> <span id="s_regras"></span></div>`;
   } else if(ABA==="slides"){
     I.innerHTML=`Cada bloco é um <b>tipo de slide</b> com os melhores exemplos. Escolha <b>✓ Vira preset</b> nos tipos que a fábrica pode usar. Toque numa imagem para ver grande.`;
     M.innerHTML=tipos(POSTS.flatMap(p=>slidesDe(p).filter((s,i)=>i>0||AV[p.id])));
@@ -238,6 +274,15 @@ document.addEventListener("click",async e=>{const t=e.target;
   const tp=t.closest("[data-tp]");if(tp){const m=tp.dataset.tp,item="tipo:"+m;const v=(P[item]||{}).escolha===tp.dataset.v?null:tp.dataset.v;
     const sec=tp.closest(".tipo");sec.className="tipo "+(v||"");sec.querySelectorAll("[data-tp]").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
     const err=await gravar(item,NOME[m]||m,v);document.getElementById("s_tipo_"+m).textContent=err?"Erro: "+err.message:"✓ salvo";progresso();return}
+  const mo=t.closest("[data-mot]");if(mo){const m=mo.dataset.mot;MOTIVOS.has(m)?MOTIVOS.delete(m):MOTIVOS.add(m);mo.classList.toggle("on");return}
+  const abv=t.closest("[data-ab]");if(abv&&PAR){const v=abv.dataset.ab;
+    if(v!=="pular"){const r={ambiente_id:1,tipo:PAR.tipo,a:PAR.a.imagem,b:PAR.b.imagem,vencedor:v,motivos:[...MOTIVOS]};
+      const {error}=await sb.from("escolhas_ab").insert(r);if(error){alert("Erro ao salvar: "+error.message);return}ESC.push(r)}
+    PAR=novoPar();MOTIVOS=new Set();desenhar();return}
+  const rg=t.closest("[data-regras]");if(rg){rg.disabled=true;document.getElementById("s_regras").textContent="Lendo as suas escolhas (uns 40 segundos)…";
+    const {data,error}=await sb.functions.invoke("roteiro",{body:{acao:"regras_escolhas"}});
+    if(error||!data||!data.ok){document.getElementById("s_regras").textContent="Não consegui: "+((data&&data.erro)||(error&&error.message)||"erro");rg.disabled=false;return}
+    REGRAS_AB=data.texto;desenhar();return}
   const vr=t.closest("[data-ver]");if(vr){abrir(vr.dataset.ver);return}
   const z=document.getElementById("zoom");
   if(t.closest(".x")||t===z){z.classList.remove("on");return}
