@@ -260,7 +260,14 @@ def capas_alternativas(p):
     atual = capa.get("molde") or "capa_f1"
     pers = ficha.get("personagem", "") if ficha.get("kit") else ""
     ideia = (capa.get("foto_prompt") or ficha.get("foto_prompt") or "") + (f" Main character: {pers}." if pers else "")
-    moldes = [m for m in ALTERNATIVAS if m != atual][:3]
+    # TRAVA também aqui: capa alternativa nunca usa um tipo que o dono reprovou (página Padrões + "não" do ambiente)
+    r = chamar({"acao": "proibidos", "ambiente_id": (ficha.get("marca") or {}).get("ambiente_id") or 1})
+    if not r.get("ok"):
+        raise RuntimeError("não consegui conferir os tipos reprovados; parei por segurança")
+    proib = set(r.get("proibidos") or [])
+    moldes = [m for m in ALTERNATIVAS if m != atual and m not in proib][:3]
+    if not moldes:
+        raise RuntimeError("todos os tipos de capa alternativa estão reprovados")
     ev("diretor", f"Você pediu outras capas. Vou montar 3 versões: {', '.join(moldes)}, com o mesmo texto aprovado.")
     pasta = SAIDA / f"post_{post_id}" / "capas"; pasta.mkdir(parents=True, exist_ok=True)
 
