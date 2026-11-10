@@ -831,6 +831,8 @@ async function enviarMensagem(w,texto){
     const rts=(r.acoes&&r.acoes.retoques)||[],dfs=(r.acoes&&r.acoes.desfeitos)||[];
     if(rts.length){toast(`Corrigindo a foto do slide ${rts.map(x=>x.slide).join(", ")}: fica pronto em uns 5 minutos`);conta("Assistente",`mandou o robô corrigir a foto do slide ${rts.map(x=>x.slide).join(", ")}.`)}
     if(dfs.length)toast(`Voltei a versão anterior do slide ${dfs.map(x=>x.slide).join(", ")}`);
+    if(p&&r.acoes&&r.acoes.plano){p.plano=r.acoes.plano.plano;const t=Object.entries(r.acoes.plano.trocas).map(([n,m])=>`slide ${n} → ${NOME_MOLDE[m]||m}`).join(", ");toast("Formato trocado: "+t);conta("Assistente","trocou o formato: "+t)}
+    if(p&&r.acoes&&r.acoes.plano_erro)toast("Não consegui trocar o formato: "+r.acoes.plano_erro);
     if(rts.length||dfs.length)carregar();
     equipe("assistente","pronto",rts.length?"Pedi ao robô para corrigir a foto.":p&&r.nova_versao?"Pronto, editei o post que você pediu.":"Respondi sua mensagem.");
     if(r.acoes&&r.acoes.gerar){const g=r.acoes.gerar;conta("Assistente",`mandou a fábrica gerar ${g.quantidade} variações.`);

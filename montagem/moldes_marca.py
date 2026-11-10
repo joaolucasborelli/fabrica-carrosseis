@@ -120,10 +120,11 @@ body{{width:1080px;height:1350px;overflow:hidden;-webkit-font-smoothing:antialia
 .blush .cel.larga{{grid-column:1 / -1;flex-direction:row;align-items:baseline;gap:30px}}
 
 /* ---------- LISTA (itens com marcador fino) ---------- */
-.lista .cab{{position:absolute;left:88px;right:88px;top:120px;display:flex;flex-direction:column;gap:22px}}
+.lista .col{{position:absolute;left:88px;right:88px;top:120px;bottom:150px;display:flex;flex-direction:column;gap:64px}}
+.lista .cab{{display:flex;flex-direction:column;gap:22px}}
 .lista .cab .tit{{font-size:76px}}
 .lista .cab .sub{{font:500 30px/1.4 var(--ft)}}
-.lista .itens{{position:absolute;left:88px;right:88px;top:470px;bottom:150px;display:flex;flex-direction:column;justify-content:center;gap:0}}
+.lista .itens{{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;gap:0}}
 .lista .it{{display:flex;align-items:center;gap:30px;padding:26px 0;border-top:2px solid var(--suave)}}
 .lista .it:last-child{{border-bottom:2px solid var(--suave)}}
 .lista .it i{{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font:600 22px/1 var(--ft);font-style:normal}}
@@ -218,7 +219,7 @@ def html_slide(s, p=None):
                + (f'<div class="sub">{_rico(s["sub"])}</div>' if s.get("sub") else "") + '</div>')
         marca = (lambda i: "✓") if s.get("check") else (lambda i: str(i))
         itens = "".join(f'<div class="it"><i>{marca(i)}</i><span>{_rico(t)}</span></div>' for i, t in enumerate(s.get("itens") or [], 1))
-        corpo = cab + f'<div class="itens fitbox"><div class="fit" style="font-size:inherit">{itens}</div></div>' + pe(s.get("n", ""))
+        corpo = f'<div class="col">{cab}<div class="itens"><div class="fit" style="font-size:inherit">{itens}</div></div></div>' + pe(s.get("n", ""))
     elif m == "mk_frase":
         rot = f'<span class="rot">{_e(s["rotulo"])}</span>' if s.get("rotulo") else ""
         if s.get("virada"):
@@ -289,14 +290,14 @@ def adaptar(capa, slides, perfil=None):
         ult = (i == n + 1)
         nn = f"{i:02d}"
         itens = s.get("itens") or [c.get("nome") for c in (s.get("cards") or []) if c.get("nome")]
-        numeros = [_NUM.match(str(t)) for t in itens]
+        numeros = [_NUM.match(str(t).replace("**", "")) for t in itens]
         if ult and m in ("cta_f6", "fecho_foto"):
             junto = " ".join(ps)
             pal = re.search(r"\[\[(.+?)\]\]", junto)
             out.append({"molde": "mk_fecho", "estilo": base, "pergunta": s.get("pergunta") or "", "paragrafos": ps,
                         "palavra": pal.group(1) if pal else "", "produto": p.get("produto_arquivo")})
         elif itens and sum(1 for x in numeros if x) >= max(2, len(itens) - 1):
-            its = [{"v": x.group(1), "l": x.group(2)} if x else {"v": "", "l": t} for x, t in zip(numeros, itens)]
+            its = [{"v": x.group(1), "l": x.group(2)} if x else {"v": "", "l": str(t).replace("**", "")} for x, t in zip(numeros, itens)]
             for it in its:
                 if re.match(r"^0\s*g", it["v"]):
                     it["foco"] = True
@@ -308,14 +309,22 @@ def adaptar(capa, slides, perfil=None):
         elif m == "faixa_amarela":
             out.append({"molde": "mk_frase", "estilo": alt, "n": nn, "antes": " ".join(s.get("antes") or []),
                         "virada": s.get("faixa") or "", "depois": " ".join(s.get("depois") or [])})
-        elif m in FOTO and s.get("foto"):
-            out.append({"molde": "mk_historia", "estilo": base, "n": nn, "foto": s.get("foto"), "foco": s.get("foco"),
+        elif m in FOTO and (s.get("foto") or s.get("fotos")):
+            out.append({"molde": "mk_historia", "estilo": base, "n": nn, "foto": s.get("foto") or (s.get("fotos") or [None])[-1], "foco": s.get("foco"),
                         "texto": " ".join(ps) or s.get("titulo") or s.get("texto") or ""})
         else:  # papel, lição, citação, aviso: frase pura
             rot = s.get("rotulo") or ("Atenção" if any(x.lower().startswith("atenção") for x in ps) else "")
             ps2 = [re.sub(r"^\s*Atenção:\s*", "", x) for x in ps] if rot == "Atenção" else ps
             ps2 = [x[:1].upper() + x[1:] if x else x for x in ps2]
             if m == "citacao":
-                ps2 = [f"“{s.get('texto', '')}”"] + ([f"— {s.get('nome', '')}"] if s.get("nome") else [])
-            out.append({"molde": "mk_frase", "estilo": base, "n": nn, "rotulo": rot, "paragrafos": ps2 or [s.get("texto", "")]})
+                ps2 = [f"“{s.get('texto', '')}”"] + ([f"— {s.get('nome', '')}"] if s.get("nome") and s.get("papel") else [])
+            junto = " ".join(ps2 or [s.get("texto", "")]).strip()
+            mm = re.match(r"^(.{20,140}?):\s*(.{3,60})$", junto)
+            if not rot and m != "citacao" and mm and len(mm.group(2).split()) <= 8:
+                antes_v, resto = mm.group(1) + ":", mm.group(2)
+                vir, _, dep = resto.partition(",")
+                out.append({"molde": "mk_frase", "estilo": alt, "n": nn, "antes": antes_v, "virada": vir.strip().rstrip("."),
+                            "depois": dep.strip()})
+            else:
+                out.append({"molde": "mk_frase", "estilo": base, "n": nn, "rotulo": rot, "paragrafos": ps2 or [s.get("texto", "")]})
     return out
