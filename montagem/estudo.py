@@ -25,28 +25,40 @@ def _agente(aid, papel, contexto=None, tentativas=2):
     raise RuntimeError(f"{papel}: {str(ultimo)[:200]}")
 
 
+def _cores_da_imagem(png, n=5):
+    """Cores dominantes da embalagem (ignorando o fundo transparente), para o agente de identidade."""
+    from PIL import Image
+    import io
+    im = Image.open(io.BytesIO(png)).convert("RGBA"); im.thumbnail((200, 200))
+    px = [p[:3] for p in im.getdata() if p[3] > 200]
+    if not px:
+        return []
+    q = Image.new("RGB", (len(px), 1)); q.putdata(px)
+    pal = q.quantize(colors=n, method=Image.Quantize.MEDIANCUT)
+    cores = pal.getpalette()[: n * 3]; cont = sorted(pal.getcolors(), reverse=True)
+    return ["#%02x%02x%02x" % tuple(cores[i * 3: i * 3 + 3]) for _, i in cont]
+
+
+def _perfil_seguro(pf):
+    """Garante leitura: texto escuro sobre o claro com contraste alto; destaque visível. Ajusta só o necessário."""
+    import moldes
+    pf = dict(pf)
+    k = 0
+    while moldes.contraste(pf["escuro"], pf["claro"]) < 7 and k < 20:
+        pf["escuro"] = moldes._mistura(pf["escuro"], "#000000", 0.12); k += 1
+    k = 0
+    while moldes.contraste(pf["destaque"], pf["claro"]) < 3 and k < 20:
+        pf["destaque"] = moldes._mistura(pf["destaque"], "#000000", 0.1); k += 1
+    return pf
+
+
 def montar_kit(aid, entrada, coleta=None, log=print):
-    """KIT DA MARCA (barato): o robô coleta o site sem IA; 2 agentes curtos escolhem o tema e as fotos do produto;
-    o robô recorta a embalagem e guarda. Vira as cores dos slides e o produto colado de verdade nas fotos."""
+    """KIT DA MARCA (barato): o robô coleta o site sem IA; o agente do produto escolhe as fotos e o robô recorta a embalagem;
+    o agente de IDENTIDADE monta o PERFIL VISUAL (papel de cada cor, fontes, estilo, direção de foto) a partir das cores-token
+    do site e das cores medidas na embalagem. Vira os layouts da marca (mk_*) e a direção das fotos de todo post."""
     coleta = coleta or marca_kit.coletar(entrada, log=log)
-    kit = {"coleta": {k: coleta.get(k) for k in ("site", "plataforma", "cores", "fontes", "avisos")}}
-    try:
-        idn = _agente(aid, "identidade", {k: coleta.get(k) for k in ("cores", "fontes", "logos", "site")})
-        kit["tema"] = idn.get("tema")
-        if idn.get("logo_url"):
-            try:
-                dado = marca_kit._get(idn["logo_url"], binario=True)
-                cam = f"marcas/amb_{aid}/logo" + (".svg" if idn["logo_url"].split("?")[0].endswith(".svg") else ".png")
-                if cam.endswith(".png"):
-                    from PIL import Image
-                    import io
-                    buf = io.BytesIO(); Image.open(io.BytesIO(dado)).convert("RGBA").save(buf, "PNG"); dado = buf.getvalue()
-                    chamar({"acao": "salvar", "caminho": cam, "base64": base64.b64encode(dado).decode()})
-                    kit["logo"] = cam
-            except Exception as e:
-                log(f"logo não baixou: {str(e)[:80]}")
-    except Exception as e:
-        log(f"identidade visual não saiu: {str(e)[:100]}")
+    kit = {"coleta": {k: coleta.get(k) for k in ("site", "plataforma", "cores", "tokens", "fontes", "avisos")}}
+    cores_produto = []
     try:
         pr = _agente(aid, "produto", {k: coleta.get(k) for k in ("produtos", "imagens_produto", "plataforma")})
         produtos = []
@@ -62,6 +74,11 @@ def montar_kit(aid, entrada, coleta=None, log=print):
                         cam = f"marcas/amb_{aid}/produto_{i + 1}_{j + 1}.png"
                         chamar({"acao": "salvar", "caminho": cam, "base64": base64.b64encode(png).decode()})
                         recortes.append(cam)
+                        if not cores_produto:
+                            try:
+                                cores_produto = _cores_da_imagem(png)
+                            except Exception:
+                                pass
                 if recortes:
                     produtos.append({"nome": p.get("nome", ""), "descricao": p.get("descricao", ""), "recortes": recortes})
         kit["produtos"] = produtos
@@ -69,6 +86,28 @@ def montar_kit(aid, entrada, coleta=None, log=print):
         log(f"produto real: {sum(len(p['recortes']) for p in produtos)} fotos recortadas de {len(produtos)} produtos")
     except Exception as e:
         log(f"produto não saiu: {str(e)[:100]}")
+    try:
+        idn = _agente(aid, "identidade", {**{k: coleta.get(k) for k in ("cores", "tokens", "fontes", "logos", "site")}, "cores_produto": cores_produto})
+        kit["tema"] = idn.get("tema")
+        if idn.get("perfil"):
+            pf = _perfil_seguro(idn["perfil"])
+            kit["perfil"] = {**pf, "kit": "mk", "status": "proposta", "nunca": idn.get("nunca", []), "chapeu_capa": ""}
+            kit["direcao_foto"] = idn.get("direcao_foto", "")
+            log(f"perfil visual: estilo {pf['estilo']}, destaque {pf['destaque']}, fontes {pf['display']} + {pf['texto']}")
+        if idn.get("logo_url"):
+            try:
+                dado = marca_kit._get(idn["logo_url"], binario=True)
+                cam = f"marcas/amb_{aid}/logo" + (".svg" if idn["logo_url"].split("?")[0].endswith(".svg") else ".png")
+                if cam.endswith(".png"):
+                    from PIL import Image
+                    import io
+                    buf = io.BytesIO(); Image.open(io.BytesIO(dado)).convert("RGBA").save(buf, "PNG"); dado = buf.getvalue()
+                    chamar({"acao": "salvar", "caminho": cam, "base64": base64.b64encode(dado).decode()})
+                    kit["logo"] = cam
+            except Exception as e:
+                log(f"logo não baixou: {str(e)[:80]}")
+    except Exception as e:
+        log(f"identidade visual não saiu: {str(e)[:100]}")
     chamar({"acao": "salvar_kit", "id": aid, "kit": kit}, url=AMB)
     return kit
 
