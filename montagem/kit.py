@@ -164,7 +164,7 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
         for i, s in enumerate(post["slides"], 2):
             if s["molde"] not in COM_FOTO:
                 continue
-            if len(na_mao) < 2 and MAO.search(_norm(" ".join(textos(s)))):
+            if len(na_mao) < 3 and MAO.search(_norm(" ".join(textos(s)))):
                 na_mao.add(i)  # a cena precisa da pessoa com o produto na mão: troca o pacote da IA pelo real (por referência)
             elif len(com_produto) < 3 and fala_do_produto(s):
                 com_produto.add(i)  # cita o produto: cola a embalagem real num canto da cena
@@ -205,10 +205,25 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     elif capa["molde"] == "capa_caderno":
         ev("fotografo", "Capa de caderno: usando a foto fixa do planner aberto.")
         (pasta / "capa.png").write_bytes(_caderno(pasta).read_bytes())
+    elif capa["molde"] == "capa_revista" and produtos and (capa.get("estilo") == "produto" or fala_do_produto(capa) or PACOTE.search(capa.get("foto_prompt") or "")):
+        # o objeto da capa é o produto: usa a foto recortada do pacote DE VERDADE (a IA inventava um pacote genérico)
+        from PIL import Image
+        p = produtos[0]
+        pf = post.get("_perfil") or {}
+        W, H = (1536, 1206) if pf else (1024, 1536)  # layouts da marca põem a capa num quadro horizontal
+        cor = pf.get("sup") or "#ffffff"
+        pac = Image.open(p["arquivo"]).convert("RGBA"); pac.thumbnail((int(W * 0.7), int(H * 0.78)))
+        fundo = Image.new("RGBA", (W, H), tuple(int(cor.lstrip("#")[k:k + 2], 16) for k in (0, 2, 4)) + (255,))
+        sombra = Image.new("RGBA", pac.size, (0, 0, 0, 0)); sombra.putalpha(pac.getchannel("A").point(lambda v: int(v * 0.18)))
+        from PIL import ImageFilter
+        x, y = (W - pac.width) // 2, (H - pac.height) // 2 - 20
+        fundo.alpha_composite(sombra.filter(ImageFilter.GaussianBlur(28)), (x + 18, y + 34)); fundo.alpha_composite(pac, (x, y))
+        fundo.convert("RGB").save(pasta / "capa.png")
+        ev("fotografo", f"Capa revista com o pacote real de {p.get('nome', 'produto')} (sem IA, rótulo exato).")
     elif capa["molde"] == "capa_revista":
         ev("fotografo", "Capa revista: fotografando só o objeto, em fundo branco, para recortar.")
         cam_capa = f"{base}/capa.png"
-        gerar(capa["foto_prompt"] + " Single isolated object, centered, on a plain pure white background, studio product photo, soft shadow.", cam_capa)
+        gerar(limpo(capa["foto_prompt"]) + SEM_PACOTE + " Single isolated object, centered, on a plain pure white background, studio product photo, soft shadow.", cam_capa)
         robo.baixar(cam_capa, pasta / "capa.png")
     else:
         txt = capa.get("texto") or capa.get("titulo") or capa.get("numero")
