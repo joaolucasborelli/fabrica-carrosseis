@@ -289,8 +289,82 @@ def _existe(caminho):
     return bool(chamar({"acao": "baixar", "caminho": caminho}).get("ok"))
 
 
+def _foto_kit(post_id, cands, pasta):
+    """A foto já gerada na montagem (sem gerar imagem nova): tenta os nomes na ordem."""
+    for c in cands:
+        loc = pasta / f"{c}.png"
+        if loc.exists() and loc.stat().st_size:
+            return loc
+        try:
+            baixar(f"post_{post_id}/kit/{c}.png", loc)
+            if loc.exists() and loc.stat().st_size:
+                return loc
+        except Exception:
+            pass
+    return None
+
+
+def redesenhar(p, ficha, n, pasta, foto_nova=None):
+    """Redesenha só o slide n do jeito que a montagem desenhou (layouts da marca quando há perfil), com as mesmas fotos."""
+    import kit
+    from render import renderizar
+    post_id = p["id"]; fotos = p.get("fotos_retocadas") or {}
+    marca, produtos = marca_completa(ficha.get("marca"), SAIDA / f"post_{post_id}" / "marca")
+    import moldes; moldes.usar_marca(marca)
+
+    def foto(i):
+        if i == n and foto_nova:
+            return foto_nova
+        if str(i) in fotos:
+            loc = pasta / f"ret_{i}.png"
+            if not loc.exists():
+                baixar(fotos[str(i)], loc)
+            return loc
+        cands = ["prod_capa_final", "capa_v3", "capa_v2", "capa_v1", "capa_v0", "capa"] if i == 1 else [f"prod_s{i:02d}_final", f"s{i:02d}_real", f"s{i:02d}"]
+        return _foto_kit(post_id, cands, pasta)
+
+    capa = kit.desenho(dict(ficha["capa"]), eh_capa=True)
+    fc = foto(1)
+    if not fc:
+        raise RuntimeError("não achei a foto da capa deste post")
+    capa["foto"] = fc.resolve().as_uri()
+    if n == 1 and capa.get("molde") == "capa_circulos":
+        cl = _foto_kit(post_id, ["circulo"], pasta)
+        if cl:
+            capa["fotos_circulo"] = [cl.resolve().as_uri()]
+    slides = [capa]
+    for i, s in enumerate(ficha["slides"], 2):
+        d = kit.desenho(dict(s))
+        if s["molde"] == "antes_hoje":
+            if i == n:
+                raise RuntimeError("slide de antes e hoje tem 2 fotos; por enquanto ele não é redesenhado sozinho")
+            d["fotos"] = [capa["foto"], capa["foto"]]
+        elif s["molde"] in kit.COM_FOTO or s.get("foto_fonte") == "ia":
+            if i == n:
+                f = foto(i)
+                if not f:
+                    raise RuntimeError("não achei a foto deste slide")
+                d["foto"] = f.resolve().as_uri()
+            else:
+                d["foto"] = capa["foto"]  # só marca que o slide tem foto; ele não é desenhado agora
+        slides.append(d)
+    if (marca or {}).get("perfil"):
+        import moldes_marca
+        perfil = {**marca["perfil"], "produto_arquivo": Path(produtos[0]["arquivo"]).resolve().as_uri() if produtos else None}
+        slides = moldes_marca.adaptar(slides[0], slides[1:], perfil)
+    return renderizar([slides[n - 1]], pasta / f"n{n}_{int(time.time())}")[0]
+
+
+def aplicar_texto(ficha, n, mud):
+    alvo = ficha["capa"] if n == 1 else ficha["slides"][n - 2]
+    for k in ("texto", "titulo", "sub", "paragrafos", "itens", "pergunta"):
+        if mud.get(k) is not None:
+            alvo[k] = mud[k]
+
+
 def retocar(p):
-    """O dono pediu para corrigir a foto de um slide: edita só essa foto, redesenha só esse slide e devolve."""
+    """O dono pediu para corrigir um slide pelo chat: a FOTO (edita só essa foto) ou o TEXTO (mesmas fotos).
+    Redesenha só esse slide, no mesmo jeito da montagem, e devolve."""
     import kit
     from render import renderizar
     post_id = p["id"]; ficha = p.get("ficha") or {}; imgs = list(p.get("imagens") or [])
@@ -298,7 +372,7 @@ def retocar(p):
     import moldes; moldes.usar_marca(marca_completa(ficha.get("marca"), SAIDA / f"post_{post_id}" / "marca")[0])
     ev = lambda agente, fala, estado="trabalhando", **k: evento(post_id, agente, fala, estado, **k)
     pasta = SAIDA / f"post_{post_id}" / "retoques"; pasta.mkdir(parents=True, exist_ok=True)
-    feitos = []
+    feitos = []; mexeu_ficha = False
     for r in p["retoques"]:
         n = int(r["slide"])
         try:
@@ -307,6 +381,15 @@ def retocar(p):
             s = ficha["capa"] if n == 1 else (ficha["slides"][n - 2] if n - 2 < len(ficha["slides"]) else None)
             if not s:
                 raise RuntimeError("não achei esse slide na ficha do post")
+            if r.get("tipo") == "texto":
+                ev("montador", f"Trocando o texto do slide {n} e redesenhando com as mesmas fotos.")
+                aplicar_texto(ficha, n, r.get("mudanca") or {})
+                f = redesenhar(p, ficha, n, pasta)
+                cam = f"post_{post_id}/slide_{n:02d}_r{r['id']}.png"
+                chamar({"acao": "salvar", "caminho": cam, "base64": base64.b64encode(Path(f["arquivo"]).read_bytes()).decode()})
+                feitos.append({"id": r["id"], "slide": n, "imagem": cam}); mexeu_ficha = True
+                ev("entregador", f"Slide {n} com o texto novo. Se não gostar, dá para desfazer no post.", "pronto")
+                continue
             molde = s["molde"]
             if molde == "antes_hoje":
                 raise RuntimeError("slide de antes e hoje tem 2 fotos; por enquanto o retoque só corrige slides de 1 foto")
@@ -330,12 +413,15 @@ def retocar(p):
             if not e.get("ok"):
                 raise RuntimeError(f"a edição da foto falhou: {str(e.get('erro', e))[:200]}")
             loc = pasta / f"foto_{r['id']}.png"; baixar(novo, loc)
-            d = kit.desenho(s, eh_capa=(n == 1))
-            d["foto"] = loc.resolve().as_uri()
-            if n == 1 and molde == "capa_circulos" and _existe(f"post_{post_id}/kit/circulo.png"):
-                cl = pasta / "circulo.png"; baixar(f"post_{post_id}/kit/circulo.png", cl); d["fotos_circulo"] = [cl.resolve().as_uri()]
             ev("montador", f"Redesenhando só o slide {n} com a foto corrigida.")
-            f = renderizar([d], pasta / f"r{r['id']}")[0]
+            if ((marca_completa(ficha.get("marca"), SAIDA / f"post_{post_id}" / "marca")[0]) or {}).get("perfil"):
+                f = redesenhar(p, ficha, n, pasta, foto_nova=loc)  # layouts da marca, igual ao resto do post
+            else:
+                d = kit.desenho(s, eh_capa=(n == 1))
+                d["foto"] = loc.resolve().as_uri()
+                if n == 1 and molde == "capa_circulos" and _existe(f"post_{post_id}/kit/circulo.png"):
+                    cl = pasta / "circulo.png"; baixar(f"post_{post_id}/kit/circulo.png", cl); d["fotos_circulo"] = [cl.resolve().as_uri()]
+                f = renderizar([d], pasta / f"r{r['id']}")[0]
             cam = f"post_{post_id}/slide_{n:02d}_r{r['id']}.png"
             chamar({"acao": "salvar", "caminho": cam, "base64": base64.b64encode(Path(f["arquivo"]).read_bytes()).decode()})
             feitos.append({"id": r["id"], "slide": n, "imagem": cam, "foto": novo})
@@ -346,7 +432,7 @@ def retocar(p):
             msg = "a OpenAI está sem créditos: recarregue e peça a correção de novo" if "credits" in str(e).lower() else str(e)[:300]
             ev("retocador", f"Não consegui corrigir o slide {n}: {msg[:160]}", "erro")
             feitos.append({"id": r["id"], "erro": msg})
-    chamar({"acao": "salvar", "post_id": post_id, "retoques": feitos}, url=OPCOES)
+    chamar({"acao": "salvar", "post_id": post_id, "retoques": feitos, **({"ficha": ficha} if mexeu_ficha else {})}, url=OPCOES)
 
 
 def main():

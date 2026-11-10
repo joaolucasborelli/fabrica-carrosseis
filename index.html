@@ -840,12 +840,12 @@ async function enviarMensagem(w,texto){
     if(r.transcricao)meu.t=(texto?texto+"\n":"")+`(áudio) ${r.transcricao}`;
     if(p&&r.nova_versao){const n=r.nova_versao;Object.assign(p,{capa:esc(n.capa),sl:n.slides,leg:n.legenda,hs:n.hashtags});if(p.pr)p.pr.capa=n.thumb_descricao;conta("Assistente","editou o post.");toast("Post atualizado")}
     const rts=(r.acoes&&r.acoes.retoques)||[],dfs=(r.acoes&&r.acoes.desfeitos)||[];
-    if(rts.length){toast(`Corrigindo a foto do slide ${rts.map(x=>x.slide).join(", ")}: fica pronto em uns 5 minutos`);conta("Assistente",`mandou o robô corrigir a foto do slide ${rts.map(x=>x.slide).join(", ")}.`)}
+    if(rts.length){toast(`Corrigindo o slide ${rts.map(x=>x.slide).join(", ")}: fica pronto em uns 5 minutos`);conta("Assistente",`mandou o robô corrigir o slide ${rts.map(x=>x.slide).join(", ")}.`)}
     if(dfs.length)toast(`Voltei a versão anterior do slide ${dfs.map(x=>x.slide).join(", ")}`);
     if(p&&r.acoes&&r.acoes.plano){p.plano=r.acoes.plano.plano;const t=Object.entries(r.acoes.plano.trocas).map(([n,m])=>`slide ${n} → ${NOME_MOLDE[m]||m}`).join(", ");toast("Formato trocado: "+t);conta("Assistente","trocou o formato: "+t)}
     if(p&&r.acoes&&r.acoes.plano_erro)toast("Não consegui trocar o formato: "+r.acoes.plano_erro);
     if(rts.length||dfs.length)carregar();
-    equipe("assistente","pronto",rts.length?"Pedi ao robô para corrigir a foto.":p&&r.nova_versao?"Pronto, editei o post que você pediu.":"Respondi sua mensagem.");
+    equipe("assistente","pronto",rts.length?"Pedi ao robô para corrigir o slide.":p&&r.nova_versao?"Pronto, editei o post que você pediu.":"Respondi sua mensagem.");
     if(r.acoes&&r.acoes.gerar){const g=r.acoes.gerar;conta("Assistente",`mandou a fábrica gerar ${g.quantidade} variações.`);
       if(PIPE[acc]&&!PIPE[acc].done&&!PIPE[acc].erro)toast("A fábrica ainda está gerando o lote anterior.");else{startPipe({qtd:g.quantidade,assunto:g.assunto||""});toast(`Gerando ${g.quantidade} variações. Acompanhe na aba Escritório.`)}}
   }catch(e){Object.assign(pensando,{w:"ag",t:"Não consegui responder: "+e.message});equipe("assistente","erro","Parei por um erro: "+e.message)}
