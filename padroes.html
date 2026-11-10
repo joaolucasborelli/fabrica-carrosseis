@@ -32,7 +32,7 @@ main{max-width:1240px;margin:12px auto 80px;padding:0 16px}
 .sl{flex:0 0 150px;scroll-snap-align:start;position:relative}
 .sl .im{height:188px;background:#000;border-radius:8px;overflow:hidden;cursor:zoom-in;border:2px solid transparent}
 .sl.on .im,.tile.on .im{border-color:var(--am)}
-.sl img,.tile img{width:100%;height:100%;object-fit:cover;display:block}
+.sl img,.tile img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .25s}.sl img.ok,.tile img.ok{opacity:1}.im{background:#1c1c1c url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724%27 height=%2724%27%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%279%27 fill=%27none%27 stroke=%27%23888%27 stroke-width=%272%27 stroke-dasharray=%2714 40%27/%3E%3C/svg%3E") center/24px no-repeat}
 .sl .rot{max-width:100%;font-size:11px;color:var(--mut);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .estrela{position:absolute;right:6px;top:6px;width:30px;height:30px;border-radius:99px;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:16px;cursor:pointer;line-height:30px}
 .on>.estrela,.on .estrela{background:var(--am);color:#111}
@@ -205,7 +205,7 @@ function grupos(lista,miolo,compacto){const g={};lista.forEach(s=>(g[s.molde]=g[
     return `<h2 class="gr" style="${compacto?"font-size:15px;margin-top:16px":""}">${esc(nomeTipo(m))} <span>${g[m].length}${n&&!compacto?` · ★ ${n}`:""}</span></h2><div class="grade">${g[m].map((s,i)=>tileSlide(s,i,"tile")).join("")}</div>`}).join("")}
 function tileSlide(s,i,cls){const on=marcado(s.key);const de=s.post?(cls==="sl"?nomeTipo(s.molde):`${s.post.titulo}`):(s.origem||"");
   const nota=s.nota!=null?`<span class="nota ${s.nota>=8?"alta":s.nota<=4?"baixa":""}">${s.nota}</span>`:"";
-  return `<div class="${cls} ${on?"on":""}" data-k="${esc(s.key)}"><div class="im" data-ver="${esc(s.key)}"><img loading="lazy" src="${esc(URLS[s.imagem]||"")}" alt="">${s.post?`<span class="n">${s.i+1}</span>`:""}${nota}</div>
+  return `<div class="${cls} ${on?"on":""}" data-k="${esc(s.key)}"><div class="im" data-ver="${esc(s.key)}"><img loading="lazy" decoding="async" onload="this.classList.add('ok')" src="${esc(URLS[s.imagem]||"")}" alt="">${s.post?`<span class="n">${s.i+1}</span>`:""}${nota}</div>
    <button class="estrela" data-star="${esc(s.key)}" data-tipo="${esc(s.molde)}" aria-label="Marcar como padrão">★</button>
    <div class="${cls==="sl"?"rot":"de"}">${esc(cls==="sl"?de:(s.texto||de).slice(0,140))}</div></div>`}
 function progresso(){const v=Object.values(P);
