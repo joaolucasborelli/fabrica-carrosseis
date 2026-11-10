@@ -527,7 +527,7 @@ function formatoDe(p,n){const s=slideDoPlano(p,n);if(!s)return p.planejando?`<sp
 // RETRABALHO pelo chat: o dono pede no chat do post ("a embalagem está escondida no slide 1") e a correção aparece aqui, com Desfazer
 function retoquesNoChat(p){
   const ST_R={pendente:"na fila (fica pronto em uns 5 minutos)",fazendo:"corrigindo agora",pronto:"corrigido ✓",erro:"não deu",desfeito:"desfeito, voltou a versão anterior"};
-  return (p.ret||[]).slice().reverse().map(r=>`<div class="m ag"><span class="from">Correção da foto · slide ${r.slide}${r.slide===1?" (capa)":""}</span>${esc(r.pedido)}<br><small>${ST_R[r.status]||r.status}${r.status==="erro"&&r.erro?`: ${esc(r.erro)}`:""}</small>${r.status==="pronto"&&r.imagem_antes?` <button class="btn mini" data-desfazer="${r.id}">Desfazer</button>`:""}</div>`).join("");
+  return (p.ret||[]).slice().reverse().map(r=>`<div class="m ag"><span class="from">${/^texto: /.test(r.pedido||"")?"Correção do texto":"Correção da foto"} · slide ${r.slide}${r.slide===1?" (capa)":""}</span>${esc((r.pedido||"").replace(/^texto: /,""))}<br><small>${ST_R[r.status]||r.status}${r.status==="erro"&&r.erro?`: ${esc(r.erro)}`:""}</small>${r.status==="pronto"&&r.imagem_antes?` <button class="btn mini" data-desfazer="${r.id}">Desfazer</button>`:""}</div>`).join("");
 }
 function painelDA(p){
   if(p.imgs&&p.imgs.length)return "";
