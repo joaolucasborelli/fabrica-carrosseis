@@ -87,6 +87,47 @@ def compor(foto: Path, prod: Image.Image, lugar, lado_luz="esq"):
     return out.convert("RGB"), prc, (x, y)
 
 
+def _no_formato(img: Image.Image, razao: float):
+    """Põe a foto numa tela com a proporção que a IA devolve, completando com a borda esticada e desfocada.
+    Devolve a tela e a caixa onde a foto original ficou (para recortar de volta depois)."""
+    W, H = img.size
+    if abs(W / H - razao) < 0.01:
+        return img, (0, 0, W, H)
+    if W / H > razao:  # foto mais larga: completa em cima e embaixo
+        NH = round(W / razao); top = (NH - H) // 2
+        tela = img.resize((W, NH)).filter(ImageFilter.GaussianBlur(30)); tela.paste(img, (0, top)); return tela, (0, top, W, top + H)
+    NW = round(H * razao); left = (NW - W) // 2
+    tela = img.resize((NW, H)).filter(ImageFilter.GaussianBlur(30)); tela.paste(img, (left, 0)); return tela, (left, 0, left + W, H)
+
+
+def achar_produto(foto: Image.Image, prod: Image.Image, perto):
+    """Procura o pacote (em vários tamanhos) perto de onde ele estava. Usa o miolo do rótulo, sem o fundo."""
+    import cv2, numpy as np
+    g = cv2.cvtColor(np.array(foto.convert("RGB")), cv2.COLOR_RGB2GRAY)
+    H, W = g.shape
+    mx, my = round(prod.width * 0.14), round(prod.height * 0.12)
+    miolo = prod.convert("RGB").crop((mx, my, prod.width - mx, prod.height - my))
+    t0 = cv2.cvtColor(np.array(miolo), cv2.COLOR_RGB2GRAY)
+    px, py = perto
+    x0, y0 = max(0, int(px - W * 0.35)), max(0, int(py - H * 0.3))
+    x1, y1 = min(W, int(px + prod.width + W * 0.35)), min(H, int(py + prod.height + H * 0.3))
+    janela = g[y0:y1, x0:x1]
+    melhor = None
+    for esc in np.linspace(0.5, 1.25, 16):
+        t = cv2.resize(t0, (max(8, int(t0.shape[1] * esc)), max(8, int(t0.shape[0] * esc))))
+        if t.shape[0] >= janela.shape[0] or t.shape[1] >= janela.shape[1]:
+            continue
+        r = cv2.matchTemplate(janela, t, cv2.TM_CCOEFF_NORMED)
+        _, val, _, loc = cv2.minMaxLoc(r)
+        if melhor is None or val > melhor[0]:
+            melhor = (val, esc, loc)
+    if not melhor:
+        return None
+    val, esc, (lx, ly) = melhor
+    w, h = round(prod.width * esc), round(prod.height * esc)
+    return {"x": x0 + lx - round(mx * esc), "y": y0 + ly - round(my * esc), "w": w, "h": h, "escala": round(float(esc), 2), "confianca": round(float(val), 2)}
+
+
 def _subir(img: Image.Image, caminho):
     buf = io.BytesIO(); img.save(buf, "PNG")
     robo.chamar({"acao": "salvar", "caminho": caminho, "base64": base64.b64encode(buf.getvalue()).decode()})
@@ -125,18 +166,29 @@ def integrar(foto: Path, produto: dict, base_storage: str, nome: str, zona="miol
         try:
             vert = comp.height > comp.width
             cam_c, cam_ia = f"{base_storage}/{nome}_comp.png", f"{base_storage}/{nome}_ia.png"
-            _subir(comp, cam_c)
+            # a IA devolve 2:3 (ou 3:2): manda a foto já nesse formato, com borda esticada, para ela não esticar nem deslocar a cena
+            alvo = (1024, 1536) if vert else (1536, 1024)
+            tela, caixa = _no_formato(comp, alvo[0] / alvo[1])
+            _subir(tela, cam_c)
             e = _ch({"acao": "editar", "caminho": cam_c, "destino": cam_ia, "size": "1024x1536" if vert else "1536x1024", "quality": "medium",
                      "instrucao": "This photo has a product package standing in the scene. Make it look naturally photographed in this place: "
                                   "realistic contact shadow on the surface, light direction and color temperature matching the room, soft edges, "
-                                  "subtle reflections. Do NOT move, resize, redraw or change the package: same position, shape, colors, logo and printed text. "
+                                  "subtle reflections. Same framing: do not zoom, crop or shift the image. "
+                                  "You may adjust the package's size and position a little so it rests naturally on the surface at a realistic scale; "
+                                  "keep the same package design (shape, colors, logo and printed text). "
                                   "Do not add any other package or text. Keep everything else identical."})
             if e.get("ok"):
                 robo.baixar(cam_ia, pasta / f"{nome}_ia.png")
-                ia = Image.open(pasta / f"{nome}_ia.png").convert("RGB").resize(comp.size, Image.LANCZOS)
-                # o rótulo volta por cima, pixel por pixel (borda suave para não aparecer recorte)
-                m = prc.getchannel("A").filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(1.2))
-                ia.paste(prc.convert("RGB"), (x, y), m)
+                ia = Image.open(pasta / f"{nome}_ia.png").convert("RGB").resize(tela.size, Image.LANCZOS).crop(caixa)
+                # a IA escolhe o lugar e o tamanho (fica mais natural), mas redesenha o texto do rótulo:
+                # achamos onde ela pôs o pacote e colamos por cima o pacote 3D com o rótulo REAL, no mesmo lugar e tamanho
+                ach = achar_produto(ia, prc, (x, y))
+                resumo["achado"] = ach
+                if not ach or ach["confianca"] < 0.42:
+                    raise RuntimeError("não achei o pacote na foto da IA; fica a versão 3D")
+                pr2 = prc.resize((ach["w"], ach["h"]), Image.LANCZOS)
+                m = pr2.getchannel("A").filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(1.2))
+                ia.paste(pr2.convert("RGB"), (ach["x"], ach["y"]), m)
                 ia.save(pasta / f"{nome}_final.png")
                 cam_f = f"{base_storage}/{nome}_final.png"; _subir(ia, cam_f)
                 cf = _ch({"acao": "conferir", "caminho": cam_f,

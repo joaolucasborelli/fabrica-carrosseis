@@ -85,6 +85,11 @@ def coletar(texto_dono, log=print):
             hx = "#" + "".join(c * 2 for c in hx[1:])
         if not _cinza(hx):
             cores[hx] += 1
+    # os tokens de cor do site (--pink: #d92258) são a identidade de verdade: valem muito mais que cor solta no CSS
+    for nome, hx in re.findall(r"--([\w-]+)\s*:\s*(#[0-9a-fA-F]{6})", css_txt + h):
+        if not _cinza(hx.lower()):
+            cores[hx.lower()] += 50
+    out["tokens"] = dict(re.findall(r"--((?:[\w-]*(?:color|cor|pink|plum|rose|blush|cream|brand|primary|accent|ink)[\w-]*))\s*:\s*(#[0-9a-fA-F]{6})", css_txt + h))
     out["cores"] = [{"hex": c, "vezes": n} for c, n in cores.most_common(10)]
     # logo
     logos = []

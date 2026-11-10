@@ -146,6 +146,7 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
     pasta.mkdir(parents=True, exist_ok=True)
     capa = post["capa"]; pers = post.get("personagem", ""); famosa = capa["estilo"].startswith("famoso")
     produtos = post.get("_produtos") or []
+    DIRECAO = (" " + post["_direcao"]) if post.get("_direcao") else ""  # a cena veste a identidade visual da marca (cores, figurino, objetos)
     SEM_PACOTE = (" IMPORTANT: do not show any product packaging, pouch, sachet, box, bottle, jar or brand label anywhere in the image"
                   " (the real product is added later).") if produtos else ""
     VAGA = " Leave a clean empty area on the table or surface in the lower-right third of the frame." if produtos else ""
@@ -211,10 +212,11 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
         robo.baixar(cam_capa, pasta / "capa.png")
     else:
         txt = capa.get("texto") or capa.get("titulo") or capa.get("numero")
-        ideia = limpo(capa["foto_prompt"]) + (f" Main character: {pers}." if pers and not famosa else "") + (f" Famous person: {capa['famoso']} (fact: {capa['fato']})." if capa.get("famoso") else "") + SEM_PACOTE + (" Leave a clean empty area on the right side of the frame, at mid height, on a table or shelf." if produtos else "")
+        prod_capa = bool(produtos) and (capa.get("estilo") == "produto" or fala_do_produto(capa))  # produto só entra na capa quando a capa é sobre ele
+        ideia = limpo(capa["foto_prompt"]) + (f" Main character: {pers}." if pers and not famosa else "") + (f" Famous person: {capa['famoso']} (fact: {capa['fato']})." if capa.get("famoso") else "") + SEM_PACOTE + DIRECAO + (" Leave a clean empty area on a table or shelf, at mid height, away from the bottom third." if prod_capa else "")
         ff = foto_fiel(txt, capa["molde"], ideia, f"{base}/capa", vertical=capa["molde"] in ("capa_f3a", "capa_f3b", "capa_circulos", "capa_marcatexto", "capa_numero"), log=lambda *_: None, ev=ev)
         cam_capa = ff["melhor"]; robo.baixar(cam_capa, pasta / "capa.png"); log(f"capa nota {ff['nota']}")
-        if produtos:
+        if prod_capa:
             colar(pasta / "capa.png", 0, capa=True)
     circulo = None
     if capa["molde"] == "capa_circulos" and capa.get("foto_prompt2"):
@@ -244,9 +246,9 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
         i, s, campo, suf = a
         dest = f"{base}/s{i:02d}{suf}.png"; vert = s["molde"] in VERTICAIS
         if i in na_mao:
-            prompt = s[campo] + " The person holds one plain product package naturally in one hand, front facing the camera."
+            prompt = s[campo] + " The person holds one plain product package naturally in one hand, front facing the camera." + DIRECAO
         else:
-            prompt = limpo(s[campo]) + SEM_PACOTE + (VAGA if i in com_produto else "")
+            prompt = limpo(s[campo]) + SEM_PACOTE + DIRECAO + (VAGA if i in com_produto else "")
         ok = variar(cam_capa, dest, pers, prompt, vert) if (s.get("mesma_pessoa") and pers and cam_capa and not famosa) else gerar(prompt, dest, vert)
         if not ok:
             return (i, suf), None

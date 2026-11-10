@@ -31,7 +31,7 @@ jobs:
       - name: Instalar o desenhador (Chromium)
         if: steps.fila.outputs.pendentes != '0'
         run: |
-          pip install -q playwright==1.63.0 pillow
+          pip install -q playwright==1.63.0 pillow opencv-python-headless==4.10.0.84
           python -m playwright install --with-deps chromium
       - name: Montar
         if: steps.fila.outputs.pendentes != '0'

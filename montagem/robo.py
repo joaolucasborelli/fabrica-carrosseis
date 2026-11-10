@@ -112,7 +112,7 @@ def marca_completa(marca, pasta: Path):
         return marca, []
     m = chamar({"acao": "marca_kit", "id": marca["ambiente_id"]}, url=AMB)
     k = ((m.get("marca") or {}).get("marca") or {}) if m.get("ok") else {}
-    full = {**marca, "tema": k.get("tema")}
+    full = {**marca, "tema": k.get("tema"), "direcao_foto": k.get("direcao_foto", "")}
     pasta.mkdir(parents=True, exist_ok=True)
     if k.get("logo"):
         try:
@@ -161,7 +161,7 @@ def montar(post_id: int):
     pasta = SAIDA / f"post_{post_id}"
     import moldes
     marca, produtos = marca_completa(post.get("marca"), pasta / "marca")
-    moldes.usar_marca(marca); post["_produtos"] = produtos
+    moldes.usar_marca(marca); post["_produtos"] = produtos; post["_direcao"] = (marca or {}).get("direcao_foto", "")
     if produtos:
         passos.append(f"produto real colado ({len(produtos)} foto(s))")
     arquivos = kit.montar(post, pasta, f"post_{post_id}/kit", ev=ev, log=passos.append)
