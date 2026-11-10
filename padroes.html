@@ -97,7 +97,7 @@ const REC_DB={1:"Confissão em 1ª pessoa",2:"Confissão em 1ª pessoa",3:"Pergu
 const LOTE={lote1:"Lote 1",lote2:"Lote 2",lote3:"Lote 3","posts-de-teste":"Posts de teste","posts-montados":"Posts montados","opcoes-de-capa":"Opções de capa","tipos-novos":"Tipos novos"};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const limpa=s=>String(s??"").replace(/\*\*|\[\[|\]\]|_/g,"");
-let POSTS=[],CAPAS=[],URL={},P={},ABA="posts",LISTA=[],IDX=0;
+let POSTS=[],CAPAS=[],URLS={},P={},ABA="posts",LISTA=[],IDX=0;
 
 function texto(d){if(!d)return"";const L=[];
   ["chapeu","rotulo","numero","faixa_topo","titulo","texto","sub","pergunta"].forEach(k=>d[k]&&typeof d[k]==="string"&&L.push(d[k]));
@@ -128,7 +128,7 @@ async function iniciar(){
   POSTS=[...loc.filter(p=>p.origem!=="Slides avulsos"),...dbp,...loc.filter(p=>p.origem==="Slides avulsos")];
   CAPAS=(th.data||[]).filter(t=>t.imagem).map(t=>{const a=(t.avaliacoes_thumb||[])[0]||{};return {key:"thumb:"+t.id,imagem:t.imagem,molde:t.molde,texto:limpa(t.texto),nota:a.nota,coment:a.comentario,origem:LOTE[t.lote]||t.lote,extra:[...(a.gostei||[]).map(x=>"+ "+x),...(a.nao_gostei||[]).map(x=>"− "+x)].join("\n")}});
   const caminhos=[...new Set([...POSTS.flatMap(p=>p.slides.map(s=>s.imagem)),...CAPAS.map(c=>c.imagem)])];
-  for(let i=0;i<caminhos.length;i+=100){const {data:u}=await sb.storage.from("montagens").createSignedUrls(caminhos.slice(i,i+100),7200);(u||[]).forEach(x=>URL[x.path]=x.signedUrl)}
+  for(let i=0;i<caminhos.length;i+=100){const {data:u}=await sb.storage.from("montagens").createSignedUrls(caminhos.slice(i,i+100),7200);(u||[]).forEach(x=>URLS[x.path]=x.signedUrl)}
   desenhar();
 }
 const slidesDe=p=>p.slides.map((s,i)=>({key:"slide:"+s.imagem,imagem:s.imagem,molde:s.molde||(p.origem==="Slides avulsos"?"_av_"+p.id:"_sem"),texto:texto(s.dados),post:p,i}));
@@ -172,7 +172,7 @@ function grupos(lista,miolo,compacto){const g={};lista.forEach(s=>(g[s.molde]=g[
     return `<h2 class="gr" style="${compacto?"font-size:15px;margin-top:16px":""}">${esc(nomeTipo(m))} <span>${g[m].length}${n&&!compacto?` · ★ ${n}`:""}</span></h2><div class="grade">${g[m].map((s,i)=>tileSlide(s,i,"tile")).join("")}</div>`}).join("")}
 function tileSlide(s,i,cls){const on=marcado(s.key);const de=s.post?(cls==="sl"?nomeTipo(s.molde):`${s.post.titulo}`):(s.origem||"");
   const nota=s.nota!=null?`<span class="nota ${s.nota>=8?"alta":s.nota<=4?"baixa":""}">${s.nota}</span>`:"";
-  return `<div class="${cls} ${on?"on":""}" data-k="${esc(s.key)}"><div class="im" data-ver="${esc(s.key)}"><img loading="lazy" src="${esc(URL[s.imagem]||"")}" alt="">${s.post?`<span class="n">${s.i+1}</span>`:""}${nota}</div>
+  return `<div class="${cls} ${on?"on":""}" data-k="${esc(s.key)}"><div class="im" data-ver="${esc(s.key)}"><img loading="lazy" src="${esc(URLS[s.imagem]||"")}" alt="">${s.post?`<span class="n">${s.i+1}</span>`:""}${nota}</div>
    <button class="estrela" data-star="${esc(s.key)}" data-tipo="${esc(s.molde)}" aria-label="Marcar como padrão">★</button>
    <div class="${cls==="sl"?"rot":"de"}">${esc(cls==="sl"?de:(s.texto||de).slice(0,140))}</div></div>`}
 function progresso(){const v=Object.values(P);
@@ -190,7 +190,7 @@ function abrir(key){const todos=ABA==="capas"?[...CAPAS,...POSTS.map(p=>slidesDe
   const s=todos.find(x=>x.key===key);if(!s)return;
   LISTA=s.post&&ABA==="posts"?slidesDe(s.post):[...document.querySelectorAll("#main [data-k]")].map(el=>todos.find(x=>x.key===el.dataset.k)).filter(Boolean);
   IDX=Math.max(0,LISTA.findIndex(x=>x.key===key));mostrar();document.getElementById("zoom").classList.add("on")}
-function mostrar(){const s=LISTA[IDX];const z=document.getElementById("zoom");z.querySelector("img").src=URL[s.imagem]||"";
+function mostrar(){const s=LISTA[IDX];const z=document.getElementById("zoom");z.querySelector("img").src=URLS[s.imagem]||"";
   z.querySelector(".lado").innerHTML=`<b>${esc(nomeTipo(s.molde||"_sem"))}</b>${s.post?`\n${esc(s.post.titulo)} · slide ${s.i+1}`:`\n${esc(s.origem||"")}${s.nota!=null?" · sua nota: "+s.nota:""}`}\n\n${esc(s.texto||"")}${s.extra?"\n\n"+esc(s.extra):""}${s.coment?"\n\nSeu comentário: "+esc(s.coment):""}\n\n<button class="btn" data-star="${esc(s.key)}" data-tipo="${esc(s.molde)}">${marcado(s.key)?"★ Padrão (tirar)":"☆ Marcar como padrão"}</button>`}
 document.addEventListener("click",async e=>{const t=e.target;
   const ab=t.closest("[data-aba]");if(ab){ABA=ab.dataset.aba;desenhar();scrollTo(0,0);return}
