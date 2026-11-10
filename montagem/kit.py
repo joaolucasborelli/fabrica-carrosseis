@@ -180,9 +180,16 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
         except Exception as x:
             ev("fotografo", f"Não consegui trocar o pacote: {str(x)[:80]}", "erro")
     def colar(loc, k, capa=False):
+        p = produtos[k % len(produtos)]
+        try:  # agente do produto: 3D com o rótulo real + acabamento de IA + conferente (caminho B do dono)
+            import produto3d
+            r = produto3d.integrar(Path(loc), p, base, "prod_capa" if capa else f"prod_s{k:02d}", zona="capa" if capa else "miolo", ev=ev)
+            log(f"produto 3D {'capa' if capa else k}: {r.get('modo')} nota {r.get('nota')}")
+            return
+        except Exception as e3:
+            ev("fotografo", f"O produto em 3D falhou ({str(e3)[:60]}); usei a colagem simples.", "erro")
         try:
             import marca_kit
-            p = produtos[k % len(produtos)]
             if capa:  # na capa o texto ocupa a parte de baixo: o produto vai no meio, à direita
                 marca_kit.colar_produto(loc, p["arquivo"], loc, altura=0.34, base=0.6)
             else:
