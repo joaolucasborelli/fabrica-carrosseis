@@ -28,12 +28,12 @@ main{max-width:1240px;margin:12px auto 80px;padding:0 16px}
 .ph h3{font-size:16px;font-weight:800;flex:1;min-width:240px}
 .tag{font-size:12px;font-weight:700;border-radius:99px;padding:3px 9px;background:#25272c;color:#d9dbe0;white-space:nowrap}
 .tag.rec{background:rgba(255,210,31,.14);color:var(--am)}
-.tira{display:flex;gap:10px;overflow-x:auto;padding:6px 16px 12px;scroll-snap-type:x proximity}
+.tira{display:flex;align-items:flex-start;gap:10px;overflow-x:auto;padding:6px 16px 12px;scroll-snap-type:x proximity}
 .sl{flex:0 0 150px;scroll-snap-align:start;position:relative}
-.sl .im{aspect-ratio:4/5;background:#000;border-radius:8px;overflow:hidden;cursor:zoom-in;border:2px solid transparent}
+.sl .im{height:188px;background:#000;border-radius:8px;overflow:hidden;cursor:zoom-in;border:2px solid transparent}
 .sl.on .im,.tile.on .im{border-color:var(--am)}
 .sl img,.tile img{width:100%;height:100%;object-fit:cover;display:block}
-.sl .rot{font-size:11px;color:var(--mut);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl .rot{max-width:100%;font-size:11px;color:var(--mut);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .estrela{position:absolute;right:6px;top:6px;width:30px;height:30px;border-radius:99px;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:16px;cursor:pointer;line-height:30px}
 .on>.estrela,.on .estrela{background:var(--am);color:#111}
 .n{position:absolute;left:6px;top:6px;background:rgba(0,0,0,.65);border-radius:6px;padding:1px 6px;font-size:11px;font-weight:700}
@@ -67,7 +67,7 @@ main{max-width:1240px;margin:12px auto 80px;padding:0 16px}
 .zoom .lado b{color:var(--am)}
 .zoom .x,.zoom .ant,.zoom .prox{position:absolute;background:rgba(255,255,255,.1);border:0;color:#fff;border-radius:99px;width:44px;height:44px;font-size:22px;cursor:pointer}
 .zoom .x{right:14px;top:14px}.zoom .ant{left:14px;top:50%}.zoom .prox{right:14px;top:50%}
-@media (max-width:700px){.zoom{flex-direction:column;overflow:auto;justify-content:flex-start}.zoom img{max-width:100%;max-height:70vh}.zoom .ant,.zoom .prox{top:auto;bottom:14px}.grade{grid-template-columns:repeat(2,1fr)}.sl{flex-basis:120px}}
+@media (max-width:700px){.zoom{flex-direction:column;overflow:auto;justify-content:flex-start}.zoom img{max-width:100%;max-height:70vh}.zoom .ant,.zoom .prox{top:auto;bottom:14px}.grade{grid-template-columns:repeat(2,1fr)}.sl{flex-basis:120px}.sl .im{height:150px}}
 </style>
 </head>
 <body>
@@ -124,7 +124,7 @@ async function iniciar(){
   const dbp=(db.data||[]).filter(p=>(p.imagens||[]).length).map(p=>{const f=p.ficha||{};const ds=[f.capa||{}].concat(f.slides||[]);
     return {id:"db_"+p.id,origem:"Fábrica · post "+p.id,receita:REC_DB[p.id]||"Outro",titulo:limpa((f.capa||{}).texto||"Post "+p.id),
       slides:p.imagens.map((im,i)=>({imagem:im,molde:(ds[i]||{}).molde||"",dados:ds[i]||{}}))}});
-  const loc=(ac||[]).map(p=>({...p,origem:p.origem==="avulso"?"Slides avulsos":"Testes no computador"}));
+  const loc=(ac||[]).map(p=>({...p,titulo:limpa(p.titulo),origem:p.origem==="avulso"?"Slides avulsos":"Testes no computador"}));
   POSTS=[...loc.filter(p=>p.origem!=="Slides avulsos"),...dbp,...loc.filter(p=>p.origem==="Slides avulsos")];
   CAPAS=(th.data||[]).filter(t=>t.imagem).map(t=>{const a=(t.avaliacoes_thumb||[])[0]||{};return {key:"thumb:"+t.id,imagem:t.imagem,molde:t.molde,texto:limpa(t.texto),nota:a.nota,coment:a.comentario,origem:LOTE[t.lote]||t.lote,extra:[...(a.gostei||[]).map(x=>"+ "+x),...(a.nao_gostei||[]).map(x=>"− "+x)].join("\n")}});
   const caminhos=[...new Set([...POSTS.flatMap(p=>p.slides.map(s=>s.imagem)),...CAPAS.map(c=>c.imagem)])];
