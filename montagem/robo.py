@@ -435,7 +435,24 @@ def retocar(p):
     chamar({"acao": "salvar", "post_id": post_id, "retoques": feitos, **({"ficha": ficha} if mexeu_ficha else {})}, url=OPCOES)
 
 
+def passou_do_teto():
+    """TETO DE GASTO (10/11): se a fábrica já gastou o teto do dia, o robô não começa nada novo."""
+    try:
+        g = chamar({"acao": "gasto"}, timeout=30, url=OPCOES)
+    except Exception as e:
+        print("não consegui ler o gasto de hoje:", e); return False
+    if g.get("ok") and g.get("passou"):
+        print(f"TETO DO DIA: já gastou US$ {g['usd']:.2f} de US$ {g['teto']:.2f}. Não vou montar nada hoje.")
+        return True
+    return False
+
+
 def main():
+    if passou_do_teto():
+        if os.environ.get("GITHUB_OUTPUT"):
+            with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+                f.write("pendentes=0\n")
+        return
     if "--contar" in sys.argv:  # usado pelo GitHub para não instalar o navegador à toa
         c = chamar({"acao": "contar"})
         n = c.get("pendentes", 0) if c.get("ok") else 0

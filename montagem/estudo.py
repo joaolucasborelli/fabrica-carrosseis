@@ -5,7 +5,7 @@ aqui só se organiza o time: 7 agentes de pesquisa em paralelo → roteirista e 
 """
 import base64, sys, time
 from concurrent.futures import ThreadPoolExecutor
-from robo import chamar
+from robo import chamar, passou_do_teto
 import marca_kit
 
 AMB = "https://kfvugtrjuqdakbpzvsxq.supabase.co/functions/v1/ambientes"
@@ -209,6 +209,8 @@ def kits_faltando():
 
 
 def main():
+    if passou_do_teto():
+        return
     kits_faltando()
     fila = chamar({"acao": "fila_estudo"}, url=AMB)
     print("estudos na fila:", [a["id"] for a in fila.get("ambientes", [])] if fila.get("ok") else fila)

@@ -546,7 +546,7 @@ function planejarFila(){
 async function planejarVisual(p,extra={}){
   if(p.planejando)return;p.planejando=true;p.planoErro=null;render();
   falaDA("trabalhando",extra.forcar?`Refazendo o plano com o formato que você escolheu para o slide ${Object.keys(extra.forcar).join(", ")}.`:"Lendo o post aprovado e escolhendo o formato de cada slide: notícia, cupom, foto, checklist…");
-  try{const {data,error}=await sb.functions.invoke("roteiro",{body:{acao:"plano_visual",variacao_id:p.id,...extra}});
+  try{await tetoOk();const {data,error}=await sb.functions.invoke("roteiro",{body:{acao:"plano_visual",variacao_id:p.id,...extra}});
     if(error)throw error;if(!data||!data.ok)throw new Error((data&&data.erro)||"erro");
     p.plano=data.plano;const pl=data.plano.post,reais=[pl.capa,...pl.slides].filter(s=>s.foto_fonte==="real").length;
     falaDA("pronto",`Plano pronto: ${pl.slides.length+1} slides, receita ${String(pl.receita||"").slice(0,40)}${reais?`, ${reais} com foto real`:""}. A montagem vai seguir este plano.`);
@@ -635,7 +635,11 @@ function drawGen(){
    <label class="gl">Assunto do momento (opcional)<input id="g-ass" value="${esc(gen.assunto)}" placeholder="ex.: GTA 6"></label>
    <div class="prow" style="justify-content:flex-end"><button class="btn" data-mclose>Cancelar</button><button class="btn primary" data-gdo>Gerar ${gen.qtd}</button></div></div>`;
 }
+// TETO DE GASTO (10/11): passou do teto do dia, a tela não chama a IA (o robô também para sozinho)
+async function tetoOk(){try{const {data}=await sb.from("gasto_hoje").select("usd,teto").single();if(data&&+data.usd>=+data.teto)throw new Error(`Teto do dia atingido: a fábrica já gastou US$ ${(+data.usd).toFixed(2)} hoje (teto US$ ${(+data.teto).toFixed(2)}). Volta a funcionar à meia-noite.`)}catch(e){if(/Teto do dia/.test(e.message))throw e}}
+const GASTA=["pesquisar","planejar","planejar_semana","escrever","avaliar","conversar"];
 async function chamar(body){
+  if(GASTA.includes(body.acao))await tetoOk();
   const {data,error}=await sb.functions.invoke("fabrica",{body});
   if(error){let m=error.message;try{const j=await error.context.json();m=j.erro||m}catch(_){}throw new Error(m)}
   if(data&&data.erro)throw new Error(data.erro);
