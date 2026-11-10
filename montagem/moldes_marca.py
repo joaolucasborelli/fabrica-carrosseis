@@ -354,6 +354,10 @@ def adaptar(capa, slides, perfil=None):
                 cands = [x for x in ps if x.rstrip().endswith("?") and "[[" not in x and not x.lstrip().startswith(tuple(_ASPAS))]
                 if cands:
                     perg = cands[-1]; ps = [x for x in ps if x is not perg]
+                elif ps and "[[" not in ps[0]:
+                    frases = re.split(r"(?<=[.!])\s+", ps[0].strip(), maxsplit=1)
+                    if 12 <= len(frases[0]) <= 80:
+                        perg = frases[0]; ps = ([frases[1]] if len(frases) > 1 else []) + ps[1:]
             out.append({"molde": "mk_fecho", "estilo": base, "pergunta": perg, "paragrafos": ps,
                         "palavra": pal.group(1) if pal else "", "produto": p.get("produto_arquivo")})
         elif itens and sum(1 for x in numeros if x) >= max(2, len(itens) - 1):
@@ -380,9 +384,12 @@ def adaptar(capa, slides, perfil=None):
             ps2 = [re.sub(r"^\s*Atenção:\s*", "", x) for x in ps] if rot == "Atenção" else ps
             ps2 = [x[:1].upper() + x[1:] if x else x for x in ps2]
             if m == "citacao" and s.get("texto"):
-                out.append({"molde": "mk_frase", "estilo": base, "n": nn, "antes": " ".join(ps2) or _maiuscula(s.get("sub") or ""),
-                            "virada": f"“{_sem_aspas(s['texto'])}”",
-                            "depois": f"— {s['nome']}" if s.get("nome") and s.get("papel") else ""})
+                nome = (s.get("nome") or "").strip()
+                passo = re.match(r"^(sa[ií]da|passo|teste|dica|regra|parte|etapa|erro|motivo|pergunta)\b|^\d", nome, re.I)
+                out.append({"molde": "mk_frase", "estilo": base, "n": nn, "rotulo": nome if passo else "",
+                            "antes": " ".join(ps2) or _maiuscula(s.get("sub") or ""),
+                            "virada": f"“{_sem_aspas(s['texto'])}”" if not passo else _sem_aspas(s["texto"]),
+                            "depois": f"— {nome}" if nome and s.get("papel") and not passo else ""})
                 continue
             ps2 = _com_titulo(s, ps2)
             junto = " ".join(ps2 or [s.get("texto", "")]).strip()
