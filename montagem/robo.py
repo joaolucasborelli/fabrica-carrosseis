@@ -265,8 +265,9 @@ def retocar(p):
             ev("entregador", f"Slide {n} corrigido. Se não gostar, dá para desfazer no post.", "pronto")
         except Exception as e:
             print(post_id, "retoque", r["id"], "ERRO", e)
-            ev("retocador", f"Não consegui corrigir o slide {n}: {str(e)[:160]}", "erro")
-            feitos.append({"id": r["id"], "erro": str(e)[:300]})
+            msg = "a OpenAI está sem créditos: recarregue e peça a correção de novo" if "credits" in str(e).lower() else str(e)[:300]
+            ev("retocador", f"Não consegui corrigir o slide {n}: {msg[:160]}", "erro")
+            feitos.append({"id": r["id"], "erro": msg})
     chamar({"acao": "salvar", "post_id": post_id, "retoques": feitos}, url=OPCOES)
 
 
