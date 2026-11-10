@@ -64,6 +64,7 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 .selos{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
 .st-mont{background:#FFD21F;color:#111;display:inline-flex;align-items:center;gap:5px}.st-mont i{width:6px;height:6px;border-radius:50%;background:#111;animation:pisca 1s infinite}
 @keyframes pisca{50%{opacity:.2}}
+.st-custo{background:rgba(255,210,31,.12);color:#e9c84a;border:1px solid rgba(255,210,31,.35)}.custo-det{margin:8px 0 0;color:var(--muted,#9a9ea6)}
 .avaliar{font:600 .82rem Inter,sans-serif;color:inherit;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-right:6px}.avaliar:hover{border-color:var(--accent);color:var(--accent)}
 .st-wait{background:var(--wait);color:var(--wait-ink)} .st-ok{background:var(--ok);color:var(--ok-ink)} .st-draft{background:var(--draft);color:var(--draft-ink)} .st-sched{background:var(--sched);color:var(--sched-ink)} .st-rej{background:var(--rej);color:var(--rej-ink)} .st-prop{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
 .cover{aspect-ratio:4/5;max-width:100%;padding:12px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;font-family:var(--f-d);font-weight:800;line-height:1.1;font-size:.95rem;position:relative}
@@ -349,7 +350,8 @@ const ST={prop:["Proposta","st-prop"],gen:["Gerando","st-draft"],draft:["Rascunh
 const AGENDA={a1:["09:00","12:35","17:50","02:00"]};
 const HOJE=new Date();
 const d=(dd,mm,hh)=>{const [h,mi]=hh.split(":");return new Date(2026,mm-1,dd,+h,+mi)};
-let POSTS=[];
+let POSTS=[];let DOLAR=5.5;
+const usd=v=>"US$ "+(+v||0).toFixed(2).replace(".",",");
 let ANALISES={a1:[]};
 let CHAT={a1:[]};
 let acc="a1",tab="posts",filtro="todos",aberto=null,drawer=false,atts={post:[],chat:[],gen:[]},rec=null;
@@ -384,6 +386,7 @@ function selos(p){
   else if(m==="pronta")extra=`<span class="st st-ok">Montado ✓</span>`;
   else if(m==="erro")extra=`<span class="st st-rej">Erro ao montar</span>`;
   if(c==="pendente"||c==="montando")extra+=`<span class="st st-mont"><i></i>Capas</span>`;
+  if(p.custo&&p.custo.total>0)extra+=`<span class="st st-custo" title="Custo medido deste post na OpenAI">${usd(p.custo.total)}</span>`;
   return `<span class="selos">${extra}${st}</span>`;
 }
 function renderPosts(){
@@ -400,6 +403,7 @@ function renderPost(){
     <div class="strip" aria-label="Slides do post. Clique num slide para abrir em tela cheia">${slidesHTML(p).map((h,i)=>`<button class="sb" data-expand="${i}" aria-label="Abrir o slide ${i+1} em tela cheia">${h}</button>`).join("")}</div>
     ${painelDA(p)}
     ${p.mont==="pendente"||p.mont==="montando"?`<p class="montaviso">🛠️ O robô está montando este post: diagramação, foto da capa e os slides. Fica pronto em até ~10 minutos e aparece aqui sozinho.</p>`:p.mont==="erro"?`<p class="montaviso erro">A montagem deu erro: ${esc(p.mlog||"")}. Me avise no chat que eu refaço.</p>`:p.mont==="pronta"&&p.mlog?`<p class="small" style="margin:8px 0 0">Montado: ${esc(p.mlog)}</p>`:""}
+    ${p.custo&&p.custo.total>0?`<p class="small custo-det">Custo medido: <b>${usd(p.custo.total)}</b> (≈ R$ ${(p.custo.total*DOLAR).toFixed(2).replace(".",",")}) · texto e montagem ${usd(p.custo.proprio)} · parte da pesquisa e do plano ${usd(p.custo.plano)} · ${p.custo.imagens} imagens${p.custo.capas>0?` · capas alternativas ${usd(p.custo.capas)}`:""}</p>`:""}
     ${legendaIG(p)}${p.pr?`<details class="why"><summary>Por que esta proposta</summary><dl><dt>Na capa</dt><dd>${esc(p.pr.capa)}</dd><dt>O que testa</dt><dd>${esc(p.pr.est)}</dd><dt>Por quê</dt><dd>${esc(p.pr.pq)}</dd><dt>Origem</dt><dd>${esc(p.pr.base)}</dd>${p.pr.pl?`<dt>Plateia</dt><dd>${esc(p.pr.pl)}</dd>`:""}${p.pr.pb?`<dt>Conferente</dt><dd>${esc(p.pr.pb)}</dd>`:""}</dl></details>`:""}
   </div>
   <div class="pbaixo"><div class="escbox" id="escbox"></div>
@@ -727,6 +731,12 @@ async function carregar(){
         base:`Remodelado do post ${rm.base_code||"-"}. Camada grande trocada: ${rm.camada_grande||"-"}. Camadas pequenas: ${(rm.camadas_pequenas||[]).join(", ")||"-"}. O que manteve: ${rm.o_que_manteve||"-"}.`,
         pl:Object.entries(pn.leitores||{}).map(([k,x])=>`${NOMES[k]||k}: ${x.nota}/10, "${x.frase}"${x.larga_no_slide?`, larga no slide ${x.larga_no_slide}`:""}`).join(" · "),
         pb:(pn.problemas||[]).join(" · ")}}});
+  // MEDIDOR DE CUSTO: quanto cada post custou de verdade (tabela custos)
+  const ids=POSTS.map(p=>p.postId).filter(Boolean);
+  if(ids.length){const {data:cs}=await sb.from("custo_por_post").select("*").in("post_id",ids);
+    const C={};(cs||[]).forEach(c=>{const pr=+c.montagem_e_texto_proprio||0,pl=+c.parte_do_plano||0,ca=+c.capas_alternativas||0;C[c.post_id]={proprio:pr,plano:pl,capas:ca,imagens:c.imagens||0,total:pr+pl+ca}});
+    POSTS.forEach(p=>{p.custo=C[p.postId]||null});}
+  sb.from("config_fabrica").select("texto").eq("chave","precos").maybeSingle().then(({data})=>{try{DOLAR=JSON.parse(data.texto).dolar_em_reais||DOLAR}catch(e){}});
   // imagens montadas (bucket privado): links assinados por 1 hora
   const todos=POSTS.flatMap(p=>p.paths);
   if(todos.length){const {data:urls}=await sb.storage.from("montagens").createSignedUrls(todos,3600);
