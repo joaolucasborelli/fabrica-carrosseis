@@ -44,7 +44,8 @@ h1,h2,h3{font-family:var(--f-d);margin:0;line-height:1.15}
 .view{min-height:0;overflow:auto}
 .pad{padding:20px max(16px,env(safe-area-inset-right,0px)) 32px max(16px,env(safe-area-inset-left,0px));max-width:1200px;margin:0 auto}
 .sub{color:var(--muted);font-size:.9rem;margin:4px 0 14px}
-.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.ordbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px;font-size:.84rem}.ordbar select,.ordbar input{background:var(--panel);color:inherit;border:1.5px solid var(--line);border-radius:8px;padding:3px 8px;margin-left:4px;font:inherit}
 .f{border:1.5px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 11px;font-size:.84rem}
 .f[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:14px}
@@ -439,6 +440,7 @@ let POSTS=[];let DOLAR=5.5;
 const usd=v=>"US$ "+(+v||0).toFixed(2).replace(".",",");
 let ANALISES={a1:[]};
 let CHAT={a1:[]};
+let ordem="recentes",diaF="";
 let acc="a1",tab="posts",filtro="todos",aberto=null,drawer=false,atts={post:[],chat:[],gen:[]},rec=null;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const plain=s=>s.replace(/<[^>]+>/g,"");
@@ -483,9 +485,12 @@ function selos(p){
   return `<span class="selos">${extra}${st}</span>`;
 }
 function renderPosts(){
-  const L=POSTS.filter(p=>p.a===acc&&(filtro==="todos"||p.s===filtro)).sort((x,y)=>(y.t||new Date(2100,0))-(x.t||new Date(2100,0)));
+  const emAndamento=p=>p.s==="gen"||p.planejando||["pendente","montando"].includes(p.mont)||["pendente","montando"].includes(p.capasSt);
+  const dataRef=p=>Math.max(+(p.montEm||0),+(p.gerEm||0),+(p.t||0));
+  const noDia=p=>{if(!diaF)return true;const d=x=>x?new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10):"";return [p.gerEm,p.montEm,p.t].some(x=>d(x)===diaF)};
+  const L=POSTS.filter(p=>p.a===acc&&(filtro==="todos"||(filtro==="gen"?emAndamento(p):p.s===filtro))&&noDia(p)).sort((x,y)=>ordem==="antigos"?dataRef(x)-dataRef(y):ordem==="forca"?((y.forca||0)-(x.forca||0)):dataRef(y)-dataRef(x));
   return `<div class="listaesc"><div class="lcol">${avisosHTML()}<div class="listhead"><div><h2>Posts e capas · ${ACC[acc].nome}</h2><p class="sub">Os agentes à direita mostram o que está sendo feito agora.</p></div><button class="btn primary" data-genopen>+ Gerar conteúdo</button></div>
-  <div class="filters" role="group" aria-label="Filtrar por status">${[["todos","Todos"],...Object.entries(ST).map(([k,v])=>[k,v[0]])].map(([k,l])=>`<button class="f" data-f="${k}" aria-pressed="${filtro===k}">${l}</button>`).join("")}</div>
+  <div class="filters" role="group" aria-label="Filtrar por status">${[["todos","Todos"],...Object.entries(ST).map(([k,v])=>[k,v[0]])].map(([k,l])=>`<button class="f" data-f="${k}" aria-pressed="${filtro===k}">${l}</button>`).join("")}</div><div class="ordbar"><label>Ordem <select data-ordem><option value="recentes" ${ordem==="recentes"?"selected":""}>Mais recentes</option><option value="antigos" ${ordem==="antigos"?"selected":""}>Mais antigos</option><option value="forca" ${ordem==="forca"?"selected":""}>Maior força</option></select></label><label>Dia <input type="date" data-diaf value="${diaF}"></label>${diaF?`<button class="f" data-limpadia>Limpar dia</button>`:""}<span class="sub">${L.length} post${L.length===1?"":"s"}</span></div>
   <div class="grid">${L.map(p=>`<button class="card ${p.s==="gen"?"gen":""}" data-post="${p.id}" ${p.s==="gen"?"disabled":""}>${cover(p)}<div class="meta"><span class="when">${quando(p)}</span>${selos(p)}</div></button>`).join("")||'<p class="sub">Nenhum post com esse status.</p>'}</div></div><aside class="escgeral" id="escgeral" aria-label="Agentes trabalhando"></aside></div>`;
 }
 function renderPost(){
@@ -861,7 +866,7 @@ async function carregar(){
   const LOGS=new Map(POSTS.map(p=>[p.id,p.log]));
   POSTS=data.map(v=>{const pc=v.pecas||{},va=v.variaveis||{},rm=v.remodelagem||{},pa=v.pautas||{},pn=v.painel||{},R=pn.risco;
     const po=(v.posts||[])[0];const ag=po&&po.agendado_para?new Date(po.agendado_para):null;
-    return {id:v.id,a:"a"+(pa.ambiente_id||1),s:ag?"sched":v.status==="mostrada"?"prop":"draft",t:ag,rot:`${ROT[pa.tipo]||pa.tipo||""} · ${ROT[pa.persona_id]||pa.persona_id||""} · força ${v.forca??"-"}`,capa:esc(pc.capa||""),sl:pc.slides||[],plano:v.plano_visual||null,leg:pc.legenda||"",hs:pc.hashtags||[],
+    return {id:v.id,a:"a"+(pa.ambiente_id||1),s:ag?"sched":v.status==="mostrada"?"prop":"draft",t:ag,rot:`${ROT[pa.tipo]||pa.tipo||""} · ${ROT[pa.persona_id]||pa.persona_id||""} · força ${v.forca??"-"}`,forca:v.forca||0,capa:esc(pc.capa||""),sl:pc.slides||[],plano:v.plano_visual||null,leg:pc.legenda||"",hs:pc.hashtags||[],
       postId:po?po.id:null,mont:po?po.montagem_status:null,montEm:po&&po.montagem_em?new Date(po.montagem_em):null,gerEm:v.criada_em?new Date(v.criada_em):null,capasSt:po?po.capas_status:null,mlog:po?po.montagem_log:"",paths:po&&Array.isArray(po.imagens)?po.imagens:[],
       log:LOGS.get(v.id)||(v.status==="escolhida"?[{w:"ag",f:"Equipe",t:"Você escolheu esta variação. O robô monta os slides e eles aparecem acima. Para corrigir qualquer coisa (texto ou foto de um slide), é só pedir aqui."}]:[]),
       esb:ESB("a1",(v.ordem||1)-1),
@@ -986,6 +991,7 @@ document.addEventListener("click",e=>{
   if(ds.acc){acc=ds.acc;aberto=null;filtro="todos";drawer=false;render();return}
   if(ds.tab){tab=ds.tab;aberto=null;render();return}
   if(ds.f){filtro=ds.f;render();return}
+  if("limpadia" in ds){diaF="";render();return}
   if(ds.post){aberto=+ds.post;atts.post=[];render();const p=POSTS.find(x=>x.id===aberto);if(p)carregarLogPost(p);return}
   if("back" in ds){aberto=null;legAberta=false;render();return}
   if(ds.expand!==undefined){viewer={id:aberto,i:+ds.expand};drawViewer();return}
@@ -1075,6 +1081,7 @@ document.getElementById("lform").addEventListener("submit",async e=>{e.preventDe
   const {error}=await sb.auth.signInWithPassword({email:document.getElementById("l-email").value.trim(),password:document.getElementById("l-pass").value});
   if(error){m.textContent=/confirm/i.test(error.message)?"Falta confirmar o acesso pelo link que chegou no seu e-mail.":"Não entrou: "+error.message;return}
   entrar()});
+document.addEventListener("change",e=>{const t=e.target;if(t.matches&&t.matches("[data-ordem]")){ordem=t.value;render();return}if(t.matches&&t.matches("[data-diaf]")){diaF=t.value;render();return}});
 document.addEventListener("change",e=>{const sel=e.target.closest("[data-damolde]");if(!sel)return;const p=POSTS.find(x=>x.id===aberto);if(!p)return;planejarVisual(p,{forcar:{[sel.dataset.damolde]:sel.value}})});
 document.getElementById("l-criar").addEventListener("click",async()=>{const m=document.getElementById("l-msg");const email=document.getElementById("l-email").value.trim(),password=document.getElementById("l-pass").value;
   if(!email||password.length<8){m.textContent="Escreva o e-mail e uma senha de pelo menos 8 caracteres.";return}
