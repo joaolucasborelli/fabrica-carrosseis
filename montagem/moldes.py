@@ -173,11 +173,9 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .f1b .divisor{position:absolute;left:150px;right:150px;top:968px;height:64px;display:flex;align-items:center;gap:26px}
 .f1b .divisor i{flex:1;height:2px;background:rgba(255,255,255,.7)}
 .f1b .emblema{width:34px;height:64px}
-.f1b .texto{position:absolute;left:70px;right:70px;top:1046px;height:200px;display:flex;align-items:center;justify-content:center}
+.f1b .texto{position:absolute;left:70px;right:70px;top:1050px;height:236px;display:flex;align-items:center;justify-content:center}
 .f1b .texto p{font:400 104px/.98 'Bebas Neue',sans-serif;letter-spacing:.005em;color:#fff;text-align:center;text-transform:uppercase;text-wrap:balance}
 .f1b .texto p .am{color:#FFD21F}
-.f1b .arraste{position:absolute;left:0;right:0;top:1276px;text-align:center;font:600 25px/1 'Barlow Condensed',sans-serif;letter-spacing:.06em;color:rgba(255,255,255,.85);text-transform:uppercase}
-.f1b .arraste b{color:#FFD21F;font-weight:700}
 .f1b .seta{position:absolute;right:46px;top:46px;width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center}
 .f1b .seta svg{width:26px;height:26px}
 
@@ -192,10 +190,9 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .perfil .chip img{width:66px;height:66px;border-radius:50%;border:2px solid rgba(255,255,255,.85)}
 .perfil .chip b{display:block;font:700 27px/1.1 'Inter',sans-serif;color:#fff}
 .perfil .chip span{display:block;font:400 21px/1.2 'Inter',sans-serif;color:#a6a9ae}
-.perfil .texto{position:absolute;left:56px;right:56px;top:972px;height:280px;display:flex;align-items:center;justify-content:center}
+.perfil .texto{position:absolute;left:56px;right:56px;top:976px;height:310px;display:flex;align-items:center;justify-content:center}
 .perfil .texto p{font:400 92px/.98 'Bebas Neue',sans-serif;color:#fff;text-align:center;text-transform:uppercase;text-wrap:balance}
 .perfil .texto p .am{color:#FFD21F}
-.perfil .arraste{position:absolute;left:0;right:0;top:1282px;text-align:center;font:600 26px/1 'Barlow Condensed',sans-serif;letter-spacing:.06em;color:#fff;text-transform:uppercase}
 
 /* Comparação · foto cortada ao meio (antes x depois), rótulos e manchete no preto */
 .comp{background:#0b0b0b}
@@ -507,9 +504,9 @@ FIT_JS = """
       el.style.top = (parseFloat(getComputedStyle(el).top) + extra) + 'px';
     }
   }
-  // subtítulo: no máximo 2 linhas (encolhe) e o bloco de baixo nunca encosta nele
+  // subtítulo curto (não o parágrafo .fit): no máximo 2 linhas (encolhe) e o bloco de baixo nunca encosta nele
   for (const s of document.querySelectorAll('.esc, .cv, .ll, .rv')) {
-    const sub = s.querySelector(':scope > .sub'); if (!sub) continue;
+    const sub = s.querySelector(':scope > .sub:not(.fit)'); if (!sub) continue;
     const alt = () => { const lh = parseFloat(getComputedStyle(sub).lineHeight) || parseFloat(getComputedStyle(sub).fontSize) * 1.3; return sub.getBoundingClientRect().height / lh; };
     let fs = parseFloat(getComputedStyle(sub).fontSize), g = 0;
     while (alt() > 2.2 && fs > 26 && g++ < 30) { fs *= 0.95; sub.style.fontSize = fs + 'px'; }
@@ -517,6 +514,41 @@ FIT_JS = """
     for (const el of s.querySelectorAll(':scope > .cards, :scope > .corpo, :scope > .itens, :scope > .lista, :scope > .conta, :scope > .linhas, :scope > .moldura')) {
       const t = parseFloat(getComputedStyle(el).top); if (!isNaN(t) && t < fim) el.style.top = fim + 'px';
     }
+  }
+  // REGRA ÚNICA DA FOTO (D-07): a foto emoldurada nunca é empurrada para fora nem fica sob o @; quem se ajusta é o texto
+  for (const s of document.querySelectorAll('.esc')) {
+    const mol = s.querySelector('.moldura'), rod = s.querySelector('.rod'); if (!mol) continue;
+    const sTop = s.getBoundingClientRect().top;
+    const limite = (rod ? rod.getBoundingClientRect().top : s.getBoundingClientRect().bottom) - sTop - 24;  // tudo acima do @
+    const corpo = mol.closest('.corpo');
+    if (corpo) {  // checklist: itens em cima, foto embaixo dentro do mesmo bloco → encolhe os itens até a foto caber inteira
+      corpo.style.bottom = 'auto'; corpo.style.height = Math.max(200, limite - (corpo.getBoundingClientRect().top - sTop)) + 'px';
+      const minFoto = () => parseFloat(getComputedStyle(mol).minHeight) || 0;
+      const estoura = () => mol.getBoundingClientRect().bottom > corpo.getBoundingClientRect().bottom + 1;
+      let g = 0;
+      while (estoura() && g++ < 60) {
+        const its = [...corpo.querySelectorAll('.it')]; const fs = its.length ? parseFloat(getComputedStyle(its[0]).fontSize) : 0;
+        if (fs > 24) { its.forEach(el => { el.style.fontSize = fs * 0.95 + 'px'; el.style.paddingTop = el.style.paddingBottom = '10px'; }); corpo.style.gap = '28px'; }
+        else if (minFoto() > 200) mol.style.minHeight = (minFoto() - 20) + 'px';
+        else break;
+      }
+    } else {  // título + moldura + parágrafo: a moldura fica onde está; o parágrafo usa o espaço entre a foto e o @
+      let mb = mol.getBoundingClientRect().bottom - sTop;
+      const sub = s.querySelector(':scope > .sub.fit');
+      if (sub) {
+        const minTxt = 150;  // se faltar espaço para o texto, a moldura fica mais baixa (nunca sai do slide)
+        if (limite - (mb + 30) < minTxt) { mol.style.height = Math.max(200, mol.clientHeight - (minTxt - (limite - (mb + 30)))) + 'px'; mb = mol.getBoundingClientRect().bottom - sTop; }
+        sub.style.top = (mb + 30) + 'px'; sub.style.height = Math.max(minTxt, limite - (mb + 30)) + 'px';
+      } else if (mb > limite) mol.style.height = Math.max(200, limite - (mol.getBoundingClientRect().top - sTop)) + 'px';
+    }
+  }
+  // notícia sem foto: o nome grande (rótulo) cabe em no máximo 2 linhas e nunca entra embaixo do cartão
+  for (const d of document.querySelectorAll('.nt .data')) {
+    const dt = d.querySelector('.dt'), card = d.parentElement.querySelector('.card'); if (!dt || !card) continue;
+    const linhas = () => { const r = [...dt.getClientRects()]; return new Set(r.map(q => Math.round(q.top))).size; };
+    const fundo = () => d.getBoundingClientRect().bottom > card.getBoundingClientRect().top - 20;
+    let fs = parseFloat(getComputedStyle(d).fontSize), g = 0;
+    while ((linhas() > 2 || fundo() || d.scrollWidth > d.clientWidth + 1) && fs > 48 && g++ < 80) { fs *= 0.96; d.style.fontSize = fs + 'px'; }
   }
   // valores grandes das caixas: numa linha só, encolhendo; se ainda não couber, quebram em 2 linhas
   // valor nunca encosta no círculo do operador: o tamanho acompanha a altura da caixa
@@ -587,7 +619,9 @@ def marcar(txt: str, cor: bool = False) -> str:
     t = html.escape(txt, quote=False)
     t = re.sub(r"\*\*(.+?)\*\*", r'<span class="am">\1</span>' if cor else r"<mark>\1</mark>", t)
     t = re.sub(r"\[\[(.+?)\]\]", r'<span class="carimbo">\1</span>', t)
-    return t
+    # quebras de linha do texto aprovado ficam (D-07 item 5): linha em branco = respiro, quebra simples = nova linha
+    t = re.sub(r"[ \t]*\n[ \t]*\n\s*", "<br><br>", t.strip())
+    return re.sub(r"[ \t]*\n[ \t]*", "<br>", t)
 
 
 def paras(ps, cls=""):
@@ -739,7 +773,7 @@ CSS_DA = """
 .nt .topo{position:absolute;left:64px;top:56px;display:flex;gap:12px;align-items:center}
 .nt .pil{background:#FFD21F;color:#111;font:800 24px/1 'Inter',sans-serif;letter-spacing:.08em;padding:12px 18px;border-radius:999px}
 .nt .pil.esc{background:rgba(10,10,10,.75);color:#F5F5F0;border:1.5px solid rgba(255,255,255,.25)}
-.nt .data{position:absolute;left:64px;top:150px;font:400 210px/.9 'Bebas Neue',sans-serif;color:#F5F5F0;letter-spacing:.01em}
+.nt .data{position:absolute;left:64px;right:64px;top:150px;font:400 210px/.9 'Bebas Neue',sans-serif;color:#F5F5F0;letter-spacing:.01em}
 .nt .data small{display:block;font:700 30px/1.3 'Inter',sans-serif;color:#9a9a9a;letter-spacing:.12em;margin-top:14px}
 .nt .card{position:absolute;left:56px;right:56px;top:630px;bottom:150px;background:linear-gradient(180deg,#171719,#121213);border:1px solid #2a2a2e;border-radius:28px;box-shadow:0 30px 60px rgba(0,0,0,.55);padding:44px 52px 44px 64px;overflow:hidden}
 .nt.semfoto .card{top:470px;bottom:170px}
@@ -786,7 +820,7 @@ def _k_noticia(s):
         return (f'<div class="slide nt"><img class="foto" src="{s["foto"]}" style="--foco:{_foco(s,"50% 30%")}"><div class="sombra"></div>{cred}'
                 f'<div class="topo"><span class="pil">NOTÍCIA</span>{f"<span class=pil esc>{data}</span>" if data else ""}</div>'
                 f'<div class="card">{linha}{texto}</div>{_assin()}</div>')
-    grande = f'<div class="data">{data or "AGORA"}<small>{fonte}</small></div>'
+    grande = f'<div class="data"><span class="dt">{data or "AGORA"}</span><small>{fonte}</small></div>'
     return (f'<div class="slide nt semfoto"><div class="topo"><span class="pil">NOTÍCIA</span></div>{grande}'
             f'<div class="card">{linha}{texto}</div>{_assin()}</div>')
 
@@ -841,13 +875,12 @@ def slide_html(s: dict) -> str:
         seta = '<svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="#111" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
         corpo = (f'<div class="slide f1b"><img class="foto" src="{s["foto"]}" style="--foco:{foco}"><div class="grao"></div>'
                  f'<div class="seta">{seta}</div><div class="divisor"><i></i>{PORTA}<i></i></div>'
-                 f'<div class="texto fit"><p>{marcar(s["texto"], cor=True)}</p></div>'
-                 f'<div class="arraste">Arrasta pro lado <b>&gt;&gt;&gt;&gt;</b></div></div>')
+                 f'<div class="texto fit"><p>{marcar(s["texto"], cor=True)}</p></div></div>')
     elif m == "capa_perfil":
         foco = html.escape(s.get("foco") or "50% 40%")
         corpo = (f'<div class="slide perfil"><img class="foto" src="{s["foto"]}" style="--foco:{foco}"><div class="grao"></div>'
                  f'<div class="divisor"><i></i><div class="chip"><img src="{AVATAR}"><div><b>{NOME}</b><span>{HANDLE}</span></div></div><i></i></div>'
-                 f'<div class="texto fit"><p>{marcar(s["texto"], cor=True)}</p></div><div class="arraste">Deslize e veja &gt;&gt;&gt;</div></div>')
+                 f'<div class="texto fit"><p>{marcar(s["texto"], cor=True)}</p></div></div>')
     elif m == "capa_comparacao":
         foco = html.escape(s.get("foco") or "50% 45%")
         e, d = (s.get("rotulos") or ["Antes", "Depois"])[:2]

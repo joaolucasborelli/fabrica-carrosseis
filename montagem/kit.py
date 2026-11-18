@@ -129,6 +129,9 @@ def ajustar(s):
             s["sub"] = txt; s["paragrafos"] = []
         else:
             itens = [i for i in (s.get("itens") or []) if i] + [f"{c['nome']}: {c['texto']}" for c in (s.get("cards") or []) if c.get("nome")]
+            # item que só repete palavras que já estão no parágrafo não vira linha solta embaixo (p29: "moradia", "remédio")
+            ja = " " + _norm(" ".join(ps)) + " "
+            itens = [i for i in itens if not _norm(i) or f" {_norm(i)} " not in ja]
             s["molde"] = "papel_f2"; s["paragrafos"] = ([f"**{s['titulo']}**"] if s.get("titulo") else []) + ps + itens
     return s
 
