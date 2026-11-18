@@ -451,8 +451,8 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .f3a .foto{filter:brightness(.9) contrast(1.02) saturate(.9)}
 .f3a .vinheta{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,rgba(0,0,0,.28) 0,rgba(0,0,0,.08) 45%,rgba(0,0,0,.4) 100%)}
 .f3a .grao,.f3b .grao{position:absolute;inset:0;background-image:url("__PAPEL__");opacity:.16;mix-blend-mode:overlay}
-.f3a .texto{position:absolute;left:190px;right:190px;top:330px;height:420px;display:flex;align-items:center;justify-content:center}
-.f3a .texto p{font:500 46px/1.28 'Inter',sans-serif;color:#fff;text-align:center;text-shadow:0 2px 14px rgba(0,0,0,.55);text-wrap:balance}
+.f3a .texto{position:absolute;left:130px;right:130px;top:300px;height:480px;display:flex;align-items:center;justify-content:center}
+.f3a .texto p{font:600 60px/1.22 'Inter',sans-serif;color:#fff;text-align:center;text-shadow:0 2px 14px rgba(0,0,0,.55);text-wrap:balance}
 .f3a .handle,.f3b .handle{color:rgba(255,255,255,.72);text-shadow:0 1px 6px rgba(0,0,0,.5)}
 
 /* F3b · foto cheia, legenda grande no terço de baixo */
