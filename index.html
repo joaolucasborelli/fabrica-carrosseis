@@ -634,7 +634,7 @@ function drawGen(){
   if(gen.modo==="claude"){
   document.getElementById("layer").innerHTML=`<div class="shade" data-mclose></div><div class="modal" role="dialog" aria-modal="true" aria-label="Pedir posts ao Claude" style="width:min(420px,calc(100% - 32px))">
    <h3>Pedir posts · ${ACC[acc].nome}</h3>${abas}
-   <p class="sub" style="margin:0">O Claude escreve no modo cópia fiel (D-17), a partir da estante aprovada, e passa as vigias. O robô monta só as fotos. Custo: cerca de US$ 0,30 por post. Começa em até 30 minutos (das 7h às 22h).</p>
+   <p class="sub" style="margin:0">O Claude escreve no modo cópia fiel (D-17), a partir da estante aprovada, e passa as vigias. O robô monta só as fotos. Custo: cerca de US$ 0,30 por post. Começa em até 1 hora (das 7h às 22h).</p>
    <div class="fieldlab" style="margin:0">Quantos posts</div>
    <div class="qty" style="justify-content:center;font-size:1rem"><button data-gq="-1" aria-label="Menos">−</button><output style="font-family:var(--f-d);font-size:1.6rem">${gen.qtd}</output><button data-gq="1" aria-label="Mais">+</button></div>
    <p class="sub" style="margin:0;text-align:center">Estimativa: US$ ${(gen.qtd*0.3).toFixed(2).replace(".",",")} (para sozinho no teto de US$ 5 por dia)</p>
@@ -874,7 +874,7 @@ async function enviarMensagem(w,texto){
 let PEDIDOS=[];
 const SIT={na_fila:"na fila",escrevendo:"escrevendo",montando:"montando as fotos",feito:"pronto",esperando:"esperando (teto ou limite)",erro:"com problema",cancelado:"cancelado"};
 function pedidosHTML(){const L=PEDIDOS.filter(p=>p.situacao!=="cancelado"&&(p.situacao!=="feito"||Date.now()-new Date(p.atualizado_em)<864e5));if(!L.length)return "";
-  return `<div class="pedidos" style="display:flex;flex-direction:column;gap:6px;margin:0 0 12px">${L.map(p=>`<div class="sub" style="margin:0;padding:8px 12px;border:1px solid var(--line,#ddd);border-radius:10px"><b>Pedido ${p.id} · ${p.qtd} post${p.qtd>1?"s":""} pelo Claude</b> · ${SIT[p.situacao]||p.situacao} (${p.feitos}/${p.qtd})${p.aviso?` · ${esc(p.aviso)}`:""}${p.situacao==="na_fila"?` <button class="btn" data-pcancel="${p.id}" style="margin-left:8px">Cancelar</button>`:""}</div>`).join("")}<p class="sub" style="margin:0">A rotina olha a fila a cada 30 minutos, das 7h às 22h.</p></div>`}
+  return `<div class="pedidos" style="display:flex;flex-direction:column;gap:6px;margin:0 0 12px">${L.map(p=>`<div class="sub" style="margin:0;padding:8px 12px;border:1px solid var(--line,#ddd);border-radius:10px"><b>Pedido ${p.id} · ${p.qtd} post${p.qtd>1?"s":""} pelo Claude</b> · ${SIT[p.situacao]||p.situacao} (${p.feitos}/${p.qtd})${p.aviso?` · ${esc(p.aviso)}`:""}${p.situacao==="na_fila"?` <button class="btn" data-pcancel="${p.id}" style="margin-left:8px">Cancelar</button>`:""}</div>`).join("")}<p class="sub" style="margin:0">A rotina olha a fila a cada hora, das 7h às 22h.</p></div>`}
 async function carregarPedidos(){try{const {data}=await sb.from("pedidos_claude").select("*").order("id",{ascending:false}).limit(6);PEDIDOS=data||[]}catch(e){}}
 async function carregar(){
   await carregarPedidos();
@@ -1019,7 +1019,7 @@ document.addEventListener("click",e=>{
   if("genopen" in ds){if(PIPE[acc]&&!PIPE[acc].done&&!PIPE[acc].erro){toast("A fábrica ainda está gerando o lote anterior.");return}gen={qtd:2,assunto:"",modo:"claude"};drawGen();return}
   if(ds.gmodo){gen.modo=ds.gmodo;gen.qtd=gen.modo==="claude"?2:9;drawGen();return}
   if(ds.gq&&gen.modo==="claude"){gen.qtd=Math.max(1,Math.min(4,gen.qtd+(+ds.gq>0?1:-1)));drawGen();return}
-  if("gclaude" in ds){const q=gen.qtd;b.disabled=true;sb.from("pedidos_claude").insert({ambiente_id:ACC[acc].amb||1,qtd:q}).then(async({error})=>{if(error){toast("Não consegui pedir: "+error.message);b.disabled=false;return}gen=null;document.getElementById("layer").innerHTML="";toast(`Pedido de ${q} post${q>1?"s":""} na fila. O Claude começa em até 30 minutos.`);await carregarPedidos();render()});return}
+  if("gclaude" in ds){const q=gen.qtd;b.disabled=true;sb.from("pedidos_claude").insert({ambiente_id:ACC[acc].amb||1,qtd:q}).then(async({error})=>{if(error){toast("Não consegui pedir: "+error.message);b.disabled=false;return}gen=null;document.getElementById("layer").innerHTML="";toast(`Pedido de ${q} post${q>1?"s":""} na fila. O Claude começa em até 1 hora.`);await carregarPedidos();render()});return}
   if(ds.pcancel){b.disabled=true;sb.from("pedidos_claude").update({situacao:"cancelado"}).eq("id",+ds.pcancel).eq("situacao","na_fila").then(async({error})=>{if(error)toast("Não consegui cancelar: "+error.message);await carregarPedidos();render()});return}
   if(ds.gq){gen.assunto=document.getElementById("g-ass")?.value||"";const up=+ds.gq>0;
     gen.qtd=gen.qtd<9||(gen.qtd===9&&!up)?Math.max(1,Math.min(9,gen.qtd+(up?1:-1))):Math.max(9,Math.min(81,gen.qtd+(up?9:-9)));drawGen();return}
