@@ -489,7 +489,7 @@ function renderPosts(){
   const dataRef=p=>Math.max(+(p.montEm||0),+(p.gerEm||0),+(p.t||0));
   const noDia=p=>{if(!diaF)return true;const d=x=>x?new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10):"";return [p.gerEm,p.montEm,p.t].some(x=>d(x)===diaF)};
   const L=POSTS.filter(p=>p.a===acc&&(filtro==="todos"||(filtro==="gen"?emAndamento(p):p.s===filtro))&&noDia(p)).sort((x,y)=>ordem==="antigos"?dataRef(x)-dataRef(y):ordem==="forca"?((y.forca||0)-(x.forca||0)):dataRef(y)-dataRef(x));
-  return `<div class="listaesc"><div class="lcol">${avisosHTML()}<div class="listhead"><div><h2>Posts e capas · ${ACC[acc].nome}</h2><p class="sub">Os agentes à direita mostram o que está sendo feito agora.</p></div><button class="btn primary" data-genopen>+ Gerar conteúdo</button></div>
+  return `<div class="listaesc"><div class="lcol">${avisosHTML()}<div class="listhead"><div><h2>Posts e capas · ${ACC[acc].nome}</h2><p class="sub">Os agentes à direita mostram o que está sendo feito agora.</p></div><button class="btn primary" data-genopen>+ Gerar conteúdo</button></div>${pedidosHTML()}
   <div class="filters" role="group" aria-label="Filtrar por status">${[["todos","Todos"],...Object.entries(ST).map(([k,v])=>[k,v[0]])].map(([k,l])=>`<button class="f" data-f="${k}" aria-pressed="${filtro===k}">${l}</button>`).join("")}</div><div class="ordbar"><label>Ordem <select data-ordem><option value="recentes" ${ordem==="recentes"?"selected":""}>Mais recentes</option><option value="antigos" ${ordem==="antigos"?"selected":""}>Mais antigos</option><option value="forca" ${ordem==="forca"?"selected":""}>Maior força</option></select></label><label>Dia <input type="date" data-diaf value="${diaF}"></label>${diaF?`<button class="f" data-limpadia>Limpar dia</button>`:""}<span class="sub">${L.length} post${L.length===1?"":"s"}</span></div>
   <div class="grid">${L.map(p=>`<button class="card ${p.s==="gen"?"gen":""}" data-post="${p.id}" ${p.s==="gen"?"disabled":""}>${cover(p)}<div class="meta"><span class="when">${quando(p)}</span>${selos(p)}</div></button>`).join("")||'<p class="sub">Nenhum post com esse status.</p>'}</div></div><aside class="escgeral" id="escgeral" aria-label="Agentes trabalhando"></aside></div>`;
 }
@@ -630,9 +630,19 @@ async function emFila(itens,lim,fn){const res=new Array(itens.length);let i=0;
 let gen=null,nextId=100,nextProp=1;
 const PIPE={},PROPS={a1:[],a2:[]};
 function drawGen(){
+  const abas=`<div class="prow" style="gap:6px;margin:0"><button class="btn ${gen.modo==="claude"?"primary":""}" data-gmodo="claude">Pelo Claude (barato)</button><button class="btn ${gen.modo!=="claude"?"primary":""}" data-gmodo="fabrica">Fábrica antiga</button></div>`;
+  if(gen.modo==="claude"){
+  document.getElementById("layer").innerHTML=`<div class="shade" data-mclose></div><div class="modal" role="dialog" aria-modal="true" aria-label="Pedir posts ao Claude" style="width:min(420px,calc(100% - 32px))">
+   <h3>Pedir posts · ${ACC[acc].nome}</h3>${abas}
+   <p class="sub" style="margin:0">O Claude escreve no modo cópia fiel (D-17), a partir da estante aprovada, e passa as vigias. O robô monta só as fotos. Custo: cerca de US$ 0,30 por post. Começa em até 30 minutos (das 7h às 22h).</p>
+   <div class="fieldlab" style="margin:0">Quantos posts</div>
+   <div class="qty" style="justify-content:center;font-size:1rem"><button data-gq="-1" aria-label="Menos">−</button><output style="font-family:var(--f-d);font-size:1.6rem">${gen.qtd}</output><button data-gq="1" aria-label="Mais">+</button></div>
+   <p class="sub" style="margin:0;text-align:center">Estimativa: US$ ${(gen.qtd*0.3).toFixed(2).replace(".",",")} (para sozinho no teto de US$ 5 por dia)</p>
+   <div class="prow" style="justify-content:flex-end"><button class="btn" data-mclose>Cancelar</button><button class="btn primary" data-gclaude>Pedir ${gen.qtd}</button></div></div>`;
+  return}
   const por=gen.qtd/9, pouco=gen.qtd<9;
   document.getElementById("layer").innerHTML=`<div class="shade" data-mclose></div><div class="modal" role="dialog" aria-modal="true" aria-label="Gerar variações" style="width:min(420px,calc(100% - 32px))">
-   <h3>Gerar variações · ${ACC[acc].nome}</h3>
+   <h3>Gerar variações · ${ACC[acc].nome}</h3>${abas}
    <p class="sub" style="margin:0">A fábrica divide igual entre os 3 tipos (História, Momento, Curiosidade) e as 3 personas (jovem, homem, mulher). O conferente e a plateia dão nota a todas. O horário você escolhe depois, dentro do post.</p>
    <div class="fieldlab" style="margin:0">Quantas variações</div>
    <div class="qty" style="justify-content:center;font-size:1rem"><button data-gq="-1" aria-label="Menos">−</button><output style="font-family:var(--f-d);font-size:1.6rem">${gen.qtd}</output><button data-gq="1" aria-label="Mais">+</button></div>
@@ -860,7 +870,14 @@ async function enviarMensagem(w,texto){
   }catch(e){Object.assign(pensando,{w:"ag",t:"Não consegui responder: "+e.message});equipe("assistente","erro","Parei por um erro: "+e.message)}
   render();
 }
+// PEDIDOS PELO CLAUDE (18/11): fila lida pela rotina do Claude na nuvem (automacao/ROTINA.md)
+let PEDIDOS=[];
+const SIT={na_fila:"na fila",escrevendo:"escrevendo",montando:"montando as fotos",feito:"pronto",esperando:"esperando (teto ou limite)",erro:"com problema",cancelado:"cancelado"};
+function pedidosHTML(){const L=PEDIDOS.filter(p=>p.situacao!=="cancelado"&&(p.situacao!=="feito"||Date.now()-new Date(p.atualizado_em)<864e5));if(!L.length)return "";
+  return `<div class="pedidos" style="display:flex;flex-direction:column;gap:6px;margin:0 0 12px">${L.map(p=>`<div class="sub" style="margin:0;padding:8px 12px;border:1px solid var(--line,#ddd);border-radius:10px"><b>Pedido ${p.id} · ${p.qtd} post${p.qtd>1?"s":""} pelo Claude</b> · ${SIT[p.situacao]||p.situacao} (${p.feitos}/${p.qtd})${p.aviso?` · ${esc(p.aviso)}`:""}${p.situacao==="na_fila"?` <button class="btn" data-pcancel="${p.id}" style="margin-left:8px">Cancelar</button>`:""}</div>`).join("")}<p class="sub" style="margin:0">A rotina olha a fila a cada 30 minutos, das 7h às 22h.</p></div>`}
+async function carregarPedidos(){try{const {data}=await sb.from("pedidos_claude").select("*").order("id",{ascending:false}).limit(6);PEDIDOS=data||[]}catch(e){}}
 async function carregar(){
+  await carregarPedidos();
   const {data,error}=await sb.from("variacoes").select("id,status,criada_em,pecas,plano_visual,variaveis,remodelagem,por_que_para,forca,risco,painel,eixo,ordem,pautas(dia,tipo,persona_id,assunto,lote,ambiente_id),posts(id,status,agendado_para,montagem_status,montagem_em,imagens,montagem_log,capas_status)").in("status",["mostrada","escolhida"]).order("forca",{ascending:false,nullsFirst:false}).order("id",{ascending:false}).limit(500);
   if(error){toast("Não consegui ler o banco: "+error.message);return}
   const LOGS=new Map(POSTS.map(p=>[p.id,p.log]));
@@ -999,7 +1016,11 @@ document.addEventListener("click",e=>{
   if("vclose" in ds){viewer=null;render();return}
   if("leg" in ds){legAberta=!legAberta;render();return}
   if("sched" in ds){openSched(POSTS.find(x=>x.id===aberto));return}
-  if("genopen" in ds){if(PIPE[acc]&&!PIPE[acc].done&&!PIPE[acc].erro){toast("A fábrica ainda está gerando o lote anterior.");return}gen={qtd:9,assunto:""};drawGen();return}
+  if("genopen" in ds){if(PIPE[acc]&&!PIPE[acc].done&&!PIPE[acc].erro){toast("A fábrica ainda está gerando o lote anterior.");return}gen={qtd:2,assunto:"",modo:"claude"};drawGen();return}
+  if(ds.gmodo){gen.modo=ds.gmodo;gen.qtd=gen.modo==="claude"?2:9;drawGen();return}
+  if(ds.gq&&gen.modo==="claude"){gen.qtd=Math.max(1,Math.min(4,gen.qtd+(+ds.gq>0?1:-1)));drawGen();return}
+  if("gclaude" in ds){const q=gen.qtd;b.disabled=true;sb.from("pedidos_claude").insert({ambiente_id:ACC[acc].amb||1,qtd:q}).then(async({error})=>{if(error){toast("Não consegui pedir: "+error.message);b.disabled=false;return}gen=null;document.getElementById("layer").innerHTML="";toast(`Pedido de ${q} post${q>1?"s":""} na fila. O Claude começa em até 30 minutos.`);await carregarPedidos();render()});return}
+  if(ds.pcancel){b.disabled=true;sb.from("pedidos_claude").update({situacao:"cancelado"}).eq("id",+ds.pcancel).eq("situacao","na_fila").then(async({error})=>{if(error)toast("Não consegui cancelar: "+error.message);await carregarPedidos();render()});return}
   if(ds.gq){gen.assunto=document.getElementById("g-ass")?.value||"";const up=+ds.gq>0;
     gen.qtd=gen.qtd<9||(gen.qtd===9&&!up)?Math.max(1,Math.min(9,gen.qtd+(up?1:-1))):Math.max(9,Math.min(81,gen.qtd+(up?9:-9)));drawGen();return}
     if("gdo" in ds){const o={qtd:gen.qtd,assunto:document.getElementById("g-ass").value.trim()};gen=null;filtro="todos";startPipe(o);render();return}
