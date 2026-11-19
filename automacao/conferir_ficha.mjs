@@ -30,8 +30,9 @@ if (proibidos.has(ficha?.capa?.molde)) problemas.push(`capa usa molde reprovado 
 
 // D-19/D-20: o post segue um tipo da DP (automacao/tipos-dp.json): mesma capa e mesma ordem de lâminas
 if (d.tipo) {
+  // a fonte é a tabela tipos_post (a rotina manda a linha em d.tipo_def); o arquivo é só a cópia inicial
   const T = JSON.parse(fs.readFileSync(new URL("./tipos-dp.json", import.meta.url), "utf8"));
-  const t = T.tipos.find((x) => x.id === d.tipo);
+  const t = d.tipo_def && d.tipo_def.id === d.tipo ? d.tipo_def : T.tipos.find((x) => x.id === d.tipo);
   if (!t) problemas.push(`tipo desconhecido: ${d.tipo}`);
   else {
     if (ficha?.capa?.molde !== t.capa.molde) problemas.push(`capa ${ficha?.capa?.molde} não é a do tipo ${t.id} (${t.capa.molde})`);

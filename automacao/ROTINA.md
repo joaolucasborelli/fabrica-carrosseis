@@ -19,7 +19,12 @@ select * from pedidos_claude where situacao in ('na_fila','esperando','escrevend
    - se algum está com `montagem_status = 'erro'`, marque `erro` e grave o motivo em `aviso`.
    Sempre atualize `atualizado_em = now()`.
 2. Pegue **o pedido mais antigo** em `na_fila`, `esperando` ou `escrevendo`. Um `escrevendo` parado há mais de 2 horas quer dizer que a rodada anterior caiu: continue de onde ela parou, contando os `feitos`.
-3. Se não houver pedido, responda só `Fila vazia.` e termine.
+3. Olhe também os pedidos de mudança de TIPO (botão "Tipos de post" da tela):
+   ```sql
+   select * from pedidos_tipo where situacao='na_fila' order by id;
+   ```
+   Se houver, faça primeiro o **Passo T** para cada um (é grátis e rápido).
+4. Se não houver pedido de post nem de tipo, responda só `Fila vazia.` e termine.
 
 ## Passo 1 · Teto do dia
 ```sql
@@ -41,7 +46,11 @@ Repita essa conta **antes de cada post**. Se estiver tudo certo, marque o pedido
    ```
    - `estante`: lista as bases aprovadas e os roteiros já aprovados.
    - `regras`: as regras gerais da página. A D-17 vence onde as duas discordarem.
-4. **Os 7 tipos da DP (D-19/D-20): `automacao/tipos-dp.json`.** Cada post segue UM tipo: a capa (molde e estilo) e a ordem das lâminas são exatamente as do tipo. Também leia no banco os modelos de texto dos tipos:
+4. **Os tipos da DP (D-19/D-20): a fonte é a tabela `tipos_post`** (o dono edita pelo botão "Tipos de post"; `automacao/tipos-dp.json` é só a cópia inicial):
+   ```sql
+   select id, nome, modelo, famoso, capa, laminas, nota, versao from tipos_post where ativo and ambiente_id=1 order by ordem;
+   ```
+   A `nota` de cada tipo vale como instrução do dono para aquele tipo. Cada post segue UM tipo: a capa (molde e estilo) e a ordem das lâminas são exatamente as do tipo. Também leia no banco os modelos de texto dos tipos:
    ```sql
    select texto from config_fabrica where ambiente_id=1 and chave='modelos_tecnica';
    ```
@@ -109,7 +118,7 @@ node automacao/vigias.mjs /tmp/v.json
 - O texto vai para a ficha **sem mudar uma palavra**, dividido nos campos do molde (`paragrafos`, `titulo`, `texto`, `itens`…).
 - Use só moldes que já existem em `montagem/moldes.py`. **Nunca use** capa_caderno, capa_marcatexto, conta_visual, esc_cards, faixa_amarela ou foto_sticker, nem os que a tabela `padroes` marca como `escolha = 'nao'`.
 - `foto_prompt` vai em inglês e sempre termina com: "Realistic natural photo, Brazilian setting, soft natural light, physically coherent scene; no recognizable face of any person; no text, full-bleed, no black bars." Use no máximo 6 fotos por post. Lâminas de virada e de moral vão sem foto.
-- Grave `/tmp/f.json` com `{"pecas": ..., "ficha": ..., "tipo": "<id do tipo>", "reprovados": [itens de padroes com escolha 'nao']}` e rode:
+- Grave `/tmp/f.json` com `{"pecas": ..., "ficha": ..., "tipo": "<id do tipo>", "tipo_def": <a linha do tipo em tipos_post: {id, capa, laminas, famoso}>, "reprovados": [itens de padroes com escolha 'nao']}` e rode:
   ```
   node automacao/conferir_ficha.mjs /tmp/f.json
   ```
@@ -144,3 +153,26 @@ Se qualquer conferência falhar, **não** grave o post. Uma variação sem post 
 - Se `feitos = qtd`, marque o pedido como `montando`. A próxima rodada marca `feito` quando o robô terminar.
 - Se pulou algum post, marque `erro` quando `feitos = 0`, ou `montando` com o motivo em `aviso`.
 - Responda em até 5 linhas: o número do pedido, os posts gravados (ids), as bases usadas, o que pulou e por quê.
+
+## Passo T · Mudar um TIPO de post (pedido do dono pelo botão "Tipos de post")
+O pedido do dono vale como o "sim" dele para aquele tipo (D-19). Custo zero.
+1. Leia o pedido, o tipo atual e as listas:
+   ```sql
+   select * from tipos_post where id = '<tipo_id>';
+   select versao, dados, motivo from tipos_post_versoes where tipo_id = '<tipo_id>' order by versao desc;
+   select texto from config_fabrica where ambiente_id=1 and chave='presets';
+   select item from padroes where escolha='nao';
+   ```
+2. Monte o tipo novo (`capa`, `laminas`, `nota`) fazendo **só o que o pedido diz**. Exemplos:
+   - "tira a lâmina de lista" → remove `lista_linhas` da lista;
+   - "volta para a versão 2" → copia `dados` da versão 2.
+   - Se o pedido for sobre o texto ou a história (e não sobre peças), escreva na `nota` do tipo.
+3. Grave `/tmp/t.json` com `{"novo": {id, capa, laminas, famoso}, "presets": <presets>, "reprovados": [itens 'nao']}` e rode `node automacao/conferir_tipo.mjs /tmp/t.json`.
+4. Se `ok: true`:
+   ```sql
+   insert into tipos_post_versoes (tipo_id, versao, dados, motivo) values ('<id>', <versao+1>, '<{"capa":..,"laminas":..,"nota":..}>'::jsonb, '<o pedido>');
+   update tipos_post set capa='<capa>'::jsonb, laminas='<laminas>'::jsonb, nota='<nota>', versao=<versao+1>, atualizado_em=now() where id='<id>';
+   update pedidos_tipo set situacao='feito', versao_nova=<versao+1>, resposta='<antes → depois, em palavras simples>', atualizado_em=now() where id=<pedido>;
+   ```
+5. Se não der (peça reprovada, mais de 9 lâminas, pedido confuso), **não mude nada**:
+   `update pedidos_tipo set situacao='recusado', resposta='<por quê, simples, e o que dá para pedir no lugar>', atualizado_em=now() where id=<pedido>;`
