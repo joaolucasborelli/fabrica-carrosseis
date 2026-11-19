@@ -326,16 +326,13 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .cad .faixa p{font:400 58px/1.45 'Bitter',serif;color:#F5F5F0}
 .cad .faixa p .am{color:#FFD21F;font-weight:600}
 .cad .handle{color:#F5F5F0;opacity:.85}
-/* miolo · F1 corrido: parágrafo em cima, foto inteira no meio, parágrafo embaixo (pedido do dono, 19/11) */
+/* miolo · F1 corrido */
 .fc{background:#000}
-.fc .cima,.fc .baixo{position:absolute;left:56px;right:56px;display:flex;flex-direction:column;align-items:center}
-.fc .cima{top:64px;height:300px;justify-content:flex-end}
-.fc .baixo{top:1000px;height:220px;justify-content:flex-start}
-.fc .foto{position:absolute;left:0;top:384px;width:1080px;height:596px;object-fit:cover;object-position:var(--foco,50% 50%)}
-.fc.so1 .cima{height:340px;top:70px;justify-content:center}
-.fc.so1 .foto{top:440px;height:720px}
-.fc .cima p,.fc .baixo p{font:700 56px/1.16 'Inter',sans-serif;color:#fff;text-align:center;text-wrap:balance}
-.fc .cima p+p,.fc .baixo p+p{margin-top:.45em}
+.fc .foto{position:absolute;inset:0 0 auto 0;width:1080px;height:780px;object-fit:cover;object-position:var(--foco,50% 40%);
+  -webkit-mask-image:linear-gradient(#000 0,#000 600px,transparent 770px);mask-image:linear-gradient(#000 0,#000 600px,transparent 770px)}
+.fc .texto{position:absolute;left:40px;right:40px;top:735px;height:470px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.fc .texto p{font:700 60px/1.12 'Inter',sans-serif;color:#fff;text-align:center;text-wrap:balance}
+.fc .texto p+p{margin-top:.5em}
 .fc .assin{bottom:40px;color:#BDBDBD}
 /* miolo · meia tela */
 .mtela{background:#111}
@@ -452,8 +449,7 @@ mark{background:#FFD21F;color:#111;padding:0 .12em;margin:0 -.04em;-webkit-box-d
 .f3a .vinheta{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,rgba(0,0,0,.28) 0,rgba(0,0,0,.08) 45%,rgba(0,0,0,.4) 100%)}
 .f3a .grao,.f3b .grao{position:absolute;inset:0;background-image:url("__PAPEL__");opacity:.16;mix-blend-mode:overlay}
 .f3a .texto{position:absolute;left:130px;right:130px;top:300px;height:480px;display:flex;align-items:center;justify-content:center}
-.f3a .texto p{font:800 64px/1.42 'Inter',sans-serif;color:#fff;text-align:center;text-wrap:balance}
-.f3a .texto p .fx{background:rgba(0,0,0,.66);-webkit-box-decoration-break:clone;box-decoration-break:clone;padding:.06em .32em;border-radius:10px}
+.f3a .texto p{font:600 60px/1.22 'Inter',sans-serif;color:#fff;text-align:center;text-shadow:0 2px 14px rgba(0,0,0,.55);text-wrap:balance}
 .f3a .handle,.f3b .handle{color:rgba(255,255,255,.72);text-shadow:0 1px 6px rgba(0,0,0,.5)}
 
 /* F3b · foto cheia, legenda grande no terço de baixo */
@@ -613,10 +609,10 @@ FIT_JS = """
   }
   // trava geral (19/11): nenhum texto encosta em outro texto nem numa foto que não é o fundo; se encostar, encolhe a letra
   for (const S of document.querySelectorAll('.slide')) {
-    const R = S.getBoundingClientRect(), area = R.width * R.height;
     let ts = [...S.querySelectorAll('.fit, .tit, .sub, .texto, .caixa, .siga, .assin, .handle, .rod, .rodape, .pergunta')].filter(e => e.textContent.trim());
     ts = ts.filter(e => !ts.some(o => o !== e && o.contains(e)));
-    const fotos = [...S.querySelectorAll('img')].filter(i => { const r = i.getBoundingClientRect(); return r.width > 200 && r.width * r.height < area * 0.8; });
+    // só fotos emolduradas (as de fundo e as que esmaecem sob o texto fazem parte do visual aprovado)
+    const fotos = [...S.querySelectorAll('.moldura img, .meia img, .img img, .duas img')].filter(i => i.getBoundingClientRect().width > 200);
     const caixa = e => { const g = document.createRange(); g.selectNodeContents(e); return g.getBoundingClientRect(); };
     const bate = (a, b) => a.width && b.width && a.left < b.right - 4 && b.left < a.right - 4 && a.top < b.bottom - 4 && b.top < a.bottom - 4;
     const encolhe = e => { const ps = e.querySelectorAll('p'); (ps.length ? [...ps] : [e]).forEach(x => { x.style.fontSize = parseFloat(getComputedStyle(x).fontSize) * 0.95 + 'px'; }); };
@@ -701,35 +697,10 @@ def _k_caderno(s):
             f'<div class="handle">{HANDLE}</div></div>')
 
 
-def _metades(ps):
-    """Divide o texto em duas partes, para a foto ficar no meio: por parágrafo; se for 1 só, por frase."""
-    ps = [p for p in ps if p and p.strip()]
-    if len(ps) >= 2:
-        k = (len(ps) + 1) // 2
-        return ps[:k], ps[k:]
-    if not ps:
-        return [], []
-    fr = [f.strip() for f in re.split(r"(?<=[.!?…])\s+(?=\S)", ps[0]) if f.strip()]
-    if len(fr) < 2:
-        return ps, []
-    tot = sum(len(f) for f in fr); acc = 0; k = 1
-    for i, f in enumerate(fr[:-1], 1):
-        acc += len(f)
-        if acc >= tot / 2:
-            k = i; break
-        k = i
-    return [" ".join(fr[:k])], [" ".join(fr[k:])]
-
-
 def _k_corrido(s):
-    cima, baixo = _metades(s.get("paragrafos") or [s.get("texto", "")])
-    pp = lambda xs: "".join(f"<p>{marcar(p, cor=True)}</p>" for p in xs)
-    if not baixo:
-        return (f'<div class="slide fc so1"><div class="cima fit" data-max="62">{pp(cima)}</div>'
-                f'<img class="foto" src="{s["foto"]}" style="--foco:{_foco(s, "50% 50%")}">{_assin()}</div>')
-    return (f'<div class="slide fc"><div class="cima fit" data-max="60">{pp(cima)}</div>'
-            f'<img class="foto" src="{s["foto"]}" style="--foco:{_foco(s, "50% 50%")}">'
-            f'<div class="baixo fit" data-max="60">{pp(baixo)}</div>{_assin()}</div>')
+    ps = s.get("paragrafos") or [s.get("texto", "")]
+    return (f'<div class="slide fc"><img class="foto" src="{s["foto"]}" style="--foco:{_foco(s)}">'
+            f'<div class="texto fit" data-max="66">{"".join(f"<p>{marcar(p, cor=True)}</p>" for p in ps)}</div>{_assin()}</div>')
 
 
 def _k_meiatela(s):
@@ -988,9 +959,8 @@ def slide_html(s: dict) -> str:
         cls = m[-3:]
         extra = '<div class="vinheta"></div>' if cls == "f3a" else '<div class="sombra"></div>'
         dmax = ' data-max="76"' if cls == "f3b" else ""
-        tx = f'<span class="fx">{marcar(s["texto"])}</span>' if cls == "f3a" else marcar(s["texto"])  # faixa escura: o título nunca some na foto
         corpo = (f'<div class="slide {cls}"><img class="foto" src="{s["foto"]}" style="--foco:{foco}">{extra}<div class="grao"></div>'
-                 f'<div class="texto fit"{dmax}><p>{tx}</p></div><div class="handle">{HANDLE}</div></div>')
+                 f'<div class="texto fit"{dmax}><p>{marcar(s["texto"])}</p></div><div class="handle">{HANDLE}</div></div>')
     elif m == "papel_f2":
         corpo = f'<div class="slide f2"><div class="texto fit" data-max="62">{paras(s["paragrafos"])}</div><div class="handle">{HANDLE}</div></div>'
     elif m == "preto_f5":
