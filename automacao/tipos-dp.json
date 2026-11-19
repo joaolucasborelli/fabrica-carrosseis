@@ -1,0 +1,77 @@
+{
+  "versao": "2026-11-19",
+  "fonte": "posts-modelo aprovados da fábrica da DP (config_fabrica.modelos_tecnica e presets.posts_modelo); D-19: o visual é igual, mudam só o público, a história e as pessoas das fotos",
+  "trocas_de_pecas_reprovadas": {
+    "meia_tela": "f1_corrido",
+    "foto_sticker": "f1_corrido",
+    "faixa_amarela": "preto_f5",
+    "conta_visual": "lista_linhas",
+    "esc_cards": "lista_linhas"
+  },
+  "pessoas": "mulher de 40 a 60 anos, mãe com filho ou filha, avó com neta; nunca jovem, adolescente, estudante, motoboy ou noivo; nunca rosto reconhecível de personagem inventada",
+  "tipos": [
+    {
+      "id": "historia_familia",
+      "nome": "História de família com virada no fim",
+      "modelo": "MODELO 1 (o pai e os R$ 300) · kit_R1_aluguel",
+      "famoso": false,
+      "capa": { "molde": "capa_numero", "estilo": "foto_real" },
+      "laminas": ["f1_corrido", "f1_corrido", "f1_corrido", "f1_corrido", "preto_f5", "lista_linhas", "antes_hoje", "citacao", "cta_f6"],
+      "nota": "capa com número grande + faixa; história em lâminas com foto; a revelação em preto_f5; a conta em lista_linhas; antes × hoje; a fala de quem guardou; pedido no fim"
+    },
+    {
+      "id": "famoso_trajetoria",
+      "nome": "Famoso com fato real (trajetória)",
+      "modelo": "MODELO 2 (Rebeca Andrade) · kit_R2_famoso",
+      "famoso": true,
+      "capa": { "molde": "capa_circulos", "estilo": "famoso" },
+      "laminas": ["f1_corrido", "f1_corrido", "f1_corrido", "f1_corrido", "f1_corrido", "f1_corrido", "f1_corrido", "fecho_foto"],
+      "nota": "cada lâmina é um fato real da vida da pessoa, com foto; fecho com foto e uma pergunta para ela"
+    },
+    {
+      "id": "famoso_licao",
+      "nome": "Famoso com fato real (lição para a vida dela)",
+      "modelo": "MODELO 3 (Silvio Santos) · p4_famoso",
+      "famoso": true,
+      "capa": { "molde": "capa_perfil", "estilo": "famoso_composicao" },
+      "laminas": ["papel_f2", "esc_titulo_moldura", "papel_f2", "esc_titulo_moldura", "lista_linhas", "esc_checklist", "preto_f5", "cta_f6"],
+      "nota": "o fato do famoso, a ponte para a vida dela (cena da casa), a lista do que ele entendia, o checklist da semana, a moral"
+    },
+    {
+      "id": "tweet_historia",
+      "nome": "Print de tweet + história",
+      "modelo": "MODELO 4 (o motoboy e a corrida de R$ 7,90) · p3_motoboy",
+      "famoso": false,
+      "capa": { "molde": "capa_tweet", "estilo": "foto_real" },
+      "laminas": ["papel_f2", "esc_titulo_moldura", "papel_f2", "esc_titulo_moldura", "esc_checklist", "lista_linhas", "preto_f5", "cta_f6"],
+      "nota": "capa em forma de post de rede social escrito por ela (personagem, aviso só na legenda); a cena, a vergonha, o método em checklist, os vazamentos em lista, a moral"
+    },
+    {
+      "id": "confissao",
+      "nome": "Confissão",
+      "modelo": "MODELO 5 (a farmácia às 3h17) · v4",
+      "famoso": false,
+      "capa": { "molde": "capa_f1", "estilo": "foto_real" },
+      "laminas": ["papel_f2", "papel_f2", "papel_f2", "papel_f2", "papel_f2", "papel_f2", "preto_f5", "cta_f6"],
+      "nota": "capa com hora marcada e a frase da virada; lâminas curtas em papel claro; a fala em 1ª pessoa vai entre aspas (personagem inventada nunca diz 'eu' como real)"
+    },
+    {
+      "id": "pergunta_curiosa",
+      "nome": "Pergunta curiosa",
+      "modelo": "MODELO 6 (por que tudo parece mais barato no cartão) · post 3",
+      "famoso": false,
+      "capa": { "molde": "capa_f1b", "estilo": "foto_real" },
+      "laminas": ["papel_f2", "papel_f2", "papel_f2", "papel_f2", "papel_f2", "papel_f2", "preto_f5", "cta_f6"],
+      "nota": "a pergunta na capa; a explicação em lâminas de papel com a revelação no meio; dado só com fonte na legenda. O post 3 usava capa_f1; aqui capa_f1b para não repetir a capa da confissão no mesmo pedido"
+    },
+    {
+      "id": "problema_solucoes",
+      "nome": "Problema → soluções",
+      "modelo": "MODELO 7 (o parcelado) · só texto na fábrica",
+      "famoso": false,
+      "capa": { "molde": "capa_f3a", "estilo": "foto_real" },
+      "laminas": ["f1_corrido", "f1_corrido", "f1_corrido", "preto_f5", "papel_f2", "papel_f2", "papel_f2", "cta_f6"],
+      "nota": "3 lâminas de problema com foto, a virada em preto, 3 testes que ela pode fazer (1 por lâmina), o pedido"
+    }
+  ]
+}

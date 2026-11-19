@@ -41,14 +41,28 @@ Repita essa conta **antes de cada post**. Se estiver tudo certo, marque o pedido
    ```
    - `estante`: lista as bases aprovadas e os roteiros já aprovados.
    - `regras`: as regras gerais da página. A D-17 vence onde as duas discordarem.
-4. O exemplo completo que deu certo (post 31):
+4. **Os 7 tipos da DP (D-19/D-20): `automacao/tipos-dp.json`.** Cada post segue UM tipo: a capa (molde e estilo) e a ordem das lâminas são exatamente as do tipo. Também leia no banco os modelos de texto dos tipos:
+   ```sql
+   select texto from config_fabrica where ambiente_id=1 and chave='modelos_tecnica';
+   ```
+   O visual é igual ao da fábrica da DP; mudam só o público (ela, de 40 a 60), a história (D-17) e as pessoas das fotos (mãe, avó, mulher de 40 a 60; nunca jovem).
+5. O exemplo de campos da ficha (post 31; use só como exemplo do formato dos campos, NÃO como sequência de moldes):
    ```sql
    select pecas, plano_visual from variacoes where id=82;
    select * from pautas where id=79;
    ```
    **Copie esse formato campo por campo.**
 
-## Passo 3 · Escolher a base de cada post
+## Passo 3 · Escolher o TIPO e a base de cada post
+0. **Tipo primeiro.** Veja os tipos usados nos últimos posts:
+   ```sql
+   select remodelagem->>'tipo_dp' t, count(*) from variacoes where remodelagem ? 'tipo_dp' group by 1;
+   ```
+   Escolha o tipo menos usado. No mesmo pedido: nunca 2 posts do mesmo tipo, nunca a mesma capa, no máximo 1 famoso.
+   - **Famoso** (famoso_trajetoria, famoso_licao): só com fato real que você confirma, com "Fonte:" na legenda (link ou veículo e data), nunca político, nunca criança ou adolescente, retratado com dignidade, sem frase inventada. Preencha `capa.famoso` e `capa.fato`. Não leva "Comente FILA". Ponha em `aviso`: "post X tem famoso: conferir a fonte antes de publicar". Para famoso, a história vem do fato real (não precisa de base da estante; use `base_code` = "fato").
+   - **Confissão:** a fala em 1ª pessoa vai sempre entre aspas (personagem inventada nunca diz "eu" como real).
+   - Quando listas discordarem, **o proibido vence** (ex.: faixa_amarela está em presets mas é reprovada em padroes).
+
 1. Primeiro use os roteiros já aprovados que ainda não viraram post. Para saber quais já viraram:
    ```sql
    select distinct remodelagem->>'base_code' from variacoes where remodelagem->>'base_code' is not null;
@@ -68,7 +82,7 @@ Repita essa conta **antes de cada post**. Se estiver tudo certo, marque o pedido
 - Mesma ordem, mesma virada e mesmo fim da base. O texto é **100% novo**: nunca 6 palavras seguidas iguais às da base.
 - Ela tem de 40 a 60 anos: mãe com filho, avó com neta, mulher que segura a casa.
 - Capa com 6 a 10 palavras, sem "eu" (use "você", "ela" ou o nome).
-- No máximo 10 lâminas, contando a capa, e nunca mais lâminas que a base.
+- No máximo 10 lâminas, contando a capa. O número de lâminas é o do tipo (tipos-dp.json); a história da base é encurtada ou dividida para caber.
 - Até 35 palavras por lâmina de história e até 20 por lâmina de lista ou conversa. No máximo 180 palavras no post.
 - Uma ideia só. O post termina na revelação ou na emoção. **Nunca** escreva "história ilustrativa" nas lâminas.
 - **Pedido "comente FILA" (D-18):** no máximo 2 posts por dia levam o pedido. Antes de escrever, conte quantos já levaram hoje:
@@ -82,7 +96,7 @@ Repita essa conta **antes de cada post**. Se estiver tudo certo, marque o pedido
 - Formato de `pecas`: `{capa: texto, slides: [textos], legenda, hashtags: [], thumb_descricao}`. `slides` é uma lista de **textos**, nunca de objetos.
 
 ### Vigias (obrigatório)
-Grave `/tmp/v.json` com `{"base": {n_slides, capa_texto, slides}, "post": {capa, slides, legenda, pessoa_real, pedido_fila}}` e rode (`pessoa_real: true` só para história real de famoso, com "Fonte:" na legenda; aí a legenda não leva o aviso de ilustrativa):
+Grave `/tmp/v.json` com `{"base": {n_slides, capa_texto, slides}, "post": {capa, slides, legenda, pessoa_real, pedido_fila, tipo, famoso}}` (`tipo` = id do tipo; `famoso: true` nos tipos de famoso) e rode (`pessoa_real: true` só para história real de famoso, com "Fonte:" na legenda; aí a legenda não leva o aviso de ilustrativa):
 ```
 node automacao/vigias.mjs /tmp/v.json
 ```
@@ -90,11 +104,12 @@ node automacao/vigias.mjs /tmp/v.json
 - Se ainda reprovar, pule esse post e escreva o motivo em `aviso`.
 
 ## Passo 5 · Ficha visual
-- Copie o formato de `variacoes.plano_visual.post` da variação 82: `capa`, `slides`, `legenda`, `receita`, `hashtags` e `personagem`, com **todos** os campos, deixando vazios os que não usar.
+- A sequência de moldes é a do tipo (`tipos-dp.json`): capa e lâminas exatamente nessa ordem, e o texto é escrito para caber nela (o número de lâminas é o do tipo).
+- Copie o formato dos campos de `variacoes.plano_visual.post` da variação 82: `capa`, `slides`, `legenda`, `receita`, `hashtags` e `personagem`, com **todos** os campos, deixando vazios os que não usar.
 - O texto vai para a ficha **sem mudar uma palavra**, dividido nos campos do molde (`paragrafos`, `titulo`, `texto`, `itens`…).
 - Use só moldes que já existem em `montagem/moldes.py`. **Nunca use** capa_caderno, capa_marcatexto, conta_visual, esc_cards, faixa_amarela ou foto_sticker, nem os que a tabela `padroes` marca como `escolha = 'nao'`.
 - `foto_prompt` vai em inglês e sempre termina com: "Realistic natural photo, Brazilian setting, soft natural light, physically coherent scene; no recognizable face of any person; no text, full-bleed, no black bars." Use no máximo 6 fotos por post. Lâminas de virada e de moral vão sem foto.
-- Grave `/tmp/f.json` com `{"pecas": ..., "ficha": ..., "reprovados": [itens de padroes com escolha 'nao']}` e rode:
+- Grave `/tmp/f.json` com `{"pecas": ..., "ficha": ..., "tipo": "<id do tipo>", "reprovados": [itens de padroes com escolha 'nao']}` e rode:
   ```
   node automacao/conferir_ficha.mjs /tmp/f.json
   ```
@@ -104,7 +119,7 @@ node automacao/vigias.mjs /tmp/v.json
 1. `insert into pautas (dia, lote, tipo, plano, persona_id, quantidade, ambiente_id)`, com `lote = 'claude-pedido-<id do pedido>'`, `persona_id = 'mulher'`, `ambiente_id = 1`. Guarde o id.
 2. `insert into variacoes (pauta_id, pecas, forca, risco, motivo, painel, status, historico, variaveis, remodelagem, por_que_para)`:
    - `status = 'mostrada'`;
-   - `remodelagem` com `{"base_code": "<base>", "camada_grande": "cópia fiel do roteiro (D-17)", "pedido_fila": true|false}`;
+   - `remodelagem` com `{"base_code": "<base>", "camada_grande": "cópia fiel do roteiro (D-17) no tipo da DP (D-19)", "pedido_fila": true|false, "tipo_dp": "<id do tipo>"}`;
    - `painel` com o resultado das vigias.
    Guarde o id.
 3. Grave a ficha e calcule a impressão digital **no banco**, a partir do `pecas` já gravado:

@@ -19,7 +19,7 @@ concurrency:
 jobs:
   montar:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,5 +36,5 @@ jobs:
       - name: Montar
         if: steps.fila.outputs.pendentes != '0'
         env:
-          MONTADOR_LIMITE: "4"
+          MONTADOR_LIMITE: "1"
         run: python montagem/robo.py

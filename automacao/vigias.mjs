@@ -32,7 +32,8 @@ if (/(?<!\p{L})eu(?!\p{L})/iu.test(semAspas(post.capa))) problemas.push(`capa co
 
 // 2. tamanho (D-17)
 const total = slides.length + 1;
-const tetoLaminas = Math.min(10, Number(base?.n_slides) || 10);
+// com tipo da DP (D-19/D-20) quem manda no tamanho é o tipo (até 10); sem tipo, nunca maior que a base (D-17)
+const tetoLaminas = post.tipo ? 10 : Math.min(10, Number(base?.n_slides) || 10);
 if (total > tetoLaminas) problemas.push(`${total} lâminas (máximo ${tetoLaminas}: até 10 e nunca maior que a base)`);
 if (total < 5) problemas.push(`só ${total} lâminas`);
 slidesConta.forEach((s, i) => { const n = palavras(s).length; if (n > 35) problemas.push(`lâmina ${i + 2} com ${n} palavras (máximo 35)`); });
@@ -47,6 +48,7 @@ if (achadas.length) problemas.push(`palavra proibida: ${achadas.join(", ")}`);
 const semPedido = [post.capa, ...slides.slice(0, -1), ultima.replace(PEDIDO, ""), post.legenda ?? ""].map(String).join("\n");
 if (/(?<!\p{L})(coment|digite|escreva)\p{L}*/iu.test(semPedido)) problemas.push(`pedido de comentário fora do "comente FILA" da última lâmina`);
 if (post.pedido_fila === true && !PEDIDO.test(ultima)) problemas.push(`falta "comente FILA" na última lâmina`);
+if (post.famoso === true && PEDIDO.test(ultima)) problemas.push(`post de famoso não leva "Comente FILA" (D-16: o famoso nunca vende)`);
 if (post.pedido_fila !== true && PEDIDO.test(ultima)) problemas.push(`"comente FILA" sem pedido_fila: true (limite de 2 por dia)`);
 
 // 4. "eu" de personagem nas lâminas (fala entre aspas ou travessão pode)
