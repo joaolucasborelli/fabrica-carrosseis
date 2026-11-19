@@ -25,6 +25,10 @@ fs_.forEach((s, i) => {
   if (!s.molde) problemas.push(`lâmina ${i + 2} sem molde`);
   if (proibidos.has(s.molde)) problemas.push(`lâmina ${i + 2} usa molde reprovado ${s.molde}`);
   if (s.foto_fonte === "ia" && !s.foto_prompt) problemas.push(`lâmina ${i + 2} sem foto_prompt`);
+  // lâmina que é desenhada com foto não pode ir "sem foto" (o robô repetiria a foto da capa)
+  if (["f1_corrido", "fecho_foto", "esc_checklist", "esc_titulo_moldura", "antes_hoje"].includes(s.molde) && !["ia", "real"].includes(s.foto_fonte)) problemas.push(`lâmina ${i + 2} (${s.molde}) precisa de foto: foto_fonte "ia" ou "real"`);
+  if (s.foto_fonte === "real" && !(s.busca_real || s.pessoa_real)) problemas.push(`lâmina ${i + 2} com foto real sem busca_real`);
+  if (s.foto_fonte === "real" && !s.foto_prompt) problemas.push(`lâmina ${i + 2} com foto real precisa de foto_prompt de reserva (cena sem rosto, se não achar a foto)`);
 });
 if (proibidos.has(ficha?.capa?.molde)) problemas.push(`capa usa molde reprovado ${ficha.capa.molde}`);
 

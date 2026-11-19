@@ -5,6 +5,8 @@ recusa NC (não comercial) e ND (sem derivação). Devolve o arquivo baixado e a
 import html
 import json
 import re
+import time
+import urllib.error
 import unicodedata
 import urllib.parse
 import urllib.request
@@ -65,6 +67,39 @@ def candidatos(termos, pessoa="", limite=40):
     return saida
 
 
+def recortar_rosto(arq: Path, proporcao=4 / 5, folga=3.2, min_lado=360):
+    """Foto de palco/evento com a pessoa pequena: recorta em volta do maior rosto (retrato 4:5).
+    Devolve True se recortou. Sem rosto, rosto pequeno demais ou recorte com pouca resolução: deixa como está."""
+    try:
+        import cv2
+    except Exception:
+        return False
+    img = cv2.imread(str(arq))
+    if img is None:
+        return False
+    h, w = img.shape[:2]
+    cinza = cv2.equalizeHist(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+    det = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    rostos = det.detectMultiScale(cinza, scaleFactor=1.08, minNeighbors=6, minSize=(40, 40))
+    if len(rostos) == 0:
+        return False
+    x, y, fw, fh = max(rostos, key=lambda r: r[2] * r[3])
+    if fw * fh >= 0.06 * w * h:  # o rosto já é grande: a foto já é um retrato
+        return False
+    cw = int(fw * folga); ch = int(cw / proporcao)
+    if cw > w or ch > h:
+        cw = min(w, int(h * proporcao)); ch = int(cw / proporcao)
+    if cw < min_lado:  # recorte com pouca resolução: borra no slide
+        return False
+    cx = x + fw // 2; cy = y + int(fh * 0.9)  # rosto no terço de cima
+    x0 = max(0, min(w - cw, cx - cw // 2)); y0 = max(0, min(h - ch, cy - ch // 2))
+    cv2.imwrite(str(arq), img[y0:y0 + ch, x0:x0 + cw], [cv2.IMWRITE_JPEG_QUALITY, 92])
+    return True
+
+
+USADAS = set()  # fotos já usadas nesta montagem: a mesma foto real não se repete no post
+
+
 def buscar(termos, pessoa, destino: Path, log=print, aceitar=None, max_conferir=6):
     """Baixa a melhor foto livre que passar na conferência (aceitar). Devolve {"arquivo", "credito", "pagina"} ou None."""
     for tentativa in (termos, pessoa):
@@ -75,15 +110,27 @@ def buscar(termos, pessoa, destino: Path, log=print, aceitar=None, max_conferir=
         except Exception as e:  # rede, API fora
             log(f"  foto real: busca falhou ({e})")
             return None
-        for c in cs[:max_conferir]:
-            try:
-                with urllib.request.urlopen(urllib.request.Request(c["url"], headers=UA), timeout=60) as r:
-                    destino.parent.mkdir(parents=True, exist_ok=True); destino.write_bytes(r.read())
-            except Exception:
+        for c in [x for x in cs if x["titulo"] not in USADAS][:max_conferir]:
+            baixou = False
+            for espera in (1.5, 6, 15):  # o Wikimedia limita downloads seguidos (HTTP 429): espera e tenta de novo
+                time.sleep(espera)
+                try:
+                    with urllib.request.urlopen(urllib.request.Request(c["url"], headers=UA), timeout=60) as r:
+                        destino.parent.mkdir(parents=True, exist_ok=True); destino.write_bytes(r.read())
+                    baixou = True; break
+                except urllib.error.HTTPError as e:
+                    if e.code != 429:
+                        break
+                except Exception:
+                    break
+            if not baixou:
                 continue
+            if recortar_rosto(destino):
+                log(f"  foto real recortada no rosto: {c['titulo']}")
             if aceitar and not aceitar(destino, c):
                 log(f"  foto real recusada: {c['titulo']}")
                 continue
+            USADAS.add(c["titulo"])
             log(f"  foto real: {c['titulo']} ({c['licenca']}, {c['ano'] or 's/ano'})")
             return {"arquivo": destino, "credito": c["credito"], "pagina": c["pagina"]}
     return None

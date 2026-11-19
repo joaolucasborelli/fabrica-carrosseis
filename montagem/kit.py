@@ -64,8 +64,9 @@ def _real(s, destino: Path, ev):
         ev("conferente", f"Foto real: nota {k.get('nota', '?')}/10. {(k.get('defeitos') or [''])[0][:90]}")
         return (k.get("nota") or 0) >= 7
     r = None
-    for termo in [f"{quem} pronunciamento à nação", f"{quem} retrato oficial", f"{quem} discurso", busca] if quem else [busca]:
-        r = fotos_reais.buscar(termo, quem, destino, log=lambda *_: None, aceitar=aceitar, max_conferir=3)
+    # o nome puro primeiro (artista, atleta); os termos de cerimônia só depois (eram para político e achavam foto de palco)
+    for termo in ([busca] + ([f"{quem} retrato", f"{quem} entrevista", f"{quem} retrato oficial"] if quem else [])):
+        r = fotos_reais.buscar(termo, quem, destino, log=lambda *_: None, aceitar=aceitar, max_conferir=4)
         if r:
             break
     if r:
