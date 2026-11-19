@@ -58,7 +58,7 @@ Repita essa conta **antes de cada post**. Se estiver tudo certo, marque o pedido
    ```sql
    select remodelagem->>'tipo_dp' t, count(*) from variacoes where remodelagem ? 'tipo_dp' group by 1;
    ```
-   Escolha o tipo menos usado. No mesmo pedido: nunca 2 posts do mesmo tipo, nunca a mesma capa, no máximo 1 famoso.
+   Se o `aviso` do pedido começar com `tipos:` (ex.: `tipos: famoso_trajetoria, tweet_historia`), use esses tipos, nessa ordem, e apague esse texto do `aviso` ao terminar. Senão, escolha o tipo menos usado. No mesmo pedido: nunca 2 posts do mesmo tipo, nunca a mesma capa, no máximo 1 famoso.
    - **Famoso** (famoso_trajetoria, famoso_licao): só com fato real que você confirma, com "Fonte:" na legenda (link ou veículo e data), nunca político, nunca criança ou adolescente, retratado com dignidade, sem frase inventada. Preencha `capa.famoso` e `capa.fato`. Não leva "Comente FILA". Ponha em `aviso`: "post X tem famoso: conferir a fonte antes de publicar". Para famoso, a história vem do fato real (não precisa de base da estante; use `base_code` = "fato").
    - **Confissão:** a fala em 1ª pessoa vai sempre entre aspas (personagem inventada nunca diz "eu" como real).
    - Quando listas discordarem, **o proibido vence** (ex.: faixa_amarela está em presets mas é reprovada em padroes).
