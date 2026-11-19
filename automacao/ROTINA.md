@@ -76,7 +76,7 @@ Repita essa conta **antes de cada post**. Se estiver tudo certo, marque o pedido
 - Formato de `pecas`: `{capa: texto, slides: [textos], legenda, hashtags: [], thumb_descricao}`. `slides` é uma lista de **textos**, nunca de objetos.
 
 ### Vigias (obrigatório)
-Grave `/tmp/v.json` com `{"base": {n_slides, capa_texto, slides}, "post": {capa, slides, legenda}}` e rode:
+Grave `/tmp/v.json` com `{"base": {n_slides, capa_texto, slides}, "post": {capa, slides, legenda, pessoa_real}}` e rode (`pessoa_real: true` só para história real de famoso, com "Fonte:" na legenda; aí não vai "história ilustrativa"):
 ```
 node automacao/vigias.mjs /tmp/v.json
 ```

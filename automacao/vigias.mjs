@@ -1,7 +1,8 @@
 // Vigias grátis do caminho "Pelo Claude" (D-17). Não chama nenhuma API.
 // Uso: node automacao/vigias.mjs caminho/do/teste.json
 // teste.json = { "base": { "n_slides": 11, "capa_texto": "...", "slides": ["..."] },
-//               "post": { "capa": "...", "slides": ["..."], "legenda": "..." } }
+//               "post": { "capa": "...", "slides": ["..."], "legenda": "...", "pessoa_real": false } }
+// pessoa_real: true só para história real de famoso com fonte (D-16); aí não leva "história ilustrativa".
 // Sai com {"ok":true|false,"problemas":[...],"avisos":[...]} e código 0 (ok) ou 1 (reprovado).
 import fs from "node:fs";
 
@@ -60,7 +61,11 @@ if (base) {
 const lam = [post.capa, ...slides].join("\n");
 if (/@|ahistoriaquemuda|siga (a|nossa) p[áa]gina/iu.test(lam)) problemas.push("marca ou \"siga\" dentro das lâminas");
 if (/fila das contas|defensoria/iu.test(lam)) avisos.push("Fila das Contas ou Defensoria dentro das lâminas: só se o tema pedir");
-if (!/hist[óo]ria ilustrativa/i.test(ultima)) problemas.push("falta \"história ilustrativa\" na última lâmina");
+// história real de famoso (D-16): não leva "história ilustrativa", mas precisa de fonte na legenda
+if (post.pessoa_real === true) {
+  if (!/fonte/i.test(String(post.legenda ?? ""))) problemas.push("história real de famoso sem fonte na legenda");
+  if (/hist[óo]ria ilustrativa/i.test(lam)) problemas.push("história real não leva \"história ilustrativa\"");
+} else if (!/hist[óo]ria ilustrativa/i.test(ultima)) problemas.push("falta \"história ilustrativa\" na última lâmina");
 
 // 7. número sem fonte
 if (/\d+([.,]\d+)?\s*%/.test(lam) && !/fonte/i.test(String(post.legenda ?? ""))) problemas.push("número em % sem fonte na legenda");
