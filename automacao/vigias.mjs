@@ -45,7 +45,7 @@ const tudo = [post.capa, ...slides, post.legenda ?? ""].map(String).join("\n");
 const achadas = PROIBIDAS.filter((t) => new RegExp(`(?<![\\p{L}\\p{N}])${escRe(t)}(?![\\p{L}\\p{N}])`, "iu").test(t === "você gasta demais" ? semAspas(tudo) : tudo));
 if (achadas.length) problemas.push(`palavra proibida: ${achadas.join(", ")}`);
 // D-18: só vale "comente FILA", e só na última lâmina
-const semPedido = [post.capa, ...slides.slice(0, -1), ultima.replace(PEDIDO, ""), post.legenda ?? ""].map(String).join("\n");
+const semPedido = [post.capa, ...slides.slice(0, -1), ultima.replace(PEDIDO, ""), post.pedido_fila === true ? String(post.legenda ?? "").replace(PEDIDO, "") : (post.legenda ?? "")].map(String).join("\n");
 if (/(?<!\p{L})(coment|digite|escreva)\p{L}*/iu.test(semPedido)) problemas.push(`pedido de comentário fora do "comente FILA" da última lâmina`);
 if (post.pedido_fila === true && !PEDIDO.test(ultima)) problemas.push(`falta "comente FILA" na última lâmina`);
 if (post.famoso === true && PEDIDO.test(ultima)) problemas.push(`post de famoso não leva "Comente FILA" (D-16: o famoso nunca vende)`);
