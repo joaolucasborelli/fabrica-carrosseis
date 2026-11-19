@@ -7,7 +7,7 @@ Você é a rotina que escreve os posts da página **Do outro lado da Porta** qua
 - **Nunca** chame as funções pagas (`fabrica`, `roteiro`, `capas`, `montador`) nem qualquer API de IA. O texto e a ficha visual são escritos por você. Só o robô (que acorda sozinho quando você grava o post) gera as fotos.
 - Nunca publique nada no Instagram. Nunca mude `config_fabrica` (teto, regras, estante). Nunca apague linhas.
 - Nada de fato, número, depoimento ou resultado inventado. Política neutra: nem exaltar nem atacar político ou partido.
-- Personagem inventada: aviso na legenda, "história ilustrativa" na última lâmina e **nunca rosto reconhecível** nas fotos (de costas, só mãos ou fora de foco).
+- Personagem inventada: aviso de história ilustrativa **só na legenda** (a página se chama Histórias Ilustrativas; D-18) e **nunca rosto reconhecível** nas fotos (de costas, só mãos ou fora de foco).
 - Não faça commit nem push neste repositório.
 
 ## Passo 0 · Olhar a fila
@@ -70,13 +70,19 @@ Repita essa conta **antes de cada post**. Se estiver tudo certo, marque o pedido
 - Capa com 6 a 10 palavras, sem "eu" (use "você", "ela" ou o nome).
 - No máximo 10 lâminas, contando a capa, e nunca mais lâminas que a base.
 - Até 35 palavras por lâmina de história e até 20 por lâmina de lista ou conversa. No máximo 180 palavras no post.
-- Uma ideia só. O post termina na revelação ou na emoção. A última lâmina termina com a linha `história ilustrativa` quando a personagem é inventada.
-- Nada de marca, "siga", "comente", Fila das Contas ou Defensoria dentro das lâminas. Isso vai para a legenda, só quando o tema pedir.
-- A legenda leva o aviso de personagem ilustrativa e de 6 a 8 hashtags sem marca.
+- Uma ideia só. O post termina na revelação ou na emoção. **Nunca** escreva "história ilustrativa" nas lâminas.
+- **Pedido "comente FILA" (D-18):** no máximo 2 posts por dia levam o pedido. Antes de escrever, conte quantos já levaram hoje:
+  ```sql
+  select count(*) from variacoes where remodelagem->>'pedido_fila' = 'true' and (criada_em at time zone 'America/Sao_Paulo')::date = (now() at time zone 'America/Sao_Paulo')::date;
+  ```
+  Se for menos de 2, este post leva o pedido: a última lâmina termina com uma frase curta ligada à história, seguida de **"Comente FILA e receba a sua fila das contas."** Grave `"pedido_fila": true` em `remodelagem` e em `/tmp/v.json`. A legenda repete: "Comente FILA que eu te mando o teste no direct."
+  Fora do pedido, nada de "comente", "digite" ou "escreva".
+- Nada de marca, "siga", Fila das Contas ou Defensoria dentro das outras lâminas. Isso vai para a legenda, só quando o tema pedir.
+- A legenda leva o aviso de personagem ilustrativa ("Personagem e história ilustrativas.") e de 6 a 8 hashtags sem marca.
 - Formato de `pecas`: `{capa: texto, slides: [textos], legenda, hashtags: [], thumb_descricao}`. `slides` é uma lista de **textos**, nunca de objetos.
 
 ### Vigias (obrigatório)
-Grave `/tmp/v.json` com `{"base": {n_slides, capa_texto, slides}, "post": {capa, slides, legenda, pessoa_real}}` e rode (`pessoa_real: true` só para história real de famoso, com "Fonte:" na legenda; aí não vai "história ilustrativa"):
+Grave `/tmp/v.json` com `{"base": {n_slides, capa_texto, slides}, "post": {capa, slides, legenda, pessoa_real, pedido_fila}}` e rode (`pessoa_real: true` só para história real de famoso, com "Fonte:" na legenda; aí a legenda não leva o aviso de ilustrativa):
 ```
 node automacao/vigias.mjs /tmp/v.json
 ```
@@ -98,7 +104,7 @@ node automacao/vigias.mjs /tmp/v.json
 1. `insert into pautas (dia, lote, tipo, plano, persona_id, quantidade, ambiente_id)`, com `lote = 'claude-pedido-<id do pedido>'`, `persona_id = 'mulher'`, `ambiente_id = 1`. Guarde o id.
 2. `insert into variacoes (pauta_id, pecas, forca, risco, motivo, painel, status, historico, variaveis, remodelagem, por_que_para)`:
    - `status = 'mostrada'`;
-   - `remodelagem` com `{"base_code": "<base>", "camada_grande": "cópia fiel do roteiro (D-17)"}`;
+   - `remodelagem` com `{"base_code": "<base>", "camada_grande": "cópia fiel do roteiro (D-17)", "pedido_fila": true|false}`;
    - `painel` com o resultado das vigias.
    Guarde o id.
 3. Grave a ficha e calcule a impressão digital **no banco**, a partir do `pecas` já gravado:

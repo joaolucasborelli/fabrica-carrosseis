@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qual conta passa na frente?</title>
+<meta name="description" content="Monte a sua Fila das Contas em 2 minutos. Sem cadastro.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f1e9;--card:#fffdf9;--tx:#2b2420;--mut:#7a6d63;--ac:#b5562e;--ac2:#f3dccd;--ok:#3f6b4a;--ln:#e6dccf}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.5 Inter,system-ui,sans-serif}
+main{max-width:520px;margin:0 auto;padding:24px 16px 48px}
+.top{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+h1{font-size:28px;line-height:1.2;margin:0 0 12px;font-weight:800}
+h2{font-size:21px;line-height:1.3;margin:0 0 14px}
+p{margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:16px;padding:22px 18px;box-shadow:0 2px 10px #0000000a}
+.bar{height:6px;background:var(--ln);border-radius:9px;margin:0 0 18px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ac);width:0;transition:width .3s}
+.op{display:block;width:100%;text-align:left;background:#fff;border:2px solid var(--ln);border-radius:12px;padding:13px 14px;margin:0 0 10px;font:inherit;color:inherit;cursor:pointer}
+.op.on{border-color:var(--ac);background:var(--ac2)}
+.btn{display:block;width:100%;background:var(--ac);color:#fff;border:0;border-radius:12px;padding:15px;font:600 17px Inter,system-ui,sans-serif;cursor:pointer;margin-top:8px}
+.btn:disabled{opacity:.4}
+.lnk{background:none;border:0;color:var(--mut);font:inherit;text-decoration:underline;cursor:pointer;margin-top:12px}
+textarea{width:100%;min-height:90px;border:2px solid var(--ln);border-radius:12px;padding:12px;font:inherit}
+.dica{font-size:14px;color:var(--mut)}
+.fila{list-style:none;padding:0;margin:0 0 16px}
+.fila li{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid var(--ln);margin-bottom:8px}
+.fila b.n{min-width:28px;height:28px;border-radius:50%;background:var(--ac);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
+.fila.espera b.n{background:var(--mut)}
+.tag{font-size:12px;background:#fde3d8;color:#8a3215;border-radius:6px;padding:2px 6px;margin-left:auto}
+.box{border-left:4px solid var(--ok);background:#eef4ef;padding:12px 14px;border-radius:8px;margin:16px 0}
+.box.alerta{border-color:var(--ac);background:#fbeee7}
+.frase{font-size:20px;font-weight:800;line-height:1.3;margin:18px 0}
+footer{font-size:12px;color:var(--mut);margin-top:24px;text-align:center}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">Fila das Contas · passo 1</div>
+  <div id="app" class="card"></div>
+  <footer>Sem cadastro. Não pedimos nome, telefone nem CPF.<br>Conteúdo de organização. Não é conselho financeiro individual.</footer>
+</main>
+<script>
+const SB="https://kfvugtrjuqdakbpzvsxq.supabase.co", KEY="sb_publishable_hMCt4kaGtY75gMEb3aRi-g_Xh3OkPhx";
+const CASA=["Aluguel ou prestação da casa","Mercado","Luz","Água","Gás","Remédio"];
+const RESTO=["Cartão de crédito","Empréstimo ou consignado","Crediário ou carnê de loja","Conta no nome de outra pessoa (nome emprestado)","Internet ou celular","Escola ou curso","Outra"];
+const P=[
+ {id:"primeiro",t:"Quando o dinheiro cai, o que você paga primeiro?",tipo:"um",op:["O que vence primeiro","O que cobra mais alto","O cartão, para não aumentar","Vou pagando o que dá, sem ordem"]},
+ {id:"contas",t:"Quais contas estão na sua fila este mês?",d:"Marque todas.",tipo:"varios",op:[...CASA,...RESTO]},
+ {id:"atrasadas",t:"Alguma delas está atrasada?",d:"Marque as atrasadas. Se nenhuma, siga.",tipo:"varios",op:()=>R.contas||[],vazio:true},
+ {id:"sobra",t:"Depois de pagar a casa (moradia, comida, luz, água, gás, remédio), sobra alguma coisa?",tipo:"um",op:["Sobra um pouco","Não sobra nada","Nem isso cabe no que eu ganho"]},
+ {id:"sono",t:"Qual conta mais te tira o sono?",d:"Opcional. Escreva do seu jeito.",tipo:"texto"}
+];
+const R={}; let i=0;
+const app=document.getElementById("app");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function inicio(){
+  app.innerHTML=`<h1>Qual conta passa na frente?</h1>
+  <p>Você não falhou por falta de disciplina. Ninguém te mostrou a ordem das contas.</p>
+  <p>Responda 5 perguntas curtas e veja a sua <b>Fila das Contas</b>: quem passa na frente e quem espera a vez.</p>
+  <button class="btn" id="go">Começar</button>`;
+  document.getElementById("go").onclick=()=>{i=0;pergunta()};
+}
+function pergunta(){
+  const q=P[i]; const ops=typeof q.op==="function"?q.op():q.op||[];
+  if(q.id==="atrasadas"&&!ops.length){i++;return pergunta()}
+  let h=`<div class="bar"><i style="width:${(i/P.length)*100}%"></i></div><h2>${esc(q.t)}</h2>${q.d?`<p class="dica">${esc(q.d)}</p>`:""}`;
+  if(q.tipo==="texto") h+=`<textarea id="tx" maxlength="300">${esc(R.sono||"")}</textarea><button class="btn" id="nx">Ver a minha fila</button>`;
+  else{ h+=ops.map((o,k)=>`<button class="op${sel(q,o)?" on":""}" data-k="${k}">${esc(o)}</button>`).join("");
+    if(q.tipo==="varios") h+=`<button class="btn" id="nx" ${!q.vazio&&!(R[q.id]||[]).length?"disabled":""}>Continuar</button>`; }
+  if(i>0) h+=`<button class="lnk" id="bk">Voltar</button>`;
+  app.innerHTML=h;
+  app.querySelectorAll(".op").forEach(b=>b.onclick=()=>{const o=ops[+b.dataset.k];
+    if(q.tipo==="um"){R[q.id]=o;i++;pergunta()}
+    else{const a=new Set(R[q.id]||[]);a.has(o)?a.delete(o):a.add(o);R[q.id]=[...a];
+      if(q.id==="contas"&&R.atrasadas)R.atrasadas=R.atrasadas.filter(x=>a.has(x));pergunta()}});
+  const nx=document.getElementById("nx"); if(nx) nx.onclick=()=>{if(q.tipo==="texto")R.sono=document.getElementById("tx").value.trim(); if(q.vazio&&!R[q.id])R[q.id]=[]; i++; i>=P.length?resultado():pergunta()};
+  const bk=document.getElementById("bk"); if(bk) bk.onclick=()=>{i--; if(P[i].id==="atrasadas"&&!(R.contas||[]).length)i--; pergunta()};
+}
+const sel=(q,o)=>q.tipo==="um"?R[q.id]===o:(R[q.id]||[]).includes(o);
+
+function resultado(){
+  const c=R.contas||[], at=new Set(R.atrasadas||[]);
+  const frente=c.filter(x=>CASA.includes(x)).sort((a,b)=>at.has(b)-at.has(a));
+  const espera=c.filter(x=>!CASA.includes(x)).sort((a,b)=>at.has(b)-at.has(a));
+  const li=(arr,n0)=>arr.map((x,k)=>`<li><b class="n">${n0+k}</b>${esc(x)}${at.has(x)?'<span class="tag">atrasada</span>':""}</li>`).join("");
+  let h=`<div class="bar"><i style="width:100%"></i></div><h2>A sua Fila das Contas</h2>`;
+  h+= frente.length?`<p><b>Na frente da fila: o que mantém a casa de pé.</b></p><ul class="fila">${li(frente,1)}</ul>`:`<p>Você não marcou nenhuma conta da casa. Confira: moradia, mercado, luz, água, gás e remédio sempre passam na frente.</p>`;
+  if(espera.length) h+=`<p><b>Esperam a vez:</b></p><ul class="fila espera">${li(espera,frente.length+1)}</ul>`;
+  if(c.includes("Cartão de crédito")) h+=`<div class="box"><b>Onde olhar no cartão:</b> na fatura, procure a linha "rotativo" ou "saldo financiado". É ali que os juros mais crescem.</div>`;
+  if(R.sobra==="Nem isso cabe no que eu ganho") h+=`<div class="box alerta"><b>Se nem a casa cabe no salário, não é organização que falta.</b> A Defensoria Pública e o Procon atendem de graça. E existe a Lei do Superendividamento (Lei 14.181/2021), que ajuda a renegociar as dívidas sem tirar o que você precisa para viver.</div>`;
+  h+=`<p class="frase">A casa de pé passa na frente. O resto espera a vez.</p>
+  <p><b>Para hoje:</b> escreva essa fila num papel, nessa ordem. Só os nomes. Tire um print desta tela para não perder.</p>
+  <button class="lnk" id="re">Refazer</button>`;
+  app.innerHTML=h;
+  document.getElementById("re").onclick=()=>{for(const k in R)delete R[k];inicio()};
+  salvar();
+}
+let salvo=false;
+function salvar(){ if(salvo)return; salvo=true;
+  const origem=(new URLSearchParams(location.search).get("o")||"").slice(0,60)||null;
+  fetch(SB+"/rest/v1/quiz_respostas",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json",Prefer:"return=minimal"},
+    body:JSON.stringify({respostas:{primeiro:R.primeiro,contas:R.contas,atrasadas:R.atrasadas,sobra:R.sobra},tira_o_sono:(R.sono||"").slice(0,300)||null,origem})}).catch(()=>{});
+}
+inicio();
+</script>
+</body>
+</html>
