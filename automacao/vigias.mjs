@@ -87,6 +87,14 @@ if (somb) problemas.push(`imagem sombria no texto ("${somb[0]}"): o dono proibiu
 const rel = tudo.match(RELIGIAO);
 if (rel) problemas.push(`fala de religião ("${rel[0]}"): D-21 proíbe Deus e religião`);
 
+// 8. D-23: o arco da história
+const BARRADAS = /(?<![\p{L}])(jornada|chamado|virada|vida nova|voc[êe] merece|mentalidade|segredo)(?![\p{L}])/iu;
+const bar = [post.capa, ...slides].join("\n").match(BARRADAS);
+if (bar) problemas.push(`palavra barrada pelo arco: "${bar[0]}"`);
+slidesConta.slice(0, 5).forEach((s, i) => { const n = palavras(s).length; if (n > 18) problemas.push(`lâmina ${i + 2} com ${n} palavras (o arco pede até 18 da L2 à L6)`); });
+if (post.revelacao == null) problemas.push("falta dizer em que lâmina está a revelação (campo revelacao)");
+else if (Number(post.revelacao) > 5 || Number(post.revelacao) < 3) problemas.push(`revelação na lâmina ${post.revelacao} (o arco pede entre a L3 e a L5)`);
+
 // 7. número sem fonte
 if (/\d+([.,]\d+)?\s*%/.test(lam) && !/fonte/i.test(String(post.legenda ?? ""))) problemas.push("número em % sem fonte na legenda");
 

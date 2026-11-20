@@ -106,6 +106,21 @@ Repita essa conta **antes de cada post**. Se estiver tudo certo, marque o pedido
 - A legenda leva o aviso de personagem ilustrativa ("Personagem e história ilustrativas.") e de 6 a 8 hashtags sem marca.
 - Formato de `pecas`: `{capa: texto, slides: [textos], legenda, hashtags: [], thumb_descricao}`. `slides` é uma lista de **textos**, nunca de objetos.
 
+### O arco da história (D-23, aprovado pelo dono em 19/11)
+A jornada da heroína fica escondida, em 8 tempos. **A heroína é ELA** (mulher de 40 a 60, com nome e idade, em 3ª pessoa) e é ela quem age e descobre.
+1. **L1 · capa:** o antes, oposto ao fim. Um fato que causa estranheza, nunca uma pergunta já respondida.
+2. **L2 · o aperto:** valor em reais ou data, e uma cena da casa. Ela tem que segurar a leitora sozinha.
+3. **L3 · por causa disso:** ela tenta e não basta. Cada lâmina puxa a próxima por causa e efeito.
+4. **L4 · a guia que pergunta:** uma pessoa viva e em cena (vizinha, filha, amiga) ou um objeto. Ela **só pergunta ou mostra**, nunca dá conselho nem frase de sabedoria. Se o vencedor não tiver guia, aqui fica o instante feito só por ela.
+5. **L5 · ELA descobre:** o instante de 5 segundos, com um gesto que qualquer uma faria. A revelação cai **no máximo na lâmina 5**.
+6. **L6 · a ação:** pequena e possível, com 1 defeito de verdade (demorou, custou R$ 12, um mês não fechou). As contas em reais fecham.
+7. **L7 · a volta:** uma cena, não uma moral. Desfaz a capa, sem milagre e sem plateia aprovando.
+8. **L8 · o pedido:** nasce da história. "Comente FILA" **só quando o tema é a ordem de pagar**. Senão, "Salve e mande para..." ou "Já aconteceu com você?".
+
+Se o tipo de post tiver mais lâminas, os tempos se espalham, mas a revelação continua até a L5 e, depois dela, vêm só ação, fim e pedido (no post todo, no máximo 1 lâmina de ensinamento). Da L2 à L6, no máximo 18 palavras por lâmina.
+Nunca escreva: jornada, chamado, virada, vida nova, você merece, mentalidade, segredo.
+Grave em `/tmp/v.json` o campo `"revelacao": <número da lâmina da revelação>` (a capa é a L1).
+
 ### Vigias (obrigatório)
 Grave `/tmp/v.json` com `{"base": {n_slides, capa_texto, slides}, "post": {capa, slides, legenda, pessoa_real, pedido_fila, tipo, famoso}}` (`tipo` = id do tipo; `famoso: true` nos tipos de famoso) e rode (`pessoa_real: true` só para história real de famoso, com "Fonte:" na legenda; aí a legenda não leva o aviso de ilustrativa):
 ```
