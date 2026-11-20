@@ -470,16 +470,24 @@ def main():
             with open(os.environ["GITHUB_OUTPUT"], "a") as f:
                 f.write(f"pendentes={n}\n")
         return
-    fila =chamar({"acao": "fila", "limite": int(os.environ.get("MONTADOR_LIMITE", "3"))})
-    posts = fila.get("posts", [])
-    print("fila:", posts if fila.get("ok") else fila)
-    for pid in posts:
-        try:
-            print(pid, montar(pid))
-        except Exception as e:  # registra o erro no post e segue
-            print(pid, "ERRO", e)
-            evento(pid, "entregador", f"Deu erro na montagem: {str(e)[:160]}", "erro")
-            chamar({"acao": "erro", "post_id": pid, "log": str(e)})
+    # 20/11: monta um por vez e, enquanto sobrar tempo (25 min), pega o próximo da fila.
+    # O GitHub cancela disparos que chegam enquanto o robô trabalha, então post nenhum pode ficar para trás.
+    import time as _t
+    inicio, feitos = _t.time(), set()
+    while _t.time() - inicio < 25 * 60:
+        fila = chamar({"acao": "fila", "limite": int(os.environ.get("MONTADOR_LIMITE", "3"))})
+        posts = [p for p in fila.get("posts", []) if p not in feitos]
+        print("fila:", posts if fila.get("ok") else fila)
+        if not posts:
+            break
+        for pid in posts:
+            feitos.add(pid)
+            try:
+                print(pid, montar(pid))
+            except Exception as e:  # registra o erro no post e segue
+                print(pid, "ERRO", e)
+                evento(pid, "entregador", f"Deu erro na montagem: {str(e)[:160]}", "erro")
+                chamar({"acao": "erro", "post_id": pid, "log": str(e)})
     fc = chamar({"acao": "fila"}, url=OPCOES)
     for p in fc.get("posts", []) if fc.get("ok") else []:
         try:
