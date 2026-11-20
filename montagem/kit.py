@@ -250,8 +250,11 @@ def montar(post, pasta: Path, base: str, ev=None, log=print):
             r = _real(s, pasta / f"s{i:02d}_real.jpg", ev)
             if r:
                 reais[i] = r; continue
-            if s.get("pessoa_real"):  # nunca rosto de pessoa pública por IA: vira cartão de notícia sem foto
-                s["molde"] = "noticia"; s.setdefault("chapeu", ""); continue
+            if s.get("pessoa_real"):  # nunca rosto de pessoa pública por IA
+                if s.get("foto_prompt") and s["molde"] in COM_FOTO:  # usa a foto de reserva da ficha (sem rosto) e mantém o desenho
+                    ev("fotografo", f"Sem foto real livre: uso a foto de reserva, sem rosto, na lâmina {i}.")
+                else:  # sem reserva: cartão de notícia sem foto
+                    s["molde"] = "noticia"; s.setdefault("chapeu", ""); continue
         if fonte == "nenhuma" and s["molde"] in FOTO_OPCIONAL:
             continue
         if s.get("foto_prompt") and s["molde"] in COM_FOTO | {"antes_hoje"}:
