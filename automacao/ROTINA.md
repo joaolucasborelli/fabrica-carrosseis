@@ -2,6 +2,20 @@
 
 Você é a rotina que escreve os posts da página **Do outro lado da Porta** quando o dono pede pela tela da fábrica. Escreva em português do Brasil. Seja curto no relatório final.
 
+## O escritório (D-24): você trabalha como a equipe da fábrica antiga
+Você faz o trabalho de cada agente, nesta ordem, e **cada agente anota o que está fazendo**, para o escritório da tela mostrar todo mundo trabalhando:
+```sql
+insert into eventos_agente (post_id, agente, estado, fala, detalhe) values (null, '<agente>', '<trabalhando|pronto|erro>', '<frase curta em português>', '{"pedido": <id>}'::jsonb);
+```
+Use `post_id` quando o post já existir. Os agentes, e o nome exato de cada um no `agente`:
+1. **planejadora** (também faz a pesquisa do momento): confere o gasto do dia, pesquisa o assunto do momento, escolhe o tipo, a base e o ângulo.
+2. **escritora**: escreve no arco da heroína (D-23) e passa nas vigias.
+3. **plateia**: 4 leitoras do público dão nota; abaixo de 70, a escritora reescreve.
+4. **diagramador**: monta a ficha visual do tipo e a confere.
+5. **entregador**: grava no banco e entrega ao robô.
+(O robô continua com o diretor, o fotógrafo, o conferente, o retocador e o montador.)
+Exemplos de fala: "Pesquisando o assunto do momento: 13º salário.", "Escolhi o tipo tweet + história e a base 123.", "Plateia: nota média 78. Neusa pararia; Paula achou a capa fraca.", "Entreguei o post 36 ao robô."
+
 ## Regras que nunca quebram
 - Banco: **só** o projeto Supabase `kfvugtrjuqdakbpzvsxq` (conector Supabase, `execute_sql`). Nunca mexa em outro projeto.
 - **Nunca** chame as funções pagas (`fabrica`, `roteiro`, `capas`, `montador`) nem qualquer API de IA. O texto e a ficha visual são escritos por você. Só o robô (que acorda sozinho quando você grava o post) gera as fotos.
@@ -38,6 +52,11 @@ Cada post custa cerca de US$ 0,35 nas fotos. Se `usd + 0,35` passar do `teto`:
 - termine.
 
 Repita essa conta **antes de cada post**. Se estiver tudo certo, marque o pedido como `escrevendo`.
+
+## Passo 1b · Pesquisa do momento (planejadora)
+Com WebSearch, em até 3 buscas, procure o que está acontecendo **agora** com as contas da casa no Brasil: 13º, contas de dezembro e janeiro (IPTU, IPVA, material escolar), golpes do momento, reajustes. Escolha **um** gancho que sirva à história e anote a fonte (veículo e data).
+- Nunca invente data nem notícia. Política neutra. Se não achar nada forte, siga sem gancho.
+- Anote: `planejadora · trabalhando · "Pesquisando o assunto do momento: ..."`.
 
 ## Passo 2 · Ler as regras (sempre, a cada rodada)
 1. `automacao/D-17.md`: a regra do storytelling (cópia fiel do roteiro, enxuta).
@@ -106,6 +125,8 @@ Repita essa conta **antes de cada post**. Se estiver tudo certo, marque o pedido
 - A legenda leva o aviso de personagem ilustrativa ("Personagem e história ilustrativas.") e de 6 a 8 hashtags sem marca.
 - Formato de `pecas`: `{capa: texto, slides: [textos], legenda, hashtags: [], thumb_descricao}`. `slides` é uma lista de **textos**, nunca de objetos.
 
+Antes de escrever, anote `escritora · trabalhando · "Escrevendo: <capa provisória>"`.
+
 ### O arco da história (D-23, aprovado pelo dono em 19/11)
 A jornada da heroína fica escondida, em 8 tempos. **A heroína é ELA** (mulher de 40 a 60, com nome e idade, em 3ª pessoa) e é ela quem age e descobre.
 1. **L1 · capa:** o antes, oposto ao fim. Um fato que causa estranheza, nunca uma pergunta já respondida.
@@ -129,7 +150,19 @@ node automacao/vigias.mjs /tmp/v.json
 - Se reprovar, corrija e rode de novo, até **2 correções**.
 - Se ainda reprovar, pule esse post e escreva o motivo em `aviso`.
 
+## Passo 4b · Plateia (4 leitoras do nosso público)
+Depois de passar nas vigias, leia o post como cada uma destas 4 leitoras. Cada uma dá uma nota de 0 a 100 e diz, em 1 frase, se pararia de rolar, se leria até o fim e se salvaria, mandaria ou comentaria:
+- **Dona Cida, 58:** diarista, paga tudo sozinha, desconfia de golpe e de quem "ensina a ficar rica".
+- **Neusa, 51:** casada, tem vergonha da dívida do cartão e esconde do marido.
+- **Rosa, 63:** avó que ajuda a filha com as contas e cuida do neto.
+- **Paula, 44 (a cética):** acha que isso é "papo de coach" e procura o que é falso ou exagerado.
+Notas baixas para: capa fraca, história falsa ou triste demais, bronca, guru, plateia aprovando, jargão, nada novo.
+- **Média abaixo de 70:** a escritora reescreve o que as leitoras apontaram e passa nas vigias de novo (no máximo 2 vezes). Se não chegar a 70, pule o post e escreva o motivo no `aviso`.
+- Guarde as 4 notas e frases em `variacoes.painel` (`{"plateia": [...], "media": N}`) e a média em `variacoes.forca`.
+- Anote: `plateia · pronto · "Plateia: nota média N. <quem pararia e quem não>."`.
+
 ## Passo 5 · Ficha visual
+Anote `diagramador · trabalhando · "Montando a ficha do tipo <tipo>."` no começo e `diagramador · pronto` quando a conferência der ok.
 - A sequência de moldes é a do tipo (`tipos-dp.json`): capa e lâminas exatamente nessa ordem, e o texto é escrito para caber nela (o número de lâminas é o do tipo).
 - Copie o formato dos campos de `variacoes.plano_visual.post` da variação 82: `capa`, `slides`, `legenda`, `receita`, `hashtags` e `personagem`, com **todos** os campos, deixando vazios os que não usar.
 - O texto vai para a ficha **sem mudar uma palavra**, dividido nos campos do molde (`paragrafos`, `titulo`, `texto`, `itens`…).
@@ -161,7 +194,7 @@ node automacao/vigias.mjs /tmp/v.json
    ```
 5. `insert into notas_dono (alvo, tipo, texto, ambiente_id) values ('variacao:<id>', 'escolha', 'pedido <id> pelo Claude', 1)`.
 6. `update variacoes set status = 'escolhida' where id = <variação>`.
-7. **Por último:** `insert into posts (variacao_id, status) values (<variação>, 'montando') returning id`. Isso acorda o robô.
+7. **Por último:** `insert into posts (variacao_id, status) values (<variação>, 'montando') returning id`. Isso acorda o robô. Anote `entregador · pronto · "Entreguei o post <id> ao robô."` com o `post_id`.
 8. No pedido, acrescente o id do post em `post_ids`, some 1 em `feitos` e atualize `atualizado_em`.
 
 Se qualquer conferência falhar, **não** grave o post. Uma variação sem post não gasta nada.
