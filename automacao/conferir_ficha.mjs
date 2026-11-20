@@ -53,6 +53,8 @@ if (d.tipo) {
 const prompts = [ficha?.capa?.foto_prompt, ficha?.capa?.foto_prompt2, ficha?.personagem, ...fs_.map((s) => s.foto_prompt)].filter(Boolean).join(" | ");
 const jovem = prompts.match(/\b(young|teen\w*|adolescen\w*|student|college|20s|twenty|motoboy|delivery rider|groom|bride|boyfriend|girlfriend)\b/i);
 const relig = prompts.match(/\b(church|bible|biblical|crucifix|rosary|praying|prayer|priest|pastor|saint|angel|jesus|god|religious|chapel|altar)\b/i);
+const somb = prompts.match(/\b(skull|skeleton|demon\w*|devil|satan|grim reaper|reaper|zombie|vampire|ghost|monster|horror|creepy|haunted)\b/i);
+if (somb) problemas.push(`foto sombria ("${somb[0]}"): o dono proibiu caveira, demônio e afins`);
 if (relig) problemas.push(`foto com cena religiosa ("${relig[0]}"): D-21 proíbe religião`);
 if (jovem) problemas.push(`foto com pessoa jovem ("${jovem[0]}"): use mulher de 40 a 60, mãe ou avó`);
 if (fs_.some((s) => s.foto_fonte === "ia") || ficha?.capa?.foto_fonte === "ia") {

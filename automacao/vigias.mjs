@@ -81,6 +81,9 @@ if (post.pessoa_real === true) {
 
 // 6b. D-21: nada de Deus nem religião
 const RELIGIAO = /(?<![\p{L}])(deus|deusa|jesus|cristo|senhor jesus|nosso senhor|b[íi]blia|b[íi]blico|vers[íi]culo|salmo|ora[çc][ãa]o|orar|rezar|reza|igreja|pastor|padre|santo|milagre|am[ée]m|f[ée] em|aben[çc]o\p{L}*|b[êe]n[çc][ãa]o|aleluia|evangelho|ap[óo]stolo|profeta|esp[íi]rito santo|terço|ter[çc]o)(?![\p{L}])/iu;
+const SOMBRIO = /(?<![\p{L}])(caveira|dem[ôo]ni\p{L}*|diabo|capeta|satan\p{L}*|inferno|monstro|zumbi|vampir\p{L}*|fantasma|assombra\p{L}*)(?![\p{L}])/iu;
+const somb = tudo.match(SOMBRIO);
+if (somb) problemas.push(`imagem sombria no texto ("${somb[0]}"): o dono proibiu caveira, demônio e afins`);
 const rel = tudo.match(RELIGIAO);
 if (rel) problemas.push(`fala de religião ("${rel[0]}"): D-21 proíbe Deus e religião`);
 
