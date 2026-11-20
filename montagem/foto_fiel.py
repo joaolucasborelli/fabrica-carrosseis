@@ -12,9 +12,32 @@ def _chamar(url, corpo, timeout=200):
     return robo.chamar(corpo, timeout=timeout, url=url)
 
 
+def faixas(cam):
+    """20/11: detector grátis de faixa lisa (branca, preta ou de uma cor só) nas bordas da foto.
+    Devolve o lado com faixa ('esquerda', 'direita', 'topo', 'base') ou ''."""
+    try:
+        import tempfile
+        from pathlib import Path
+        from PIL import Image, ImageStat
+        loc = Path(tempfile.gettempdir()) / ("faixa_" + cam.replace("/", "_"))
+        robo.baixar(cam, loc)
+        im = Image.open(loc).convert("L"); w, h = im.size
+        tiras = {"esquerda": (0, 0, int(w * .08), h), "direita": (int(w * .92), 0, w, h),
+                 "topo": (0, 0, w, int(h * .06)), "base": (0, int(h * .94), w, h)}
+        for lado, cx in tiras.items():
+            if ImageStat.Stat(im.crop(cx)).stddev[0] < 4:  # lisa demais: é faixa, não foto
+                return lado
+    except Exception:
+        pass
+    return ""
+
+
 def foto_fiel(texto, molde, ideia, caminho_base, vertical=False, nota_minima=8, max_edicoes=2, log=print, ev=None):
     ev = ev or (lambda *a, **k: None)
     size = "1024x1536" if vertical else "1536x1024"
+    # o Retocador mantém o formato do molde (a capa de tweet é deitada): nunca encaixa foto em pé com faixas
+    FORMATO = (" Keep the " + ("vertical portrait" if vertical else "horizontal landscape") + " framing of this canvas and fill it"
+               " edge to edge with the real scene: no white, black, blurred or colored side bands, no border, no frame, no picture-in-picture.")
     ev("diretor", "Lendo a capa para decidir o instante exato da foto e o que tem que aparecer nela.")
     c = _chamar(CAPAS, {"acao": "cena", "texto": texto, "molde": molde, "ideia": ideia, "caminho": caminho_base})
     if not c.get("ok"):
@@ -50,7 +73,13 @@ def foto_fiel(texto, molde, ideia, caminho_base, vertical=False, nota_minima=8, 
         cf = _chamar(CAPAS, {"acao": "conferir", "caminho": cam, "texto": texto, "cena": cena})
         if not cf.get("ok"):
             log(f"  conferente falhou: {cf}"); ev("conferente", "Não consegui conferir esta versão.", "erro"); break
-        k = cf["conferencia"]; historico.append({"versao": cam, **k})
+        k = cf["conferencia"]
+        lado = faixas(cam)
+        if lado:  # o Conferente pago às vezes não vê faixa branca: o detector grátis reprova
+            k["nota"] = min(k["nota"], 5); k["defeitos"] = [f"faixa lisa na {lado}"] + list(k.get("defeitos") or [])
+            k["correcao"] = (k.get("correcao") or "") + f" Remove the plain band on the {lado}: extend the real scene to fill the whole canvas."
+            ev("conferente", f"Faixa lisa na {lado} da foto: não serve, vai para o Retocador.")
+        historico.append({"versao": cam, **k})
         falta = "; ".join(k["detalhes_faltando"][:2]) or "nada"
         ev("conferente", f"Nota {k['nota']}/10. Falta: {falta[:150]}. Expressão: {k['expressao_problema'][:90] or 'ok'}.",
            "pronto" if k["nota"] >= nota_minima else "trabalhando", nota=k["nota"])
@@ -61,7 +90,7 @@ def foto_fiel(texto, molde, ideia, caminho_base, vertical=False, nota_minima=8, 
             break
         novo = f"{caminho_base}_v{rodada+1}.png"
         ev("retocador", f"Corrigindo só o que o Conferente apontou: {k['correcao'][:150]}")
-        e = _chamar(CAPAS, {"acao": "editar", "caminho": cam, "destino": novo, "instrucao": k["correcao"], "size": size})
+        e = _chamar(CAPAS, {"acao": "editar", "caminho": cam, "destino": novo, "instrucao": k["correcao"] + FORMATO, "size": size})
         if not e.get("ok"):
             log(f"  edição falhou: {e}"); ev("retocador", "A correção falhou; fico com a melhor versão.", "erro"); break
         ev("retocador", "Corrigido. Devolvi para o Conferente olhar de novo.", "pronto")
