@@ -79,6 +79,11 @@ if (post.pessoa_real === true) {
   if (!/ilustrativ/i.test(String(post.legenda ?? ""))) problemas.push("falta o aviso de história ilustrativa na legenda");
 }
 
+// 6b. D-21: nada de Deus nem religião
+const RELIGIAO = /(?<![\p{L}])(deus|deusa|jesus|cristo|senhor jesus|nosso senhor|b[íi]blia|b[íi]blico|vers[íi]culo|salmo|ora[çc][ãa]o|orar|rezar|reza|igreja|pastor|padre|santo|milagre|am[ée]m|f[ée] em|aben[çc]o\p{L}*|b[êe]n[çc][ãa]o|aleluia|evangelho|ap[óo]stolo|profeta|esp[íi]rito santo|terço|ter[çc]o)(?![\p{L}])/iu;
+const rel = tudo.match(RELIGIAO);
+if (rel) problemas.push(`fala de religião ("${rel[0]}"): D-21 proíbe Deus e religião`);
+
 // 7. número sem fonte
 if (/\d+([.,]\d+)?\s*%/.test(lam) && !/fonte/i.test(String(post.legenda ?? ""))) problemas.push("número em % sem fonte na legenda");
 

@@ -52,6 +52,8 @@ if (d.tipo) {
 // pessoas das fotos (D-19): nada de jovem; personagem é mulher de 40 a 60, mãe ou avó
 const prompts = [ficha?.capa?.foto_prompt, ficha?.capa?.foto_prompt2, ficha?.personagem, ...fs_.map((s) => s.foto_prompt)].filter(Boolean).join(" | ");
 const jovem = prompts.match(/\b(young|teen\w*|adolescen\w*|student|college|20s|twenty|motoboy|delivery rider|groom|bride|boyfriend|girlfriend)\b/i);
+const relig = prompts.match(/\b(church|bible|biblical|crucifix|rosary|praying|prayer|priest|pastor|saint|angel|jesus|god|religious|chapel|altar)\b/i);
+if (relig) problemas.push(`foto com cena religiosa ("${relig[0]}"): D-21 proíbe religião`);
 if (jovem) problemas.push(`foto com pessoa jovem ("${jovem[0]}"): use mulher de 40 a 60, mãe ou avó`);
 if (fs_.some((s) => s.foto_fonte === "ia") || ficha?.capa?.foto_fonte === "ia") {
   if (!/\b(4\d|5\d|60|middle-aged|mother|grandmother|grandma|mãe|avó)\b/i.test(prompts) && !(ficha?.capa?.famoso)) problemas.push("as fotos não dizem a idade/papel da personagem (mulher de 40 a 60, mãe ou avó)");
