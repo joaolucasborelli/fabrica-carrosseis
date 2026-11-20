@@ -98,6 +98,23 @@ def recortar_rosto(arq: Path, proporcao=4 / 5, folga=3.2, min_lado=360):
 
 
 USADAS = set()  # fotos já usadas nesta montagem: a mesma foto real não se repete no post
+CONFERIDAS = {}  # 20/11: quantas fotos de cada pessoa o Conferente (pago) já olhou nesta montagem
+MAX_CONFERIR_PESSOA = 4
+LUGAR = re.compile(r"(?i)biblioteca|museu|monumento|busto|est[aá]tua|casa |vila |esta[cç][aã]o|pra[cç]a|rua |avenida|escola|col[eé]gio|medalha|pr[eê]mio|desfile|carnaval|bloco|placa|selo|capa |logo|mural|grafite|exposi[cç][aã]o|feira|teatro|cinema|ponte|igreja")
+
+
+def tem_rosto(arq: Path) -> bool:
+    """Detector de rosto grátis (OpenCV): sem rosto, nem gasta o Conferente."""
+    try:
+        import cv2
+    except Exception:
+        return True
+    img = cv2.imread(str(arq))
+    if img is None:
+        return False
+    cinza = cv2.equalizeHist(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+    det = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    return len(det.detectMultiScale(cinza, scaleFactor=1.08, minNeighbors=6, minSize=(40, 40))) > 0
 
 
 def buscar(termos, pessoa, destino: Path, log=print, aceitar=None, max_conferir=6):
@@ -110,7 +127,12 @@ def buscar(termos, pessoa, destino: Path, log=print, aceitar=None, max_conferir=
         except Exception as e:  # rede, API fora
             log(f"  foto real: busca falhou ({e})")
             return None
-        for c in [x for x in cs if x["titulo"] not in USADAS][:max_conferir]:
+        nome = _sem_acento(pessoa or "").lower().split()
+        cs = [x for x in cs if x["titulo"] not in USADAS and not LUGAR.search(x["titulo"])]  # lugar/evento com o nome dela não é ela
+        cs.sort(key=lambda x: -sum(n in _sem_acento(x["titulo"]).lower() for n in nome))  # título com o nome da pessoa primeiro
+        for c in cs[:max_conferir]:
+            if CONFERIDAS.get(pessoa or termos, 0) >= MAX_CONFERIR_PESSOA:
+                log("  foto real: limite de conferências desta pessoa"); return None
             baixou = False
             for espera in (1.5, 6, 15):  # o Wikimedia limita downloads seguidos (HTTP 429): espera e tenta de novo
                 time.sleep(espera)
@@ -127,6 +149,9 @@ def buscar(termos, pessoa, destino: Path, log=print, aceitar=None, max_conferir=
                 continue
             if recortar_rosto(destino):
                 log(f"  foto real recortada no rosto: {c['titulo']}")
+            if not tem_rosto(destino):
+                log(f"  foto real sem rosto, pulada sem conferir: {c['titulo']}"); continue
+            CONFERIDAS[pessoa or termos] = CONFERIDAS.get(pessoa or termos, 0) + 1
             if aceitar and not aceitar(destino, c):
                 log(f"  foto real recusada: {c['titulo']}")
                 continue
