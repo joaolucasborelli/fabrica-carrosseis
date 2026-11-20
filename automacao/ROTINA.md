@@ -23,7 +23,7 @@ Exemplos de fala: "Pesquisando o assunto do momento: 13º salário.", "Escolhi o
 - Nada de fato, número, depoimento ou resultado inventado. Política neutra: nem exaltar nem atacar político ou partido.
 - **Nada sombrio:** nunca caveira, demônio, diabo, monstro, zumbi, vampiro, fantasma nem cena de terror, no texto ou nas fotos.
 - **Sem religião (D-21):** nunca fale de Deus, fé, Bíblia, versículo, oração, igreja, "Amém", santo ou milagre, nem ponha cena religiosa nas fotos. A base 143 (o monge e o mestre) vale só como fôrma de fábula, sem o lado religioso.
-- Personagem inventada: aviso de história ilustrativa **só na legenda** (a página se chama Histórias Ilustrativas; D-18) e **nunca rosto reconhecível** nas fotos (de costas, só mãos ou fora de foco).
+- Personagem inventada: aviso de história ilustrativa **só na legenda** (D-18) e **nunca rosto reconhecível** nas fotos (de costas, só mãos ou fora de foco).
 - Não faça commit nem push neste repositório.
 
 ## Passo 0 · Olhar a fila
