@@ -89,7 +89,7 @@ Com WebSearch, em até 3 buscas, procure o que está acontecendo **agora** com a
    select remodelagem->>'tipo_dp' t, count(*) from variacoes where remodelagem ? 'tipo_dp' group by 1;
    ```
    Se o `aviso` do pedido começar com `tipos:` (ex.: `tipos: famoso_trajetoria, tweet_historia`), use esses tipos, nessa ordem, e apague esse texto do `aviso` ao terminar. Senão, escolha o tipo menos usado. No mesmo pedido: nunca 2 posts do mesmo tipo, nunca a mesma capa, no máximo 1 famoso.
-   - **Famoso** (famoso_trajetoria, famoso_licao): só com fato real que você confirma, com "Fonte:" na legenda (link ou veículo e data), nunca político, nunca criança ou adolescente, retratado com dignidade, sem frase inventada. Preencha `capa.famoso` e `capa.fato`. Não leva "Comente FILA". Ponha em `aviso`: "post X tem famoso: conferir a fonte antes de publicar". Para famoso, a história vem do fato real (não precisa de base da estante; use `base_code` = "fato").
+   - **Famoso** (famoso_trajetoria, famoso_licao): só com fato real que você confirma, com "Fonte:" na legenda (link ou veículo e data), nunca político, nunca criança ou adolescente, retratado com dignidade, sem frase inventada. Preencha `capa.famoso` e `capa.fato`. Não leva "Comente CASA". Ponha em `aviso`: "post X tem famoso: conferir a fonte antes de publicar". Para famoso, a história vem do fato real (não precisa de base da estante; use `base_code` = "fato").
      - **Antes de escolher o famoso, confirme que existe foto livre dele** no Wikimedia Commons (WebFetch em `https://commons.wikimedia.org/w/api.php?action=query&format=json&list=search&srnamespace=6&srlimit=20&srsearch=<nome>%20filetype:bitmap`): precisa haver pelo menos 1 arquivo que seja retrato ou foto da própria pessoa (não biblioteca, monumento, rua ou prêmio com o nome dela). Se não houver, escolha outro famoso. Ponha em `capa.busca_real` o nome do arquivo bom (sem "File:") ou o nome da pessoa.
    - **Confissão:** a fala em 1ª pessoa vai sempre entre aspas (personagem inventada nunca diz "eu" como real).
    - Quando listas discordarem, **o proibido vence** (ex.: faixa_amarela está em presets mas é reprovada em padroes).
@@ -116,11 +116,11 @@ Com WebSearch, em até 3 buscas, procure o que está acontecendo **agora** com a
 - No máximo 10 lâminas, contando a capa. O número de lâminas é o do tipo (tipos-dp.json); a história da base é encurtada ou dividida para caber.
 - Até 35 palavras por lâmina de história e até 20 por lâmina de lista ou conversa. No máximo 180 palavras no post.
 - Uma ideia só. O post termina na revelação ou na emoção. **Nunca** escreva "história ilustrativa" nas lâminas.
-- **Pedido "comente FILA" (D-18):** no máximo 2 posts por dia levam o pedido. Antes de escrever, conte quantos já levaram hoje:
+- **Pedido "comente CASA" (D-18; palavra trocada de FILA para CASA na D-27; em dezembro e janeiro use 2027):** no máximo 2 posts por dia levam o pedido. Antes de escrever, conte quantos já levaram hoje:
   ```sql
   select count(*) from variacoes where remodelagem->>'pedido_fila' = 'true' and (criada_em at time zone 'America/Sao_Paulo')::date = (now() at time zone 'America/Sao_Paulo')::date;
   ```
-  Se for menos de 2, este post leva o pedido: a última lâmina termina com uma frase curta ligada à história, seguida de **"Comente FILA e receba a sua fila das contas."** Grave `"pedido_fila": true` em `remodelagem` e em `/tmp/v.json`. A legenda repete: "Comente FILA que eu te mando o teste no direct."
+  Se for menos de 2, este post leva o pedido: a última lâmina termina com uma frase curta ligada à história, seguida de **"Comente CASA e receba grátis no direct o teste \"Qual conta pagar primeiro?\"."** (em dezembro e janeiro: "Comente 2027 ...") Grave `"pedido_fila": true` em `remodelagem` e em `/tmp/v.json`. A legenda repete: "Comente CASA que a gente te manda o teste no direct, grátis."
   Fora do pedido, nada de "comente", "digite" ou "escreva".
 - Nada de marca, "siga", Fila das Contas ou Defensoria dentro das outras lâminas. Isso vai para a legenda, só quando o tema pedir.
 - A legenda leva de 6 a 8 hashtags sem marca. (Aviso de ilustrativa: em espera, 23/11.)
@@ -137,7 +137,7 @@ A jornada da heroína fica escondida, em 8 tempos. **A heroína é ELA** (mulher
 5. **L5 · ELA descobre:** o instante de 5 segundos, com um gesto que qualquer uma faria. A revelação cai **no máximo na lâmina 5**.
 6. **L6 · a ação:** pequena e possível, com 1 defeito de verdade (demorou, custou R$ 12, um mês não fechou). As contas em reais fecham.
 7. **L7 · a volta:** uma cena, não uma moral. Desfaz a capa, sem milagre e sem plateia aprovando.
-8. **L8 · o pedido:** nasce da história. "Comente FILA" **só quando o tema é a ordem de pagar**. Senão, "Salve e mande para..." ou "Já aconteceu com você?".
+8. **L8 · o pedido:** nasce da história. "Comente CASA" **só quando o tema é a ordem de pagar**. Senão, "Salve e mande para..." ou "Já aconteceu com você?".
 
 Se o tipo de post tiver mais lâminas, os tempos se espalham, mas a revelação continua até a L5 e, depois dela, vêm só ação, fim e pedido (no post todo, no máximo 1 lâmina de ensinamento). Da L2 à L6, no máximo 18 palavras por lâmina.
 Nunca escreva: jornada, chamado, virada, vida nova, você merece, mentalidade, segredo.

@@ -2,7 +2,7 @@
 // Uso: node automacao/vigias.mjs caminho/do/teste.json
 // teste.json = { "base": { "n_slides": 11, "capa_texto": "...", "slides": ["..."] },
 //               "post": { "capa": "...", "slides": ["..."], "legenda": "...", "pessoa_real": false, "pedido_fila": false } }
-// pedido_fila: true quando o post termina com "comente FILA" (D-18, até 2 por dia).
+// pedido_fila: true quando o post termina com "comente CASA" (D-18, até 2 por dia).
 // pessoa_real: true só para história real de famoso com fonte (D-16); aí não leva "história ilustrativa".
 // Sai com {"ok":true|false,"problemas":[...],"avisos":[...]} e código 0 (ok) ou 1 (reprovado).
 import fs from "node:fs";
@@ -21,8 +21,8 @@ const { base, post } = d;
 const problemas = [], avisos = [];
 const slides = (post.slides ?? []).map(String);
 const ultima = slides[slides.length - 1] ?? "";
-// o pedido "comente FILA" (D-18) não conta como texto da história
-const PEDIDO = /comente\s+\*{0,2}FILA\*{0,2}[^\n]*/i;
+// o pedido "comente CASA" (D-18) não conta como texto da história
+const PEDIDO = /comente\s+\*{0,2}(CASA|2027)\*{0,2}[^\n]*/i; // D-27: FILA virou CASA (2027 na virada)
 const slidesConta = slides.map((s, i) => (i === slides.length - 1 ? s.replace(PEDIDO, "") : s));
 
 // 1. capa
@@ -44,12 +44,12 @@ if (nTotal > 180) problemas.push(`${nTotal} palavras no post (máximo 180)`);
 const tudo = [post.capa, ...slides, post.legenda ?? ""].map(String).join("\n");
 const achadas = PROIBIDAS.filter((t) => new RegExp(`(?<![\\p{L}\\p{N}])${escRe(t)}(?![\\p{L}\\p{N}])`, "iu").test(t === "você gasta demais" ? semAspas(tudo) : tudo));
 if (achadas.length) problemas.push(`palavra proibida: ${achadas.join(", ")}`);
-// D-18: só vale "comente FILA", e só na última lâmina
+// D-18: só vale "comente CASA", e só na última lâmina
 const semPedido = [post.capa, ...slides.slice(0, -1), ultima.replace(PEDIDO, ""), post.pedido_fila === true ? String(post.legenda ?? "").replace(PEDIDO, "") : (post.legenda ?? "")].map(String).join("\n");
-if (/(?<!\p{L})(coment|digite|escreva)\p{L}*/iu.test(semPedido)) problemas.push(`pedido de comentário fora do "comente FILA" da última lâmina`);
-if (post.pedido_fila === true && !PEDIDO.test(ultima)) problemas.push(`falta "comente FILA" na última lâmina`);
-if (post.famoso === true && PEDIDO.test(ultima)) problemas.push(`post de famoso não leva "Comente FILA" (D-16: o famoso nunca vende)`);
-if (post.pedido_fila !== true && PEDIDO.test(ultima)) problemas.push(`"comente FILA" sem pedido_fila: true (limite de 2 por dia)`);
+if (/(?<!\p{L})(coment|digite|escreva)\p{L}*/iu.test(semPedido)) problemas.push(`pedido de comentário fora do "comente CASA" da última lâmina`);
+if (post.pedido_fila === true && !PEDIDO.test(ultima)) problemas.push(`falta "comente CASA" na última lâmina`);
+if (post.famoso === true && PEDIDO.test(ultima)) problemas.push(`post de famoso não leva "Comente CASA" (D-16: o famoso nunca vende)`);
+if (post.pedido_fila !== true && PEDIDO.test(ultima)) problemas.push(`"comente CASA" sem pedido_fila: true (limite de 2 por dia)`);
 
 // 4. "eu" de personagem nas lâminas (fala entre aspas ou travessão pode)
 slides.forEach((s, i) => { if (/(?<!\p{L})eu(?!\p{L})/iu.test(semAspas(s))) problemas.push(`lâmina ${i + 2} com "eu" fora de fala`); });
