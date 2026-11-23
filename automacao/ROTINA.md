@@ -28,12 +28,13 @@ Exemplos de fala: "Pesquisando o assunto do momento: 13º salário.", "Escolhi o
 
 ## Passo 0 · Olhar a fila
 ```sql
-select * from pedidos_claude where situacao in ('na_fila','esperando','escrevendo','montando') order by id;
+select * from pedidos_claude where situacao in ('na_fila','esperando','escrevendo','roteiro','montando') order by id;
 ```
 1. Para cada pedido em `montando`, veja os posts em `post_ids`:
    - se todos estão com `montagem_status = 'pronta'`, marque o pedido como `feito`;
    - se algum está com `montagem_status = 'erro'`, marque `erro` e grave o motivo em `aviso`.
    Sempre atualize `atualizado_em = now()`.
+   Para cada pedido em `roteiro` (D-28: esperando o dono aprovar), olhe as variações em `variacao_ids`: se já existe post para todas as que não foram recusadas (`select id from posts where variacao_id = any(...)`), acrescente esses ids em `post_ids` e passe o pedido para `montando`. Se o dono recusou todas, marque `feito` com o aviso "Roteiros recusados pelo dono.". Nunca grave post de um pedido em `roteiro`: quem manda montar é o dono, pelo botão "Gerar post".
 2. Pegue **o pedido mais antigo** em `na_fila`, `esperando` ou `escrevendo`. Um `escrevendo` parado há mais de 2 horas quer dizer que a rodada anterior caiu: continue de onde ela parou, contando os `feitos`.
 3. Olhe também os pedidos de mudança de TIPO (botão "Tipos de post" da tela):
    ```sql
@@ -46,7 +47,7 @@ select * from pedidos_claude where situacao in ('na_fila','esperando','escrevend
 ```sql
 select usd, teto from gasto_hoje;
 ```
-Cada post custa cerca de US$ 0,35 nas fotos. Se `usd + 0,35` passar do `teto`:
+Cada post custa cerca de US$ 0,45 nas fotos (US$ 1,20 se tiver famoso). Se `usd + esse valor` passar do `teto`:
 - marque o pedido como `esperando`;
 - grave o aviso "Teto do dia atingido; continuo amanhã.";
 - termine.
@@ -194,6 +195,8 @@ Anote `diagramador · trabalhando · "Montando a ficha do tipo <tipo>."` no come
    select plano_visual->>'hash' = encode(sha256(convert_to('{"capa":' || (pecas->'capa')::text || ',"slides":[' || coalesce((select string_agg(e::text, ',' order by o) from jsonb_array_elements(pecas->'slides') with ordinality t(e,o)), '') || ']}', 'UTF8')), 'hex') from variacoes where id = <variação>;
    ```
 5. `insert into notas_dono (alvo, tipo, texto, ambiente_id) values ('variacao:<id>', 'escolha', 'pedido <id> pelo Claude', 1)`.
+**D-28 · Roteiro primeiro.** Se o pedido tem `modo = 'roteiro'` (o padrão), **pare aqui**: a variação fica `mostrada`, com a ficha, e aparece na tela como esboço para o dono aprovar. Não faça os itens 5, 6 e 7. Acrescente o id da variação em `variacao_ids`, some 1 em `feitos` e anote `entregador · pronto · "Roteiro da variação <id> pronto. Esperando o dono aprovar."`. Só gasta quando o dono aperta "Gerar post" (o banco ainda confere se cabe no teto). Se `modo = 'direto'`, siga os itens 5 a 8.
+
 6. `update variacoes set status = 'escolhida' where id = <variação>`.
 7. **Por último:** `insert into posts (variacao_id, status) values (<variação>, 'montando') returning id`. Isso acorda o robô. Anote `entregador · pronto · "Entreguei o post <id> ao robô."` com o `post_id`.
 8. No pedido, acrescente o id do post em `post_ids`, some 1 em `feitos` e atualize `atualizado_em`.
@@ -201,7 +204,8 @@ Anote `diagramador · trabalhando · "Montando a ficha do tipo <tipo>."` no come
 Se qualquer conferência falhar, **não** grave o post. Uma variação sem post não gasta nada.
 
 ## Passo 7 · Fechar a rodada
-- Se `feitos = qtd`, marque o pedido como `montando`. A próxima rodada marca `feito` quando o robô terminar.
+- Pedido `modo = 'roteiro'`: se `feitos = qtd`, marque o pedido como `roteiro` (esperando o dono).
+- Pedido `modo = 'direto'`: se `feitos = qtd`, marque o pedido como `montando`. A próxima rodada marca `feito` quando o robô terminar.
 - Se pulou algum post, marque `erro` quando `feitos = 0`, ou `montando` com o motivo em `aviso`.
 - Responda em até 5 linhas: o número do pedido, os posts gravados (ids), as bases usadas, o que pulou e por quê.
 

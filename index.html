@@ -643,10 +643,12 @@ function drawGen(){
   if(gen.modo==="claude"){
   document.getElementById("layer").innerHTML=`<div class="shade" data-mclose></div><div class="modal" role="dialog" aria-modal="true" aria-label="Pedir posts ao Claude" style="width:min(420px,calc(100% - 32px))">
    <h3>Pedir posts · ${ACC[acc].nome}</h3>${abas}
-   <p class="sub" style="margin:0">O Claude escreve no modo cópia fiel (D-17), a partir da estante aprovada, e passa as vigias. O robô monta só as fotos. Custo: cerca de US$ 0,30 por post. Começa em até 1 hora (das 7h às 22h).</p>
+   <p class="sub" style="margin:0">O Claude escreve no modo cópia fiel (D-17), a partir da estante aprovada, e passa as vigias. O robô monta só as fotos. Custo: cerca de US$ 0,34 por post comum e US$ 0,92 com famoso. Começa em até 1 hora (das 7h às 22h).</p>
+   <div class="prow" style="gap:6px;margin:0;justify-content:center"><button class="btn ${gen.direto?"":"primary"}" data-gdir="0">Roteiro primeiro (eu aprovo antes de gastar)</button><button class="btn ${gen.direto?"primary":""}" data-gdir="1">Direto, sem roteiro</button></div>
+   <p class="sub" style="margin:0;text-align:center">${gen.direto?"Escreve e já monta as fotos.":"O roteiro aparece em Posts como esboço, sem gastar. Só gasta quando você aperta Gerar post."}</p>
    <div class="fieldlab" style="margin:0">Quantos posts</div>
    <div class="qty" style="justify-content:center;font-size:1rem"><button data-gq="-1" aria-label="Menos">−</button><output style="font-family:var(--f-d);font-size:1.6rem">${gen.qtd}</output><button data-gq="1" aria-label="Mais">+</button></div>
-   <p class="sub" style="margin:0;text-align:center">Estimativa: US$ ${(gen.qtd*0.3).toFixed(2).replace(".",",")} (para sozinho no teto de US$ 5 por dia)</p>
+   <p class="sub" style="margin:0;text-align:center">Estimativa: US$ ${(gen.qtd*0.34).toFixed(2).replace(".",",")} (para sozinho no teto de US$ 5 por dia)</p>
    <div class="prow" style="justify-content:flex-end"><button class="btn" data-mclose>Cancelar</button><button class="btn primary" data-gclaude>Pedir ${gen.qtd}</button></div></div>`;
   return}
   const por=gen.qtd/9, pouco=gen.qtd<9;
@@ -660,7 +662,7 @@ function drawGen(){
    <div class="prow" style="justify-content:flex-end"><button class="btn" data-mclose>Cancelar</button><button class="btn primary" data-gdo>Gerar ${gen.qtd}</button></div></div>`;
 }
 // TETO DE GASTO (10/11): passou do teto do dia, a tela não chama a IA (o robô também para sozinho)
-async function tetoOk(){try{const {data}=await sb.from("gasto_hoje").select("usd,teto").single();if(data&&+data.usd>=+data.teto)throw new Error(`Teto do dia atingido: a fábrica já gastou US$ ${(+data.usd).toFixed(2)} hoje (teto US$ ${(+data.teto).toFixed(2)}). Volta a funcionar à meia-noite.`)}catch(e){if(/Teto do dia/.test(e.message))throw e}}
+async function tetoOk(prev=0){try{const {data}=await sb.from("gasto_hoje").select("usd,teto").single();if(data&&(+data.usd+prev>+data.teto||+data.usd>=+data.teto))throw new Error(prev?`Teto do dia: este post deve custar uns US$ ${prev.toFixed(2)} e já foram gastos US$ ${(+data.usd).toFixed(2)} de US$ ${(+data.teto).toFixed(2)}. Ele fica guardado; aprove amanhã.`:`Teto do dia atingido: a fábrica já gastou US$ ${(+data.usd).toFixed(2)} hoje (teto US$ ${(+data.teto).toFixed(2)}). Volta a funcionar à meia-noite.`)}catch(e){if(/Teto do dia/.test(e.message))throw e}}
 const GASTA=["pesquisar","planejar","planejar_semana","escrever","avaliar","conversar"];
 async function chamar(body){
   if(GASTA.includes(body.acao))await tetoOk();
@@ -881,7 +883,7 @@ async function enviarMensagem(w,texto){
 }
 // PEDIDOS PELO CLAUDE (18/11): fila lida pela rotina do Claude na nuvem (automacao/ROTINA.md)
 let PEDIDOS=[];
-const SIT={na_fila:"na fila",escrevendo:"escrevendo",montando:"montando as fotos",feito:"pronto",esperando:"esperando (teto ou limite)",erro:"com problema",cancelado:"cancelado"};
+const SIT={na_fila:"na fila",escrevendo:"escrevendo",roteiro:"roteiros prontos: aprove em Posts",montando:"montando as fotos",feito:"pronto",esperando:"esperando (teto ou limite)",erro:"com problema",cancelado:"cancelado"};
 function pedidosHTML(){const L=PEDIDOS.filter(p=>p.situacao!=="cancelado"&&(p.situacao!=="feito"||Date.now()-new Date(p.atualizado_em)<864e5));if(!L.length)return "";
   return `<div class="pedidos" style="display:flex;flex-direction:column;gap:6px;margin:0 0 12px">${L.map(p=>`<div class="sub" style="margin:0;padding:8px 12px;border:1px solid var(--line,#ddd);border-radius:10px"><b>Pedido ${p.id} · ${p.qtd} post${p.qtd>1?"s":""} pelo Claude</b> · ${SIT[p.situacao]||p.situacao} (${p.feitos}/${p.qtd})${p.aviso?` · ${esc(p.aviso)}`:""}${p.situacao==="na_fila"?` <button class="btn" data-pcancel="${p.id}" style="margin-left:8px">Cancelar</button>`:""}</div>`).join("")}<p class="sub" style="margin:0">A rotina olha a fila a cada hora, das 7h às 22h.</p></div>`}
 let TPOST=[],PTIPO=[];
@@ -1045,9 +1047,10 @@ document.addEventListener("click",e=>{
   if("leg" in ds){legAberta=!legAberta;render();return}
   if("sched" in ds){openSched(POSTS.find(x=>x.id===aberto));return}
   if("genopen" in ds){if(PIPE[acc]&&!PIPE[acc].done&&!PIPE[acc].erro){toast("A fábrica ainda está gerando o lote anterior.");return}gen={qtd:2,assunto:"",modo:"claude"};drawGen();return}
+  if(ds.gdir){gen.direto=ds.gdir==="1";drawGen();return}
   if(ds.gmodo){gen.modo=ds.gmodo;gen.qtd=gen.modo==="claude"?2:9;drawGen();return}
   if(ds.gq&&gen.modo==="claude"){gen.qtd=Math.max(1,Math.min(4,gen.qtd+(+ds.gq>0?1:-1)));drawGen();return}
-  if("gclaude" in ds){const q=gen.qtd;b.disabled=true;sb.from("pedidos_claude").insert({ambiente_id:ACC[acc].amb||1,qtd:q}).then(async({error})=>{if(error){toast("Não consegui pedir: "+error.message);b.disabled=false;return}gen=null;document.getElementById("layer").innerHTML="";toast(`Pedido de ${q} post${q>1?"s":""} na fila. O Claude começa em até 1 hora.`);await carregarPedidos();render()});return}
+  if("gclaude" in ds){const q=gen.qtd;b.disabled=true;sb.from("pedidos_claude").insert({ambiente_id:ACC[acc].amb||1,qtd:q,modo:gen.direto?"direto":"roteiro"}).then(async({error})=>{if(error){toast("Não consegui pedir: "+error.message);b.disabled=false;return}gen=null;document.getElementById("layer").innerHTML="";toast(`Pedido de ${q} post${q>1?"s":""} na fila. O Claude começa em até 1 hora.${gen&&!gen.direto?"":""}`);await carregarPedidos();render()});return}
   if("tiposopen" in ds){drawTipos();carregarTipos().then(drawTipos);return}
   if(ds.tpedir){const t=document.getElementById("tp-"+ds.tpedir),txt=(t?.value||"").trim();if(txt.length<3){toast("Escreva o que mudar.");return}b.disabled=true;sb.from("pedidos_tipo").insert({tipo_id:ds.tpedir,pedido:txt}).then(async({error})=>{if(error){toast("Não consegui pedir: "+error.message);b.disabled=false;return}toast("Pedido anotado. O Claude ajusta o tipo na próxima rodada.");await carregarTipos();drawTipos()});return}
   if(ds.tpcancel){b.disabled=true;sb.from("pedidos_tipo").update({situacao:"cancelado"}).eq("id",+ds.tpcancel).eq("situacao","na_fila").then(async({error})=>{if(error)toast("Não consegui cancelar: "+error.message);await carregarTipos();drawTipos()});return}
@@ -1061,7 +1064,7 @@ document.addEventListener("click",e=>{
   if(ds.pdrop){PROPS[acc]=PROPS[acc].filter(x=>x.id!==+ds.pdrop);render();return}
   if(ds.pchat){const x=PROPS[acc].find(y=>y.id===+ds.pchat);atts.chat.push({kind:"analise",name:"Proposta: "+x.g.replace(/<[^>]+>/g,"")});tab="chat";render();document.getElementById("ta-chat")?.focus();return}
   if("pmount" in ds){montar();return}
-  if("papr" in ds){const p=POSTS.find(x=>x.id===aberto);b.disabled=true;chamar({acao:"escolher",variacao_id:p.id,decisao:"montar"}).then(()=>{toast("Escolhida! O robô monta os slides em até ~10 minutos e eles aparecem aqui.");aberto=null;return carregar()}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
+  if("papr" in ds){const p=POSTS.find(x=>x.id===aberto);b.disabled=true;const famoso=/"pessoa_real": ?"[^"]+"/.test(JSON.stringify(p.plano||{}));tetoOk(famoso?1.2:0.45).then(()=>chamar({acao:"escolher",variacao_id:p.id,decisao:"montar"})).then(r=>{if(r&&r.ok&&!r.post)throw new Error("O post não entrou para montar (provavelmente o teto do dia). Nada foi gasto.");return r}).then(()=>{toast("Escolhida! O robô monta os slides em até ~10 minutos e eles aparecem aqui.");aberto=null;return carregar()}).catch(e=>{toast("Erro: "+e.message);b.disabled=false});return}
   if("prej" in ds){const p=POSTS.find(x=>x.id===aberto);const motivo=prompt("Por que você recusou? A fábrica usa isso para aprender (pode deixar em branco).");if(motivo===null)return;chamar({acao:"escolher",variacao_id:p.id,decisao:"recusar",motivo:motivo||null}).then(()=>{POSTS=POSTS.filter(x=>x.id!==p.id);aberto=null;render();toast("Recusada. O motivo foi guardado.")}).catch(e=>toast("Erro: "+e.message));return}
   if("capas" in ds){capas={id:aberto};drawCapas();return}
   if(ds.desfazer){b.disabled=true;
