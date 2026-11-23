@@ -76,7 +76,7 @@ if (post.pessoa_real === true) {
 } else {
   // D-18: a página se chama Histórias Ilustrativas; o aviso fica só na legenda
   if (/hist[óo]ria ilustrativa/i.test(lam)) problemas.push("\"história ilustrativa\" não vai nas lâminas (só na legenda)");
-  if (!/ilustrativ/i.test(String(post.legenda ?? ""))) problemas.push("falta o aviso de história ilustrativa na legenda");
+  // 23/11: o aviso de história ilustrativa na legenda ficou EM ESPERA (o dono decide por último); não é cobrado
 }
 
 // 6b. D-21: nada de Deus nem religião

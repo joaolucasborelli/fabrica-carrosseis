@@ -23,7 +23,7 @@ Exemplos de fala: "Pesquisando o assunto do momento: 13º salário.", "Escolhi o
 - Nada de fato, número, depoimento ou resultado inventado. Política neutra: nem exaltar nem atacar político ou partido.
 - **Nada sombrio:** nunca caveira, demônio, diabo, monstro, zumbi, vampiro, fantasma nem cena de terror, no texto ou nas fotos.
 - **Sem religião (D-21):** nunca fale de Deus, fé, Bíblia, versículo, oração, igreja, "Amém", santo ou milagre, nem ponha cena religiosa nas fotos. A base 143 (o monge e o mestre) vale só como fôrma de fábula, sem o lado religioso.
-- Personagem inventada: aviso de história ilustrativa **só na legenda** (D-18) e **nunca rosto reconhecível** nas fotos (de costas, só mãos ou fora de foco).
+- Personagem inventada: **nunca rosto reconhecível** nas fotos (de costas, só mãos ou fora de foco). O aviso de história ilustrativa está **em espera** (23/11: o dono decide por último); não escreva nas lâminas nem na legenda.
 - Não faça commit nem push neste repositório.
 
 ## Passo 0 · Olhar a fila
@@ -123,7 +123,7 @@ Com WebSearch, em até 3 buscas, procure o que está acontecendo **agora** com a
   Se for menos de 2, este post leva o pedido: a última lâmina termina com uma frase curta ligada à história, seguida de **"Comente FILA e receba a sua fila das contas."** Grave `"pedido_fila": true` em `remodelagem` e em `/tmp/v.json`. A legenda repete: "Comente FILA que eu te mando o teste no direct."
   Fora do pedido, nada de "comente", "digite" ou "escreva".
 - Nada de marca, "siga", Fila das Contas ou Defensoria dentro das outras lâminas. Isso vai para a legenda, só quando o tema pedir.
-- A legenda leva o aviso de personagem ilustrativa ("Personagem e história ilustrativas.") e de 6 a 8 hashtags sem marca.
+- A legenda leva de 6 a 8 hashtags sem marca. (Aviso de ilustrativa: em espera, 23/11.)
 - Formato de `pecas`: `{capa: texto, slides: [textos], legenda, hashtags: [], thumb_descricao}`. `slides` é uma lista de **textos**, nunca de objetos.
 
 Antes de escrever, anote `escritora · trabalhando · "Escrevendo: <capa provisória>"`.
@@ -144,7 +144,7 @@ Nunca escreva: jornada, chamado, virada, vida nova, você merece, mentalidade, s
 Grave em `/tmp/v.json` o campo `"revelacao": <número da lâmina da revelação>` (a capa é a L1).
 
 ### Vigias (obrigatório)
-Grave `/tmp/v.json` com `{"base": {n_slides, capa_texto, slides}, "post": {capa, slides, legenda, pessoa_real, pedido_fila, tipo, famoso}}` (`tipo` = id do tipo; `famoso: true` nos tipos de famoso) e rode (`pessoa_real: true` só para história real de famoso, com "Fonte:" na legenda; aí a legenda não leva o aviso de ilustrativa):
+Grave `/tmp/v.json` com `{"base": {n_slides, capa_texto, slides}, "post": {capa, slides, legenda, pessoa_real, pedido_fila, tipo, famoso}}` (`tipo` = id do tipo; `famoso: true` nos tipos de famoso) e rode (`pessoa_real: true` só para história real de famoso, com "Fonte:" na legenda):
 ```
 node automacao/vigias.mjs /tmp/v.json
 ```
