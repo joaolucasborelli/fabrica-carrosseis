@@ -74,10 +74,18 @@ def tema_seguro(t):
 DP_TEMA = None  # preenchido logo abaixo
 
 
+DP_AVISO = "nunca pedimos senha nem Pix"
+DP_ATIVA = True  # 23/11: o dono quer os posts da DP no preto e amarelo de antes (sem o tema café); fica só o aviso
+
+
 def _tematizar(doc):
     """Troca as cores e fontes da Do outro lado da Porta pelas do ambiente, por papel."""
     t = TEMA
     if not t:
+        if DP_ATIVA and DP_AVISO:  # rodapé contra golpe, no visual preto e amarelo
+            css = (f'.handle::after,.assin::after,.rod::after{{content:" · {DP_AVISO}";font-weight:500;opacity:.85;white-space:nowrap}}'
+                   '.assin::after{font-size:.78em;margin-left:-8px}')
+            doc = doc.replace("</head>", f"<style>{css}</style></head>", 1)
         return doc
     import re as _re
     d, f, c, tx = t["destaque"], t["fundo"], t["claro"], t["texto_destaque"]
@@ -114,18 +122,19 @@ def _tematizar(doc):
     return doc
 
 
-DP_TEMA = tema_seguro(DP_TEMA_BASE)
+DP_TEMA = None  # 23/11: volta o preto e amarelo (o tema café de D-22 fica guardado em DP_TEMA_BASE, sem uso)
 TEMA = DP_TEMA  # padrão = DP
 
 
 def usar_marca(marca=None):
     """Cada ambiente desenha com a própria marca. Sem marca (ou o ambiente 1) volta para a Do outro lado da Porta."""
-    global LOGO, AVATAR, HANDLE, NOME, TEMA, PERFIL
+    global LOGO, AVATAR, HANDLE, NOME, TEMA, PERFIL, DP_ATIVA
     import base64 as _b64, html as _h
     if not marca or not marca.get("nome") or marca.get("ambiente_id") in (None, 1):
         LOGO, AVATAR, HANDLE, NOME = _PADRAO
-        TEMA = DP_TEMA; PERFIL = None  # D-22: a DP agora tem tema próprio (Café com as Contas)
+        TEMA = DP_TEMA; PERFIL = None; DP_ATIVA = True  # 23/11: preto e amarelo de antes
         return
+    DP_ATIVA = False
     PERFIL = marca.get("perfil") or None
     TEMA = tema_seguro(marca.get("tema"))
     NOME = marca["nome"]
