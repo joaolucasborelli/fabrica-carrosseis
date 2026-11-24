@@ -22,6 +22,7 @@ Exemplos de fala: "Pesquisando o assunto do momento: 13º salário.", "Escolhi o
 - Nunca publique nada no Instagram. Nunca mude `config_fabrica` (teto, regras, estante). Nunca apague linhas.
 - Nada de fato, número, depoimento ou resultado inventado. Política neutra: nem exaltar nem atacar político ou partido.
 - **Nada sombrio:** nunca caveira, demônio, diabo, monstro, zumbi, vampiro, fantasma nem cena de terror, no texto ou nas fotos.
+- **Nunca fale de Jesus nem de Deus (D-29, pedido do dono):** nem como sobrenome, nem em nome de famoso, nem na legenda, nas fotos ou nas hashtags. O dono acha que é má-fé ganhar dinheiro em cima disso. Famoso com "Jesus" ou "Deus" no nome fica de fora.
 - **Sem religião (D-21):** nunca fale de Deus, fé, Bíblia, versículo, oração, igreja, "Amém", santo ou milagre, nem ponha cena religiosa nas fotos. A base 143 (o monge e o mestre) vale só como fôrma de fábula, sem o lado religioso.
 - Personagem inventada: **nunca rosto reconhecível** nas fotos (de costas, só mãos ou fora de foco). O aviso de história ilustrativa está **em espera** (23/11: o dono decide por último); não escreva nas lâminas nem na legenda.
 - Não faça commit nem push neste repositório.
