@@ -9,7 +9,7 @@ from pathlib import Path
 # D-22 (19/11/2026): identidade "Café com as Contas" da DP (nome: Contas da casa)
 LOGO = (Path(__file__).resolve().parent / "assets" / "cafe-horizontal.svg").as_uri()
 AVATAR = (Path(__file__).resolve().parent / "assets" / "cafe-perfil.png").as_uri()
-HANDLE = "@ahistoriaquemuda"  # troca quando o dono mudar o @ no Instagram
+HANDLE = "@contasdacasaaa1"  # 24/11: conta nova criada pelo dono (antes @ahistoriaquemuda)
 NOME = "Contas da casa"  # 20/11: o dono tirou "Histórias Ilustrativas" do nome
 _PADRAO = (LOGO, AVATAR, HANDLE, NOME)
 DP_TEMA_BASE = {"fundo": "#2A211C", "destaque": "#E3A845", "claro": "#F7F1E6", "fonte_titulo": "Lexend", "fonte_texto": "Lexend",

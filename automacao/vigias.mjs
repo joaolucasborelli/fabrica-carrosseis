@@ -67,7 +67,7 @@ if (base) {
 
 // 6. marca e coisas que vão para a legenda (D-17)
 const lam = [post.capa, ...slides].join("\n");
-if (/@|ahistoriaquemuda|siga (a|nossa) p[áa]gina/iu.test(lam)) problemas.push("marca ou \"siga\" dentro das lâminas");
+if (/@|ahistoriaquemuda|contasdacasaaa1|siga (a|nossa) p[áa]gina/iu.test(lam)) problemas.push("marca ou \"siga\" dentro das lâminas");
 if (/fila das contas|defensoria/iu.test(lam)) avisos.push("Fila das Contas ou Defensoria dentro das lâminas: só se o tema pedir");
 // história real de famoso (D-16): não leva "história ilustrativa", mas precisa de fonte na legenda
 if (post.pessoa_real === true) {
